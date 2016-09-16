@@ -75,6 +75,7 @@ addFimoRegions <- function(tbl.cs, tbl.fimo)
       return(found)
       }
 
+   browser()
    tbl.combined$bindingSite <- sapply(1:nrow(tbl.combined),
                                    function(i) sharedMotif(tbl.combined$name[i], tbl.combined$motifname[i]))
 
@@ -99,10 +100,10 @@ test.addFimoRegions <- function()
 {
    printf("--- test.addFimoRegions")
    shoulder <- 1000
-   tbl.apoe <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
+   tbl.apoe.chipseq <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
    tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
    tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-   tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
+   tbl.expanded <- addFimoRegions(tbl.apoe.chipseq, tbl.fimo)
    expected.colnames <- c("motifname", "chrom", "start", "endpos", "strand", "motifscore", "pval",
                           "empty", "sequence", "type", "name", "score1", "bindingSite", "loc", "length")
    checkTrue(all(expected.colnames %in% colnames(tbl.expanded)))
@@ -262,29 +263,70 @@ test.toFeatureTable.big <- function(shoulder=15000)
 
 } # test.toFeatureTable.big
 #------------------------------------------------------------------------------------------------------------------------
-hint.featureTable <- function(shoulder=1000)
+hintToFeatureTable <- function(tbl.hits)
 {
-   printf("--- hint.toFeatureTable")
 
-   printf("   shoulder: %d", shoulder)
+   motifNames <- paste("hint", sort(unique(tbl.hits$name)), sep="_")
+   column.names <- c("uLoc", motifNames)
+   uLocs <- unique(tbl.hits$loc)
+   tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
+   colnames(tbl) <- column.names
+   tbl$uLoc <- uLocs
+   for(r in 1:nrow(tbl.hits)){
+      row <- tbl.hits[r, "loc"]
+      col <- sprintf("hint_%s", tbl.hits[r, "name"])
+      tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
+      }
+
+   invisible(tbl)
+
+} # hintToFeatureTable
+#------------------------------------------------------------------------------------------------------------------------
+test.hintToFeatureTable <- function(shoulder=1000)
+{
    #tbl.apoe <- getHits(db.hint, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
    load("tbl.apoe.hint.RData")
-   printf("   tbl.apoe: %d rows", nrow(tbl.apoe))
+   tbl.hits <- tbl.apoe
+   printf("   tbl.hits: %d rows", nrow(tbl.hits))
 
-       # fimo identifies 511 binding sites, among 164 unique motifs
-   tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-   printf("   tbl.fimo: %d rows", nrow(tbl.fimo))
+   tbl <- hintToFeatureTable(tbl.hits)
+   checkEquals(nrow(tbl.hits), sum(tbl[, -1]))
 
-       # our current fimo database lists chromosome names as, e.g., "10".  standardize them
-   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+      # for every row, identify each column with a 1, make sure tbl.expanded[
 
-   tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
-   printf("    testing freshly created 'tbl.expanded': %d x %d", nrow(tbl.expanded), ncol(tbl.expanded))
-   tbl <- toFeatureTable(tbl.expanded)
-   checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
+   for(r in 1:nrow(tbl)){
+      hits <- which(tbl[r,] == 1)
+      this.loc <- tbl$uLoc[r]
+      if(length(hits) > 0){
+         column.names <- sub("hint_", "", colnames(tbl)[hits])
+         #if(length(column.names) > 10) browser()
+         #printf("loc: %s   column.names: %s", this.loc, paste(column.names, collapse=","))
+         #printf("checked out? %s (%d,%d)", 
+         #       nrow(subset(tbl.hits, name %in% column.names & loc==this.loc)) == length(hits),
+         #       nrow(subset(tbl.hits, name %in% column.names & loc==this.loc)), length(hits))
+         checkEquals(nrow(subset(tbl.hits, name %in% column.names & loc==this.loc)), length(hits))
+         } # if hits
+      } # for r
 
 
-} # hist.featureTable
+} # test.hintToFeatureTable
+#------------------------------------------------------------------------------------------------------------------------
+#
+#
+#       # fimo identifies 511 binding sites, among 164 unique motifs
+#   tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
+#   printf("   tbl.fimo: %d rows", nrow(tbl.fimo))
+#
+#       # our current fimo database lists chromosome names as, e.g., "10".  standardize them
+#   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+#
+#   tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
+#   printf("    testing freshly created 'tbl.expanded': %d x %d", nrow(tbl.expanded), ncol(tbl.expanded))
+#   tbl <- toFeatureTable(tbl.expanded)
+#   checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
+#
+#
+#} # hist.featureTable
 #------------------------------------------------------------------------------------------------------------------------
 explore <- function()
 {
