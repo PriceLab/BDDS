@@ -180,23 +180,60 @@ toFeatureTable <- function(tbl.hits)
    printf("--- entering toFeatureTable, tbl.hits is (%d, %d)", nrow(tbl.hits), ncol(tbl.hits))
 
    motifNames <- paste("chipseq", sort(unique(tbl.hits$motifname)), sep="_")
-   column.names <- c("locTF", motifNames)
-   tbl.hits$locTF <- with(tbl.hits, paste(loc, name, sep="_"))
-   locTF <- unique(tbl.hits$locTF)
-   tbl <- data.frame(matrix(data=0, nrow=length(locTF), ncol=length(column.names)), stringsAsFactors=FALSE)
+   column.names <- c("uLoc", motifNames)
+   uLocs <- unique(tbl.hits$loc)
+   tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
    colnames(tbl) <- column.names
-   tbl$locTF <- locTF
+   tbl$uLoc <- uLocs
    for(r in 1:nrow(tbl.hits)){
-      row <- tbl.hits[r, "locTF"]
+      row <- tbl.hits[r, "loc"]
       col <- sprintf("chipseq_%s", tbl.hits[r, "motifname"])
-      row.number <- grep(row, tbl$locTF)
-      #printf("about to assign to tbl[%d, %s]", row.number, col)
-      tbl[grep(row, tbl$locTF), col] <- 1
+      tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
       }
 
    tbl
 
 } # toFeatureTable
+#------------------------------------------------------------------------------------------------------------------------
+test.toFeatureTable <- function(shoulder=1000)
+{
+   printf("--- test.toFeatureTable")
+
+       # chipseq data: one 151 base pair hit, claims that this is shared by 3 tfs: CTCF, RUNX3, PBX3
+   tbl.apoe <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
+       # fimo identifies 511 binding sites, among 164 unique motifs
+   tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
+       # our current fimo database lists chromosome names as, e.g., "10".  standardize them
+   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+
+   tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
+   tbl <- toFeatureTable(tbl.expanded)
+
+      # we expect one entry in the feature table for every row in tbl.expanded
+   printf("found %d loc/motif hits from tbl.expanded of %d rows", sum(tbl[, -1]), nrow(tbl.expanded))
+   checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
+
+      # for every row, identify each column with a 1, make sure tbl.expanded[
+
+   for(r in 1:nrow(tbl)){
+      hits <- which(tbl[r,] == 1)
+      this.loc <- tbl$uLoc[r]
+      if(length(hits) > 0){
+         column.names <- sub("chipseq_", "", colnames(tbl)[hits])
+         #if(length(column.names) > 10) browser()
+         #printf("loc: %s   column.names: %s", this.loc, paste(column.names, collapse=","))
+         #printf("checked out? %s (%d,%d)", 
+         #       nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)) == length(hits),
+         #       nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)), length(hits))
+                
+         checkEquals(nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)), length(hits))
+         } # if hits
+      } # for r
+
+   #browser();
+   #x <- 99
+
+} # test.toFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
 test.toFeatureTable.big <- function(shoulder=15000)
 {
@@ -224,31 +261,6 @@ test.toFeatureTable.big <- function(shoulder=15000)
    x <- 99
 
 } # test.toFeatureTable.big
-#------------------------------------------------------------------------------------------------------------------------
-test.toFeatureTable <- function(shoulder=1000)
-{
-   printf("--- test.toFeatureTable")
-
-       # chipseq data: one 151 base pair hit, claims that this is shared by 3 tfs: CTCF, RUNX3, PBX3
-
-   #browser()
-   printf("   shoulder: %d", shoulder)
-   tbl.apoe <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-   printf("   tbl.apoe: %d rows", nrow(tbl.apoe))
-
-       # fimo identifies 511 binding sites, among 164 unique motifs
-   tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-   printf("   tbl.fimo: %d rows", nrow(tbl.fimo))
-
-       # our current fimo database lists chromosome names as, e.g., "10".  standardize them
-   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-
-   tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
-   printf("    testing freshly created 'tbl.expanded': %d x %d", nrow(tbl.expanded), ncol(tbl.expanded))
-   tbl <- toFeatureTable(tbl.expanded)
-   checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
-
-} # test.toFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
 hint.featureTable <- function(shoulder=1000)
 {
