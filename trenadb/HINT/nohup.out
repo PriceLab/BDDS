@@ -1,0 +1,3851 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+Bioconductor version 3.3 (BiocInstaller 1.22.3), ?biocLite for help
+> library(RPostgreSQL)
+Loading required package: DBI
+> library(GenomicRanges)
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colnames, do.call,
+    duplicated, eval, evalq, Filter, Find, get, grep, grepl, intersect,
+    is.unsorted, lapply, lengths, Map, mapply, match, mget, order,
+    paste, pmax, pmax.int, pmin, pmin.int, Position, rank, rbind,
+    Reduce, rownames, sapply, setdiff, sort, table, tapply, union,
+    unique, unsplit
+
+Loading required package: S4Vectors
+Loading required package: stats4
+
+Attaching package: ‘S4Vectors’
+
+The following objects are masked from ‘package:base’:
+
+    colMeans, colSums, expand.grid, rowMeans, rowSums
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+> library(RUnit)
+> source("../regionAndHitsSchemas.R")
+> #------------------------------------------------------------------------------------------------------------------------
+> hint.path <- "/local/Cory/for_Paul/hint_sample"
+> #------------------------------------------------------------------------------------------------------------------------
+> if(!exists("db.hint"))
++    db.hint <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="hint", host="whovian")
+> 
+> if(!exists("db.fimo"))
++    db.fimo <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="trena", host="whovian")
+> 
+> knownLocs <- new.env(parent=emptyenv())
+> #------------------------------------------------------------------------------------------------------------------------
+> runTests <- function()
++ {
++   test.readHintTable()
++   test.mergeFootprintsWithFimo()
++   test.splitTableIntoRegionsAndHintHits()
++   test.fill.to.database()
++     
++   #test.combineFootprintsAndFimo()
++   #test.combineFootprintsAndDatabasedFimo()
++ 
++ } # runTests
+> #------------------------------------------------------------------------------------------------------------------------
+> readHintTable <- function(directory, filename, nrows=NA, chromosome=NA)
++ {
++    full.path <- file.path(directory, filename)
++  
++    if(!file.exists(full.path))
++        return(data.frame)
++    
++    tbl <- read.table(full.path, sep="\t", as.is=TRUE)[, 1:5]
++    colnames(tbl) <- c("chrom", "footprint.start", "footprint.end", "loc", "score")
++    if(!is.na(chromosome))
++       tbl <- subset(tbl, chrom==chromosome)
++ 
++    if(!is.na(nrows))
++       tbl <- tbl[1:nrows,]
++ 
++    invisible(tbl)
++ 
++ } # readHintTable
+> #------------------------------------------------------------------------------------------------------------------------
+> test.readHintTable <- function()
++ {
++    printf("--- test.readHintTable")
++ 
++    tbl <- readHintTable(hint.path, "ENCSR000EMR.hint.bed", 5, "chr21")
++    checkEquals(dim(tbl), c(5,5))
++    checkEquals(colnames(tbl), c("chrom", "footprint.start", "footprint.end", "loc", "score"))
++    checkEquals(unique(tbl$chrom), "chr21")
++ 
++      # now read without chrom or nrow retraints
++    tbl <- readHintTable(hint.path, "ENCSR000EMR.hint.bed")
++    checkEquals(ncol(tbl), 5)
++    checkTrue(nrow(tbl) > 600000)
++    checkEquals(colnames(tbl), c("chrom", "footprint.start", "footprint.end", "loc", "score"))
++    checkEquals(head(sort(unique(tbl$chrom))), c("chr1", "chr10", "chr11", "chr12", "chr13", "chr14"))
++    invisible(tbl)
++    
++ } # test.readHintTable
+> #------------------------------------------------------------------------------------------------------------------------
+> mergeFimoWithFootprints <- function(tbl.fp, sampleID)
++ {
++   chromosome <- unique(tbl.fp$chrom)
++   stopifnot(length(chromosome) == 1)
++   chromosome <- sub("chr", "", chromosome)  # fimo database lists chromosome without 'chr' prefix
++   min.pos <- min(tbl.fp$footprint.start)
++   max.pos <- max(tbl.fp$footprint.end)
++   
++   query <- sprintf("select * from fimo_hg38 where chrom='%s' and start >= %d and endpos <= %d",
++                    chromosome, min.pos, max.pos)
++ 
++   tbl.fimo <- dbGetQuery(db.fimo, query)
++   colnames(tbl.fimo) <- c("motif", "chrom", "motif.start", "motif.end", "motif.strand", "fimo.score",
++                           "fimo.pvalue", "empty", "motif.sequence")
++   tbl.fimo <- tbl.fimo[, -grep("empty", colnames(tbl.fimo))]
++   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
++ 
++   gr.fimo <- with(tbl.fimo, GRanges(seqnames=chrom, IRanges(start=motif.start, end=motif.end)))
++ 
++     # --- get some footprints
++ 
++   gr.hint <- with(tbl.fp,   GRanges(seqnames=chrom, IRanges(start=footprint.start, end=footprint.end)))
++   tbl.overlaps <- as.data.frame(findOverlaps(gr.fimo, gr.hint, type="within"))
++ 
++   tbl.fimo$loc <- with(tbl.fimo, sprintf("%s:%d-%d", chrom, motif.start, motif.end))
++   tbl.fimo$method <- "HINT"
++   tbl.fimo$sample_id <- sampleID
++   tbl.regions <- tbl.fimo[tbl.overlaps$queryHits,]
++ 
++   tbl.regions <- cbind(tbl.regions, hint.score=tbl.fp[tbl.overlaps$subjectHits, "score"])
++   invisible(tbl.regions)
++ 
++ } # mergeFimoWithFootprints
+> #------------------------------------------------------------------------------------------------------------------------
+> test.mergeFootprintsWithFimo <- function()
++ {
++    printf("--- test.mergeFootprintsWithFimo")
++    tbl.fp <- readHintTable(hint.path, "ENCSR000EMR.hint.bed")
++    tbl.fp <- head(subset(tbl.fp, chrom=="chr21"), n=3)
++    tbl <- mergeFimoWithFootprints(tbl.fp, "ENCSR00EMR")
++    checkEquals(ncol(tbl), 12)
++    checkEquals(sort(colnames(tbl)),
++                c("chrom", "fimo.pvalue", "fimo.score", "hint.score", "loc", "method",
++                  "motif", "motif.end", "motif.sequence", "motif.start", "motif.strand", "sample_id"))
++    checkTrue(nrow(tbl) >= 9)
++    checkEquals(length(grep("chr21:5014930-5014939", tbl$loc)), 5)
++      # 5 distinct motifs mapped to these region
++    checkEquals(sort(subset(tbl, loc == "chr21:5014930-5014939")$motif),
++                c("MA0522.2", "MA0820.1", "MA0824.1", "MA0830.1", "MESP1_DBD"))
++    invisible(tbl)
++ 
++ } # test.mergeFootprintsWithFimo
+> #------------------------------------------------------------------------------------------------------------------------
+> splitTableIntoRegionsAndHintHits <- function(tbl, minid)
++ {
++    tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
++    colnames(tbl.regions) <- region.schema() # 29
++ 
++    new.locs <- setdiff(tbl.regions$loc, names(knownLocs))
++      # enter these new.locs into the hash
++    lapply(new.locs, function(loc) knownLocs[[loc]] <- 0)   
++    printf("novel locs: %d new/%d possible (%d now known, %d dups)",
++           length(new.locs), nrow(tbl.regions), length(names(knownLocs)), nrow(tbl.regions) - length(new.locs))
++ 
++    if(length(new.locs) > 0){
++       keepers <- match(new.locs, tbl.regions$loc)
++       tbl.regions <- tbl.regions[keepers,]
++     } else {
++        tbl.regions <- data.frame()
++        }
++ 
++       # now start working on the hits subtable.  
++       #   add length.
++       #   extract columns of interest.
++       #      loc -> loc
++       #      motif -> name
++       #      motif.strand -> strand
++       #      hint.score -> score1
++       #      fimo.score -> score2
++       #      fimo.pvalue -> score3
++       #      
++       #   make some table-wide assignments(provenance(minid), unused scores, 
++       #                type(motif.in.footprint), method
++       #   
++       # hit.schema
++       #  [1] "loc"        "type"       "name"       "length"     "strand"    
++       #  [6] "sample_id"  "method"     "provenance" "score1"     "score2"    
++       # [11] "score3"     "score4"     "score5"     "score6"    
++ 
++    tbl$length <- with(tbl, 1 + motif.end - motif.start)
++    tbl$provenance <- minid
++    tbl$score4 <- NA
++    tbl$score5 <- NA
++    tbl$score6 <- NA
++    tbl$type <- "motif.in.footprint"
++    tbl.hits <- tbl[, c("loc", "type", "motif", "length", "motif.strand", "sample_id", 
++                        "method", "provenance", "hint.score", "fimo.score", "fimo.pvalue",
++                        "score4", "score5", "score6")]
++ 
++    colnames(tbl.hits) <- hit.schema()
++    invisible(list(regions=tbl.regions, hits=tbl.hits))
++     
++ } # splitTableIntoRegionsAndHintHits    
+> #------------------------------------------------------------------------------------------------------------------------
+> test.splitTableIntoRegionsAndHintHits <- function(tbl)
++ {
++    printf("--- test.splitTableIntoRegionsAndHintHits")
++    tbl <- test.mergeFootprintsWithFimo()
++    x <- splitTableIntoRegionsAndHintHits(tbl, "minid")
++    checkEquals(sort(names(x)), c("hits", "regions"))
++    checkEquals(colnames(x$regions), region.schema()) #
++    checkEquals(colnames(x$hits), hit.schema())
++ 
++ } # test.splitTableIntoRegionsAndHintHits    
+> #------------------------------------------------------------------------------------------------------------------------
+> fill.to.database <- function(tbl.regions, tbl.hits)
++ {
++    appendToRegionsTable(tbl.regions)
++    appendToHitsTable(tbl.hits)
++     
++ } # fill.to.database
+> #------------------------------------------------------------------------------------------------------------------------
+> test.fill.to.database <- function()
++ {
++    printf("--- test.fill.to.database")
++    createEmptyDatabaseTables()
++    knownLocs <<- new.env(parent=emptyenv())
++ 
++    tbl <- test.mergeFootprintsWithFimo()
++    x <- splitTableIntoRegionsAndHintHits(tbl, "minid")
++ 
++    fill.to.database(x$regions, x$hits)
++    checkEquals(sort(dbListTables(db.hint)), c("hits", "regions"))
++ 
++    tbl.regions <- dbGetQuery(db.hint, "select * from regions")
++    checkEquals(dim(tbl.regions), c(5, 4))
++    checkTrue(all(region.schema() == colnames(tbl.regions)))
++ 
++    tbl.hits <- dbGetQuery(db.hint, "select * from hits")
++    checkTrue(all(hit.schema() == colnames(tbl.hits)))
++    checkEquals(dim(tbl.hits), c(9, 13))
++    checkEquals(unique(tbl.hits$type), "motif.in.footprint")
++    checkTrue(all(tbl.hits$loc %in% tbl.regions$loc))
++ 
++ } # test.fill.to.database
+> #------------------------------------------------------------------------------------------------------------------------
+> databaseSummary <- function()
++ {
++     region.count <- dbGetQuery(db.hint, "select count(*) from regions")[1,1]
++     hit.count <- dbGetQuery(db.hint, "select count(*) from hits")[1,1]
++     printf("%d hits in %d regions", hit.count, region.count)
++ 
++ } # databaseSummary
+> #------------------------------------------------------------------------------------------------------------------------
+> createEmptyDatabaseTables <- function()
++ {
++    system("/bin/psql -f createTables.sql")
++     
++ } # appendToRegionsTable
+> #------------------------------------------------------------------------------------------------------------------------
+> appendToRegionsTable <- function(tbl)
++ {
++    write.table(tbl, file="regions.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
++    system("/bin/psql -f fillRegions.sql")
++     
++ } # appendToRegionsTable
+> #------------------------------------------------------------------------------------------------------------------------
+> appendToHitsTable <- function(tbl)
++ {
++    write.table(tbl, file="hits.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
++    system("/bin/psql -f fillHits.sql")
++ 
++ } # appendToHitsTable
+> #------------------------------------------------------------------------------------------------------------------------
+> fill.all.samples.by.chromosome <- function(chromosome)
++ {
++    createEmptyDatabaseTables()
++    knownLocs <<- new.env(parent=emptyenv())
++ 
++    all.files <- list.files(hint.path, pattern=".*hint.bed$")
++    minid <- "corys.hint.minid"
++ 
++    for(file in all.files){
++       printf("---- %s (%s) (%d/%d)", file, chromosome, grep(file, all.files), length(all.files))
++       sample.id <- sub(".hint.bed", "", file)
++       tbl.hint <- readHintTable(hint.path, file, NA, chromosome)
++       tbl <- mergeFimoWithFootprints(tbl.hint, sample.id)
++       x <- splitTableIntoRegionsAndHintHits(tbl, minid)
++       printf("filling %d regions, %d hits for %s", nrow(x$regions), nrow(x$hits), sample.id)
++       fill.to.database(x$regions, x$hits)
++       databaseSummary()
++       } # for file
++ 
++ } # fill.all.samples.by.chromosome
+> #------------------------------------------------------------------------------------------------------------------------
+> # tss of chr21 gene app produces only one motif hit in hint, but 1188 in piq
+> # try to figure that out
+> # explore piq motif hit chr21:25879610-25879624 for MA0518.1
+> explore.paucity.of.results <- function()
++ {
++   tbl <- readHintTable(hint.path, "ENCSR000DBY.hint.bed", nrows=NA, chromosome="chr21")
++ 
++   APP.tss <- 25880550
++   loc.chrom <- "chr21"
++   loc.start <- APP.tss - 1000
++   loc.stop  <- APP.tss + 1000
++                     
++   tbl.app <- subset(tbl, footprint.start >= loc.start & footprint.end <= loc.stop)
++ 
++ } # explore.paucity.of.results
+> #------------------------------------------------------------------------------------------------------------------------
+> if(!interactive()){
++    chromosomes <- paste("chr", 1:22, sep="")
++    for(chromosome in chromosomes)
++       fill.all.samples.by.chromosome(chromosome)
++    }
+You are now connected to database "hint" as user "pshannon".
+DROP TABLE
+DROP TABLE
+CREATE TABLE
+GRANT
+CREATE TABLE
+GRANT
+[1] ---- ENCSR000DBY.hint.bed (chr1) (1/18)
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+Bioconductor version 3.3 (BiocInstaller 1.22.3), ?biocLite for help
+> library(RPostgreSQL)
+Loading required package: DBI
+> library(GenomicRanges)
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colnames, do.call,
+    duplicated, eval, evalq, Filter, Find, get, grep, grepl, intersect,
+    is.unsorted, lapply, lengths, Map, mapply, match, mget, order,
+    paste, pmax, pmax.int, pmin, pmin.int, Position, rank, rbind,
+    Reduce, rownames, sapply, setdiff, sort, table, tapply, union,
+    unique, unsplit
+
+Loading required package: S4Vectors
+Loading required package: stats4
+
+Attaching package: ‘S4Vectors’
+
+The following objects are masked from ‘package:base’:
+
+    colMeans, colSums, expand.grid, rowMeans, rowSums
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+> library(RUnit)
+> source("../regionAndHitsSchemas.R")
+> #------------------------------------------------------------------------------------------------------------------------
+> hint.path <- "/local/Cory/for_Paul/hint_sample"
+> #------------------------------------------------------------------------------------------------------------------------
+> if(!exists("db.hint"))
++    db.hint <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="hint", host="whovian")
+> 
+> if(!exists("db.fimo"))
++    db.fimo <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="trena", host="whovian")
+> 
+> knownLocs <- new.env(parent=emptyenv())
+> #------------------------------------------------------------------------------------------------------------------------
+> runTests <- function()
++ {
++   test.readHintTable()
++   test.mergeFootprintsWithFimo()
++   test.splitTableIntoRegionsAndHintHits()
++   test.fill.to.database()
++     
++   #test.combineFootprintsAndFimo()
++   #test.combineFootprintsAndDatabasedFimo()
++ 
++ } # runTests
+> #------------------------------------------------------------------------------------------------------------------------
+> readHintTable <- function(directory, filename, nrows=NA, chromosome=NA)
++ {
++    full.path <- file.path(directory, filename)
++  
++    if(!file.exists(full.path))
++        return(data.frame)
++    
++    tbl <- read.table(full.path, sep="\t", as.is=TRUE)[, 1:5]
++    colnames(tbl) <- c("chrom", "footprint.start", "footprint.end", "loc", "score")
++    if(!is.na(chromosome))
++       tbl <- subset(tbl, chrom==chromosome)
++ 
++    if(!is.na(nrows))
++       tbl <- tbl[1:nrows,]
++ 
++    invisible(tbl)
++ 
++ } # readHintTable
+> #------------------------------------------------------------------------------------------------------------------------
+> test.readHintTable <- function()
++ {
++    printf("--- test.readHintTable")
++ 
++    tbl <- readHintTable(hint.path, "ENCSR000EMR.hint.bed", 5, "chr21")
++    checkEquals(dim(tbl), c(5,5))
++    checkEquals(colnames(tbl), c("chrom", "footprint.start", "footprint.end", "loc", "score"))
++    checkEquals(unique(tbl$chrom), "chr21")
++ 
++      # now read without chrom or nrow retraints
++    tbl <- readHintTable(hint.path, "ENCSR000EMR.hint.bed")
++    checkEquals(ncol(tbl), 5)
++    checkTrue(nrow(tbl) > 600000)
++    checkEquals(colnames(tbl), c("chrom", "footprint.start", "footprint.end", "loc", "score"))
++    checkEquals(head(sort(unique(tbl$chrom))), c("chr1", "chr10", "chr11", "chr12", "chr13", "chr14"))
++    invisible(tbl)
++    
++ } # test.readHintTable
+> #------------------------------------------------------------------------------------------------------------------------
+> mergeFimoWithFootprints <- function(tbl.fp, sampleID)
++ {
++   chromosome <- unique(tbl.fp$chrom)
++   stopifnot(length(chromosome) == 1)
++   chromosome <- sub("chr", "", chromosome)  # fimo database lists chromosome without 'chr' prefix
++   min.pos <- min(tbl.fp$footprint.start)
++   max.pos <- max(tbl.fp$footprint.end)
++   
++   query <- sprintf("select * from fimo_hg38 where chrom='%s' and start >= %d and endpos <= %d",
++                    chromosome, min.pos, max.pos)
++ 
++   tbl.fimo <- dbGetQuery(db.fimo, query)
++   colnames(tbl.fimo) <- c("motif", "chrom", "motif.start", "motif.end", "motif.strand", "fimo.score",
++                           "fimo.pvalue", "empty", "motif.sequence")
++   tbl.fimo <- tbl.fimo[, -grep("empty", colnames(tbl.fimo))]
++   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
++ 
++   gr.fimo <- with(tbl.fimo, GRanges(seqnames=chrom, IRanges(start=motif.start, end=motif.end)))
++ 
++     # --- get some footprints
++ 
++   gr.hint <- with(tbl.fp,   GRanges(seqnames=chrom, IRanges(start=footprint.start, end=footprint.end)))
++   tbl.overlaps <- as.data.frame(findOverlaps(gr.fimo, gr.hint, type="within"))
++ 
++   tbl.fimo$loc <- with(tbl.fimo, sprintf("%s:%d-%d", chrom, motif.start, motif.end))
++   tbl.fimo$method <- "HINT"
++   tbl.fimo$sample_id <- sampleID
++   tbl.regions <- tbl.fimo[tbl.overlaps$queryHits,]
++ 
++   tbl.regions <- cbind(tbl.regions, hint.score=tbl.fp[tbl.overlaps$subjectHits, "score"])
++   invisible(tbl.regions)
++ 
++ } # mergeFimoWithFootprints
+> #------------------------------------------------------------------------------------------------------------------------
+> test.mergeFootprintsWithFimo <- function()
++ {
++    printf("--- test.mergeFootprintsWithFimo")
++    tbl.fp <- readHintTable(hint.path, "ENCSR000EMR.hint.bed")
++    tbl.fp <- head(subset(tbl.fp, chrom=="chr21"), n=3)
++    tbl <- mergeFimoWithFootprints(tbl.fp, "ENCSR00EMR")
++    checkEquals(ncol(tbl), 12)
++    checkEquals(sort(colnames(tbl)),
++                c("chrom", "fimo.pvalue", "fimo.score", "hint.score", "loc", "method",
++                  "motif", "motif.end", "motif.sequence", "motif.start", "motif.strand", "sample_id"))
++    checkTrue(nrow(tbl) >= 9)
++    checkEquals(length(grep("chr21:5014930-5014939", tbl$loc)), 5)
++      # 5 distinct motifs mapped to these region
++    checkEquals(sort(subset(tbl, loc == "chr21:5014930-5014939")$motif),
++                c("MA0522.2", "MA0820.1", "MA0824.1", "MA0830.1", "MESP1_DBD"))
++    invisible(tbl)
++ 
++ } # test.mergeFootprintsWithFimo
+> #------------------------------------------------------------------------------------------------------------------------
+> splitTableIntoRegionsAndHintHits <- function(tbl, minid)
++ {
++    tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
++    colnames(tbl.regions) <- region.schema() # 29
++ 
++    new.locs <- setdiff(tbl.regions$loc, names(knownLocs))
++      # enter these new.locs into the hash
++    lapply(new.locs, function(loc) knownLocs[[loc]] <- 0)   
++    printf("novel locs: %d new/%d possible (%d now known, %d dups)",
++           length(new.locs), nrow(tbl.regions), length(names(knownLocs)), nrow(tbl.regions) - length(new.locs))
++ 
++    if(length(new.locs) > 0){
++       keepers <- match(new.locs, tbl.regions$loc)
++       tbl.regions <- tbl.regions[keepers,]
++     } else {
++        tbl.regions <- data.frame()
++        }
++ 
++       # now start working on the hits subtable.  
++       #   add length.
++       #   extract columns of interest.
++       #      loc -> loc
++       #      motif -> name
++       #      motif.strand -> strand
++       #      hint.score -> score1
++       #      fimo.score -> score2
++       #      fimo.pvalue -> score3
++       #      
++       #   make some table-wide assignments(provenance(minid), unused scores, 
++       #                type(motif.in.footprint), method
++       #   
++       # hit.schema
++       #  [1] "loc"        "type"       "name"       "length"     "strand"    
++       #  [6] "sample_id"  "method"     "provenance" "score1"     "score2"    
++       # [11] "score3"     "score4"     "score5"     "score6"    
++ 
++    tbl$length <- with(tbl, 1 + motif.end - motif.start)
++    tbl$provenance <- minid
++    tbl$score4 <- NA
++    tbl$score5 <- NA
++    tbl$score6 <- NA
++    tbl$type <- "motif.in.footprint"
++    tbl.hits <- tbl[, c("loc", "type", "motif", "length", "motif.strand", "sample_id", 
++                        "method", "provenance", "hint.score", "fimo.score", "fimo.pvalue",
++                        "score4", "score5", "score6")]
++ 
++    colnames(tbl.hits) <- hit.schema()
++    invisible(list(regions=tbl.regions, hits=tbl.hits))
++     
++ } # splitTableIntoRegionsAndHintHits    
+> #------------------------------------------------------------------------------------------------------------------------
+> test.splitTableIntoRegionsAndHintHits <- function(tbl)
++ {
++    printf("--- test.splitTableIntoRegionsAndHintHits")
++    tbl <- test.mergeFootprintsWithFimo()
++    x <- splitTableIntoRegionsAndHintHits(tbl, "minid")
++    checkEquals(sort(names(x)), c("hits", "regions"))
++    checkEquals(colnames(x$regions), region.schema()) #
++    checkEquals(colnames(x$hits), hit.schema())
++ 
++ } # test.splitTableIntoRegionsAndHintHits    
+> #------------------------------------------------------------------------------------------------------------------------
+> fill.to.database <- function(tbl.regions, tbl.hits)
++ {
++    appendToRegionsTable(tbl.regions)
++    appendToHitsTable(tbl.hits)
++     
++ } # fill.to.database
+> #------------------------------------------------------------------------------------------------------------------------
+> test.fill.to.database <- function()
++ {
++    printf("--- test.fill.to.database")
++    createEmptyDatabaseTables()
++    knownLocs <<- new.env(parent=emptyenv())
++ 
++    tbl <- test.mergeFootprintsWithFimo()
++    x <- splitTableIntoRegionsAndHintHits(tbl, "minid")
++ 
++    fill.to.database(x$regions, x$hits)
++    checkEquals(sort(dbListTables(db.hint)), c("hits", "regions"))
++ 
++    tbl.regions <- dbGetQuery(db.hint, "select * from regions")
++    checkEquals(dim(tbl.regions), c(5, 4))
++    checkTrue(all(region.schema() == colnames(tbl.regions)))
++ 
++    tbl.hits <- dbGetQuery(db.hint, "select * from hits")
++    checkTrue(all(hit.schema() == colnames(tbl.hits)))
++    checkEquals(dim(tbl.hits), c(9, 13))
++    checkEquals(unique(tbl.hits$type), "motif.in.footprint")
++    checkTrue(all(tbl.hits$loc %in% tbl.regions$loc))
++ 
++ } # test.fill.to.database
+> #------------------------------------------------------------------------------------------------------------------------
+> databaseSummary <- function()
++ {
++     region.count <- dbGetQuery(db.hint, "select count(*) from regions")[1,1]
++     hit.count <- dbGetQuery(db.hint, "select count(*) from hits")[1,1]
++     printf("%d hits in %d regions", hit.count, region.count)
++ 
++ } # databaseSummary
+> #------------------------------------------------------------------------------------------------------------------------
+> createEmptyDatabaseTables <- function()
++ {
++    system("/bin/psql -f createTables.sql")
++     
++ } # appendToRegionsTable
+> #------------------------------------------------------------------------------------------------------------------------
+> appendToRegionsTable <- function(tbl)
++ {
++    write.table(tbl, file="regions.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
++    system("/bin/psql -f fillRegions.sql")
++     
++ } # appendToRegionsTable
+> #------------------------------------------------------------------------------------------------------------------------
+> appendToHitsTable <- function(tbl)
++ {
++    write.table(tbl, file="hits.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
++    system("/bin/psql -f fillHits.sql")
++ 
++ } # appendToHitsTable
+> #------------------------------------------------------------------------------------------------------------------------
+> fill.all.samples.by.chromosome <- function(chromosome)
++ {
++    # createEmptyDatabaseTables()
++    knownLocs <<- new.env(parent=emptyenv())
++ 
++    all.files <- list.files(hint.path, pattern=".*hint.bed$")
++    minid <- "corys.hint.minid"
++ 
++    for(file in all.files){
++       printf("---- %s (%s) (%d/%d)", file, chromosome, grep(file, all.files), length(all.files))
++       sample.id <- sub(".hint.bed", "", file)
++       tbl.hint <- readHintTable(hint.path, file, NA, chromosome)
++       tbl <- mergeFimoWithFootprints(tbl.hint, sample.id)
++       x <- splitTableIntoRegionsAndHintHits(tbl, minid)
++       printf("filling %d regions, %d hits for %s", nrow(x$regions), nrow(x$hits), sample.id)
++       fill.to.database(x$regions, x$hits)
++       databaseSummary()
++       } # for file
++ 
++ } # fill.all.samples.by.chromosome
+> #------------------------------------------------------------------------------------------------------------------------
+> # tss of chr21 gene app produces only one motif hit in hint, but 1188 in piq
+> # try to figure that out
+> # explore piq motif hit chr21:25879610-25879624 for MA0518.1
+> explore.paucity.of.results <- function()
++ {
++   tbl <- readHintTable(hint.path, "ENCSR000DBY.hint.bed", nrows=NA, chromosome="chr21")
++ 
++   APP.tss <- 25880550
++   loc.chrom <- "chr21"
++   loc.start <- APP.tss - 1000
++   loc.stop  <- APP.tss + 1000
++                     
++   tbl.app <- subset(tbl, footprint.start >= loc.start & footprint.end <= loc.stop)
++ 
++ } # explore.paucity.of.results
+> #------------------------------------------------------------------------------------------------------------------------
+> if(!interactive()){
++    chromosomes <- paste("chr", 1:22, sep="")
++    for(chromosome in chromosomes)
++       fill.all.samples.by.chromosome(chromosome)
++    }
+[1] ---- ENCSR000DBY.hint.bed (chr1) (1/18)
+[1] novel locs: 24146 new/24146 possible (24146 now known, 0 dups)
+[1] filling 24146 regions, 35383 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 24146
+You are now connected to database "hint" as user "pshannon".
+COPY 35383
+[1] 35383 hits in 24146 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr1) (2/18)
+[1] novel locs: 154285 new/157706 possible (178431 now known, 3421 dups)
+[1] filling 154285 regions, 226260 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 154285
+You are now connected to database "hint" as user "pshannon".
+COPY 226260
+[1] 261643 hits in 178431 regions
+[1] ---- ENCSR000DCA.hint.bed (chr1) (3/18)
+[1] novel locs: 103176 new/119572 possible (281607 now known, 16396 dups)
+[1] filling 103176 regions, 172613 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 103176
+You are now connected to database "hint" as user "pshannon".
+COPY 172613
+[1] 434256 hits in 281607 regions
+[1] ---- ENCSR000DCB.hint.bed (chr1) (4/18)
+[1] novel locs: 107816 new/133906 possible (389423 now known, 26090 dups)
+[1] filling 107816 regions, 192967 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 107816
+You are now connected to database "hint" as user "pshannon".
+COPY 192967
+[1] 627223 hits in 389423 regions
+[1] ---- ENCSR000DCC.hint.bed (chr1) (5/18)
+[1] novel locs: 75093 new/102993 possible (464516 now known, 27900 dups)
+[1] filling 75093 regions, 149649 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 75093
+You are now connected to database "hint" as user "pshannon".
+COPY 149649
+[1] 776872 hits in 464516 regions
+[1] ---- ENCSR000EJB.hint.bed (chr1) (6/18)
+[1] novel locs: 107688 new/135016 possible (572204 now known, 27328 dups)
+[1] filling 107688 regions, 200661 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 107688
+You are now connected to database "hint" as user "pshannon".
+COPY 200661
+[1] 977533 hits in 572204 regions
+[1] ---- ENCSR000EJD.hint.bed (chr1) (7/18)
+[1] novel locs: 73587 new/112254 possible (645791 now known, 38667 dups)
+[1] filling 73587 regions, 169059 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 73587
+You are now connected to database "hint" as user "pshannon".
+COPY 169059
+[1] 1146592 hits in 645791 regions
+[1] ---- ENCSR000EJE.hint.bed (chr1) (8/18)
+[1] novel locs: 104268 new/153572 possible (750059 now known, 49304 dups)
+[1] filling 104268 regions, 225933 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 104268
+You are now connected to database "hint" as user "pshannon".
+COPY 225933
+[1] 1372525 hits in 750059 regions
+[1] ---- ENCSR000EJF.hint.bed (chr1) (9/18)
+[1] novel locs: 87209 new/143941 possible (837268 now known, 56732 dups)
+[1] filling 87209 regions, 212569 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 87209
+You are now connected to database "hint" as user "pshannon".
+COPY 212569
+[1] 1585094 hits in 837268 regions
+[1] ---- ENCSR000EJG.hint.bed (chr1) (10/18)
+[1] novel locs: 5116 new/17778 possible (842384 now known, 12662 dups)
+[1] filling 5116 regions, 27504 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 5116
+You are now connected to database "hint" as user "pshannon".
+COPY 27504
+[1] 1612598 hits in 842384 regions
+[1] ---- ENCSR000EJI.hint.bed (chr1) (11/18)
+[1] novel locs: 58368 new/117910 possible (900752 now known, 59542 dups)
+[1] filling 58368 regions, 175523 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 58368
+You are now connected to database "hint" as user "pshannon".
+COPY 175523
+[1] 1788121 hits in 900752 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr1) (12/18)
+[1] novel locs: 45418 new/106570 possible (946170 now known, 61152 dups)
+[1] filling 45418 regions, 158881 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 45418
+You are now connected to database "hint" as user "pshannon".
+COPY 158881
+[1] 1947002 hits in 946170 regions
+[1] ---- ENCSR000EJK.hint.bed (chr1) (13/18)
+[1] novel locs: 59354 new/131169 possible (1005524 now known, 71815 dups)
+[1] filling 59354 regions, 194793 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 59354
+You are now connected to database "hint" as user "pshannon".
+COPY 194793
+[1] 2141795 hits in 1005524 regions
+[1] ---- ENCSR000EJL.hint.bed (chr1) (14/18)
+[1] novel locs: 31507 new/87407 possible (1037031 now known, 55900 dups)
+[1] filling 31507 regions, 130955 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 31507
+You are now connected to database "hint" as user "pshannon".
+COPY 130955
+[1] 2272750 hits in 1037031 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr1) (15/18)
+[1] novel locs: 92965 new/178947 possible (1129996 now known, 85982 dups)
+[1] filling 92965 regions, 259208 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 92965
+You are now connected to database "hint" as user "pshannon".
+COPY 259208
+[1] 2531958 hits in 1129996 regions
+[1] ---- ENCSR000EMR.hint.bed (chr1) (16/18)
+[1] novel locs: 11910 new/56786 possible (1141906 now known, 44876 dups)
+[1] filling 11910 regions, 84615 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 11910
+You are now connected to database "hint" as user "pshannon".
+COPY 84615
+[1] 2616573 hits in 1141906 regions
+[1] ---- ENCSR000EMS.hint.bed (chr1) (17/18)
+[1] novel locs: 49123 new/134880 possible (1191029 now known, 85757 dups)
+[1] filling 49123 regions, 197468 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 49123
+You are now connected to database "hint" as user "pshannon".
+COPY 197468
+[1] 2814041 hits in 1191029 regions
+[1] ---- ENCSR000EMT.hint.bed (chr1) (18/18)
+[1] novel locs: 56988 new/162712 possible (1248017 now known, 105724 dups)
+[1] filling 56988 regions, 236494 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 56988
+You are now connected to database "hint" as user "pshannon".
+COPY 236494
+[1] 3050535 hits in 1248017 regions
+[1] ---- ENCSR000DBY.hint.bed (chr2) (1/18)
+[1] novel locs: 17374 new/17374 possible (17374 now known, 0 dups)
+[1] filling 17374 regions, 25753 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 17374
+You are now connected to database "hint" as user "pshannon".
+COPY 25753
+[1] 3076288 hits in 1265391 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr2) (2/18)
+[1] novel locs: 119218 new/121643 possible (136592 now known, 2425 dups)
+[1] filling 119218 regions, 176324 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 119218
+You are now connected to database "hint" as user "pshannon".
+COPY 176324
+[1] 3252612 hits in 1384609 regions
+[1] ---- ENCSR000DCA.hint.bed (chr2) (3/18)
+[1] novel locs: 74723 new/85312 possible (211315 now known, 10589 dups)
+[1] filling 74723 regions, 123525 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 74723
+You are now connected to database "hint" as user "pshannon".
+COPY 123525
+[1] 3376137 hits in 1459332 regions
+[1] ---- ENCSR000DCB.hint.bed (chr2) (4/18)
+[1] novel locs: 87072 new/105575 possible (298387 now known, 18503 dups)
+[1] filling 87072 regions, 152801 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 87072
+You are now connected to database "hint" as user "pshannon".
+COPY 152801
+[1] 3528938 hits in 1546404 regions
+[1] ---- ENCSR000DCC.hint.bed (chr2) (5/18)
+[1] novel locs: 59419 new/78794 possible (357806 now known, 19375 dups)
+[1] filling 59419 regions, 114343 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 59419
+You are now connected to database "hint" as user "pshannon".
+COPY 114343
+[1] 3643281 hits in 1605823 regions
+[1] ---- ENCSR000EJB.hint.bed (chr2) (6/18)
+[1] novel locs: 89460 new/107795 possible (447266 now known, 18335 dups)
+[1] filling 89460 regions, 159678 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 89460
+You are now connected to database "hint" as user "pshannon".
+COPY 159678
+[1] 3802959 hits in 1695283 regions
+[1] ---- ENCSR000EJD.hint.bed (chr2) (7/18)
+[1] novel locs: 52484 new/79079 possible (499750 now known, 26595 dups)
+[1] filling 52484 regions, 118740 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 52484
+You are now connected to database "hint" as user "pshannon".
+COPY 118740
+[1] 3921699 hits in 1747767 regions
+[1] ---- ENCSR000EJE.hint.bed (chr2) (8/18)
+[1] novel locs: 78248 new/110415 possible (577998 now known, 32167 dups)
+[1] filling 78248 regions, 163863 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 78248
+You are now connected to database "hint" as user "pshannon".
+COPY 163863
+[1] 4085562 hits in 1826015 regions
+[1] ---- ENCSR000EJF.hint.bed (chr2) (9/18)
+[1] novel locs: 65976 new/104714 possible (643974 now known, 38738 dups)
+[1] filling 65976 regions, 153796 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 65976
+You are now connected to database "hint" as user "pshannon".
+COPY 153796
+[1] 4239358 hits in 1891991 regions
+[1] ---- ENCSR000EJG.hint.bed (chr2) (10/18)
+[1] novel locs: 3737 new/12034 possible (647711 now known, 8297 dups)
+[1] filling 3737 regions, 18537 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 3737
+You are now connected to database "hint" as user "pshannon".
+COPY 18537
+[1] 4257895 hits in 1895728 regions
+[1] ---- ENCSR000EJI.hint.bed (chr2) (11/18)
+[1] novel locs: 38918 new/78233 possible (686629 now known, 39315 dups)
+[1] filling 38918 regions, 117776 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 38918
+You are now connected to database "hint" as user "pshannon".
+COPY 117776
+[1] 4375671 hits in 1934646 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr2) (12/18)
+[1] novel locs: 33931 new/74452 possible (720560 now known, 40521 dups)
+[1] filling 33931 regions, 111880 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 33931
+You are now connected to database "hint" as user "pshannon".
+COPY 111880
+[1] 4487551 hits in 1968577 regions
+[1] ---- ENCSR000EJK.hint.bed (chr2) (13/18)
+[1] novel locs: 40279 new/88056 possible (760839 now known, 47777 dups)
+[1] filling 40279 regions, 130183 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 40279
+You are now connected to database "hint" as user "pshannon".
+COPY 130183
+[1] 4617734 hits in 2008856 regions
+[1] ---- ENCSR000EJL.hint.bed (chr2) (14/18)
+[1] novel locs: 22629 new/60150 possible (783468 now known, 37521 dups)
+[1] filling 22629 regions, 90040 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 22629
+You are now connected to database "hint" as user "pshannon".
+COPY 90040
+[1] 4707774 hits in 2031485 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr2) (15/18)
+[1] novel locs: 72028 new/132118 possible (855496 now known, 60090 dups)
+[1] filling 72028 regions, 192373 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 72028
+You are now connected to database "hint" as user "pshannon".
+COPY 192373
+[1] 4900147 hits in 2103513 regions
+[1] ---- ENCSR000EMR.hint.bed (chr2) (16/18)
+[1] novel locs: 8317 new/38363 possible (863813 now known, 30046 dups)
+[1] filling 8317 regions, 57373 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 8317
+You are now connected to database "hint" as user "pshannon".
+COPY 57373
+[1] 4957520 hits in 2111830 regions
+[1] ---- ENCSR000EMS.hint.bed (chr2) (17/18)
+[1] novel locs: 39988 new/100527 possible (903801 now known, 60539 dups)
+[1] filling 39988 regions, 148145 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 39988
+You are now connected to database "hint" as user "pshannon".
+COPY 148145
+[1] 5105665 hits in 2151818 regions
+[1] ---- ENCSR000EMT.hint.bed (chr2) (18/18)
+[1] novel locs: 47121 new/124472 possible (950922 now known, 77351 dups)
+[1] filling 47121 regions, 182905 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 47121
+You are now connected to database "hint" as user "pshannon".
+COPY 182905
+[1] 5288570 hits in 2198939 regions
+[1] ---- ENCSR000DBY.hint.bed (chr3) (1/18)
+[1] novel locs: 13102 new/13102 possible (13102 now known, 0 dups)
+[1] filling 13102 regions, 19936 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 13102
+You are now connected to database "hint" as user "pshannon".
+COPY 19936
+[1] 5308506 hits in 2212041 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr3) (2/18)
+[1] novel locs: 88818 new/90558 possible (101920 now known, 1740 dups)
+[1] filling 88818 regions, 131932 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 88818
+You are now connected to database "hint" as user "pshannon".
+COPY 131932
+[1] 5440438 hits in 2300859 regions
+[1] ---- ENCSR000DCA.hint.bed (chr3) (3/18)
+[1] novel locs: 61013 new/69463 possible (162933 now known, 8450 dups)
+[1] filling 61013 regions, 100583 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 61013
+You are now connected to database "hint" as user "pshannon".
+COPY 100583
+[1] 5541021 hits in 2361872 regions
+[1] ---- ENCSR000DCB.hint.bed (chr3) (4/18)
+[1] novel locs: 75066 new/89680 possible (237999 now known, 14614 dups)
+[1] filling 75066 regions, 129794 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 75066
+You are now connected to database "hint" as user "pshannon".
+COPY 129794
+[1] 5670815 hits in 2436938 regions
+[1] ---- ENCSR000DCC.hint.bed (chr3) (5/18)
+[1] novel locs: 47438 new/62987 possible (285437 now known, 15549 dups)
+[1] filling 47438 regions, 92591 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 47438
+You are now connected to database "hint" as user "pshannon".
+COPY 92591
+[1] 5763406 hits in 2484376 regions
+[1] ---- ENCSR000EJB.hint.bed (chr3) (6/18)
+[1] novel locs: 54406 new/68935 possible (339843 now known, 14529 dups)
+[1] filling 54406 regions, 102328 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 54406
+You are now connected to database "hint" as user "pshannon".
+COPY 102328
+[1] 5865734 hits in 2538782 regions
+[1] ---- ENCSR000EJD.hint.bed (chr3) (7/18)
+[1] novel locs: 37758 new/58882 possible (377601 now known, 21124 dups)
+[1] filling 37758 regions, 88716 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 37758
+You are now connected to database "hint" as user "pshannon".
+COPY 88716
+[1] 5954450 hits in 2576540 regions
+[1] ---- ENCSR000EJE.hint.bed (chr3) (8/18)
+[1] novel locs: 45839 new/69929 possible (423440 now known, 24090 dups)
+[1] filling 45839 regions, 103886 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 45839
+You are now connected to database "hint" as user "pshannon".
+COPY 103886
+[1] 6058336 hits in 2622379 regions
+[1] ---- ENCSR000EJF.hint.bed (chr3) (9/18)
+[1] novel locs: 36948 new/63830 possible (460388 now known, 26882 dups)
+[1] filling 36948 regions, 94577 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 36948
+You are now connected to database "hint" as user "pshannon".
+COPY 94577
+[1] 6152913 hits in 2659327 regions
+[1] ---- ENCSR000EJG.hint.bed (chr3) (10/18)
+[1] novel locs: 2721 new/9074 possible (463109 now known, 6353 dups)
+[1] filling 2721 regions, 14185 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 2721
+You are now connected to database "hint" as user "pshannon".
+COPY 14185
+[1] 6167098 hits in 2662048 regions
+[1] ---- ENCSR000EJI.hint.bed (chr3) (11/18)
+[1] novel locs: 25067 new/54208 possible (488176 now known, 29141 dups)
+[1] filling 25067 regions, 81166 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 25067
+You are now connected to database "hint" as user "pshannon".
+COPY 81166
+[1] 6248264 hits in 2687115 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr3) (12/18)
+[1] novel locs: 20478 new/49690 possible (508654 now known, 29212 dups)
+[1] filling 20478 regions, 75003 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 20478
+You are now connected to database "hint" as user "pshannon".
+COPY 75003
+[1] 6323267 hits in 2707593 regions
+[1] ---- ENCSR000EJK.hint.bed (chr3) (13/18)
+[1] novel locs: 27233 new/62545 possible (535887 now known, 35312 dups)
+[1] filling 27233 regions, 93683 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 27233
+You are now connected to database "hint" as user "pshannon".
+COPY 93683
+[1] 6416950 hits in 2734826 regions
+[1] ---- ENCSR000EJL.hint.bed (chr3) (14/18)
+[1] novel locs: 14446 new/40811 possible (550333 now known, 26365 dups)
+[1] filling 14446 regions, 62189 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 14446
+You are now connected to database "hint" as user "pshannon".
+COPY 62189
+[1] 6479139 hits in 2749272 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr3) (15/18)
+[1] novel locs: 48082 new/92242 possible (598415 now known, 44160 dups)
+[1] filling 48082 regions, 134434 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 48082
+You are now connected to database "hint" as user "pshannon".
+COPY 134434
+[1] 6613573 hits in 2797354 regions
+[1] ---- ENCSR000EMR.hint.bed (chr3) (16/18)
+[1] novel locs: 6235 new/29957 possible (604650 now known, 23722 dups)
+[1] filling 6235 regions, 45488 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 6235
+You are now connected to database "hint" as user "pshannon".
+COPY 45488
+[1] 6659061 hits in 2803589 regions
+[1] ---- ENCSR000EMS.hint.bed (chr3) (17/18)
+[1] novel locs: 32824 new/79920 possible (637474 now known, 47096 dups)
+[1] filling 32824 regions, 117245 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 32824
+You are now connected to database "hint" as user "pshannon".
+COPY 117245
+[1] 6776306 hits in 2836413 regions
+[1] ---- ENCSR000EMT.hint.bed (chr3) (18/18)
+[1] novel locs: 35108 new/93488 possible (672582 now known, 58380 dups)
+[1] filling 35108 regions, 136400 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 35108
+You are now connected to database "hint" as user "pshannon".
+COPY 136400
+[1] 6912706 hits in 2871521 regions
+[1] ---- ENCSR000DBY.hint.bed (chr4) (1/18)
+[1] novel locs: 8556 new/8556 possible (8556 now known, 0 dups)
+[1] filling 8556 regions, 12476 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 8556
+You are now connected to database "hint" as user "pshannon".
+COPY 12476
+[1] 6925182 hits in 2880077 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr4) (2/18)
+[1] novel locs: 55389 new/56492 possible (63945 now known, 1103 dups)
+[1] filling 55389 regions, 82103 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 55389
+You are now connected to database "hint" as user "pshannon".
+COPY 82103
+[1] 7007285 hits in 2935466 regions
+[1] ---- ENCSR000DCA.hint.bed (chr4) (3/18)
+[1] novel locs: 31954 new/36473 possible (95899 now known, 4519 dups)
+[1] filling 31954 regions, 53810 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 31954
+You are now connected to database "hint" as user "pshannon".
+COPY 53810
+[1] 7061095 hits in 2967420 regions
+[1] ---- ENCSR000DCB.hint.bed (chr4) (4/18)
+[1] novel locs: 49446 new/58478 possible (145345 now known, 9032 dups)
+[1] filling 49446 regions, 84223 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 49446
+You are now connected to database "hint" as user "pshannon".
+COPY 84223
+[1] 7145318 hits in 3016866 regions
+[1] ---- ENCSR000DCC.hint.bed (chr4) (5/18)
+[1] novel locs: 32438 new/42050 possible (177783 now known, 9612 dups)
+[1] filling 32438 regions, 61649 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 32438
+You are now connected to database "hint" as user "pshannon".
+COPY 61649
+[1] 7206967 hits in 3049304 regions
+[1] ---- ENCSR000EJB.hint.bed (chr4) (6/18)
+[1] novel locs: 32709 new/40970 possible (210492 now known, 8261 dups)
+[1] filling 32709 regions, 60408 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 32709
+You are now connected to database "hint" as user "pshannon".
+COPY 60408
+[1] 7267375 hits in 3082013 regions
+[1] ---- ENCSR000EJD.hint.bed (chr4) (7/18)
+[1] novel locs: 23033 new/35596 possible (233525 now known, 12563 dups)
+[1] filling 23033 regions, 52788 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 23033
+You are now connected to database "hint" as user "pshannon".
+COPY 52788
+[1] 7320163 hits in 3105046 regions
+[1] ---- ENCSR000EJE.hint.bed (chr4) (8/18)
+[1] novel locs: 32744 new/46939 possible (266269 now known, 14195 dups)
+[1] filling 32744 regions, 69361 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 32744
+You are now connected to database "hint" as user "pshannon".
+COPY 69361
+[1] 7389524 hits in 3137790 regions
+[1] ---- ENCSR000EJF.hint.bed (chr4) (9/18)
+[1] novel locs: 28580 new/45510 possible (294849 now known, 16930 dups)
+[1] filling 28580 regions, 66751 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 28580
+You are now connected to database "hint" as user "pshannon".
+COPY 66751
+[1] 7456275 hits in 3166370 regions
+[1] ---- ENCSR000EJG.hint.bed (chr4) (10/18)
+[1] novel locs: 1881 new/5797 possible (296730 now known, 3916 dups)
+[1] filling 1881 regions, 9017 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 1881
+You are now connected to database "hint" as user "pshannon".
+COPY 9017
+[1] 7465292 hits in 3168251 regions
+[1] ---- ENCSR000EJI.hint.bed (chr4) (11/18)
+[1] novel locs: 17337 new/34881 possible (314067 now known, 17544 dups)
+[1] filling 17337 regions, 52166 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 17337
+You are now connected to database "hint" as user "pshannon".
+COPY 52166
+[1] 7517458 hits in 3185588 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr4) (12/18)
+[1] novel locs: 14639 new/33291 possible (328706 now known, 18652 dups)
+[1] filling 14639 regions, 49476 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 14639
+You are now connected to database "hint" as user "pshannon".
+COPY 49476
+[1] 7566934 hits in 3200227 regions
+[1] ---- ENCSR000EJK.hint.bed (chr4) (13/18)
+[1] novel locs: 20001 new/42988 possible (348707 now known, 22987 dups)
+[1] filling 20001 regions, 63280 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 20001
+You are now connected to database "hint" as user "pshannon".
+COPY 63280
+[1] 7630214 hits in 3220228 regions
+[1] ---- ENCSR000EJL.hint.bed (chr4) (14/18)
+[1] novel locs: 9825 new/26750 possible (358532 now known, 16925 dups)
+[1] filling 9825 regions, 39647 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 9825
+You are now connected to database "hint" as user "pshannon".
+COPY 39647
+[1] 7669861 hits in 3230053 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr4) (15/18)
+[1] novel locs: 40617 new/69760 possible (399149 now known, 29143 dups)
+[1] filling 40617 regions, 101326 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 40617
+You are now connected to database "hint" as user "pshannon".
+COPY 101326
+[1] 7771187 hits in 3270670 regions
+[1] ---- ENCSR000EMR.hint.bed (chr4) (16/18)
+[1] novel locs: 4475 new/20015 possible (403624 now known, 15540 dups)
+[1] filling 4475 regions, 29904 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 4475
+You are now connected to database "hint" as user "pshannon".
+COPY 29904
+[1] 7801091 hits in 3275145 regions
+[1] ---- ENCSR000EMS.hint.bed (chr4) (17/18)
+[1] novel locs: 24437 new/54158 possible (428061 now known, 29721 dups)
+[1] filling 24437 regions, 79186 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 24437
+You are now connected to database "hint" as user "pshannon".
+COPY 79186
+[1] 7880277 hits in 3299582 regions
+[1] ---- ENCSR000EMT.hint.bed (chr4) (18/18)
+[1] novel locs: 25761 new/63995 possible (453822 now known, 38234 dups)
+[1] filling 25761 regions, 93037 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 25761
+You are now connected to database "hint" as user "pshannon".
+COPY 93037
+[1] 7973314 hits in 3325343 regions
+[1] ---- ENCSR000DBY.hint.bed (chr5) (1/18)
+[1] novel locs: 12127 new/12127 possible (12127 now known, 0 dups)
+[1] filling 12127 regions, 18227 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 12127
+You are now connected to database "hint" as user "pshannon".
+COPY 18227
+[1] 7991541 hits in 3337470 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr5) (2/18)
+[1] novel locs: 74630 new/76067 possible (86757 now known, 1437 dups)
+[1] filling 74630 regions, 110551 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 74630
+You are now connected to database "hint" as user "pshannon".
+COPY 110551
+[1] 8102092 hits in 3412100 regions
+[1] ---- ENCSR000DCA.hint.bed (chr5) (3/18)
+[1] novel locs: 52256 new/59023 possible (139013 now known, 6767 dups)
+[1] filling 52256 regions, 85943 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 52256
+You are now connected to database "hint" as user "pshannon".
+COPY 85943
+[1] 8188035 hits in 3464356 regions
+[1] ---- ENCSR000DCB.hint.bed (chr5) (4/18)
+[1] novel locs: 62588 new/75243 possible (201601 now known, 12655 dups)
+[1] filling 62588 regions, 109161 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 62588
+You are now connected to database "hint" as user "pshannon".
+COPY 109161
+[1] 8297196 hits in 3526944 regions
+[1] ---- ENCSR000DCC.hint.bed (chr5) (5/18)
+[1] novel locs: 41977 new/55157 possible (243578 now known, 13180 dups)
+[1] filling 41977 regions, 79902 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 41977
+You are now connected to database "hint" as user "pshannon".
+COPY 79902
+[1] 8377098 hits in 3568921 regions
+[1] ---- ENCSR000EJB.hint.bed (chr5) (6/18)
+[1] novel locs: 48175 new/60223 possible (291753 now known, 12048 dups)
+[1] filling 48175 regions, 89251 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 48175
+You are now connected to database "hint" as user "pshannon".
+COPY 89251
+[1] 8466349 hits in 3617096 regions
+[1] ---- ENCSR000EJD.hint.bed (chr5) (7/18)
+[1] novel locs: 33180 new/50472 possible (324933 now known, 17292 dups)
+[1] filling 33180 regions, 76124 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 33180
+You are now connected to database "hint" as user "pshannon".
+COPY 76124
+[1] 8542473 hits in 3650276 regions
+[1] ---- ENCSR000EJE.hint.bed (chr5) (8/18)
+[1] novel locs: 42045 new/62639 possible (366978 now known, 20594 dups)
+[1] filling 42045 regions, 92329 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 42045
+You are now connected to database "hint" as user "pshannon".
+COPY 92329
+[1] 8634802 hits in 3692321 regions
+[1] ---- ENCSR000EJF.hint.bed (chr5) (9/18)
+[1] novel locs: 35482 new/59128 possible (402460 now known, 23646 dups)
+[1] filling 35482 regions, 87891 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 35482
+You are now connected to database "hint" as user "pshannon".
+COPY 87891
+[1] 8722693 hits in 3727803 regions
+[1] ---- ENCSR000EJG.hint.bed (chr5) (10/18)
+[1] novel locs: 2259 new/7572 possible (404719 now known, 5313 dups)
+[1] filling 2259 regions, 11861 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 2259
+You are now connected to database "hint" as user "pshannon".
+COPY 11861
+[1] 8734554 hits in 3730062 regions
+[1] ---- ENCSR000EJI.hint.bed (chr5) (11/18)
+[1] novel locs: 23517 new/48871 possible (428236 now known, 25354 dups)
+[1] filling 23517 regions, 73508 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 23517
+You are now connected to database "hint" as user "pshannon".
+COPY 73508
+[1] 8808062 hits in 3753579 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr5) (12/18)
+[1] novel locs: 17954 new/43589 possible (446190 now known, 25635 dups)
+[1] filling 17954 regions, 65862 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 17954
+You are now connected to database "hint" as user "pshannon".
+COPY 65862
+[1] 8873924 hits in 3771533 regions
+[1] ---- ENCSR000EJK.hint.bed (chr5) (13/18)
+[1] novel locs: 24637 new/54548 possible (470827 now known, 29911 dups)
+[1] filling 24637 regions, 80737 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 24637
+You are now connected to database "hint" as user "pshannon".
+COPY 80737
+[1] 8954661 hits in 3796170 regions
+[1] ---- ENCSR000EJL.hint.bed (chr5) (14/18)
+[1] novel locs: 13009 new/36110 possible (483836 now known, 23101 dups)
+[1] filling 13009 regions, 53819 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 13009
+You are now connected to database "hint" as user "pshannon".
+COPY 53819
+[1] 9008480 hits in 3809179 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr5) (15/18)
+[1] novel locs: 43328 new/80626 possible (527164 now known, 37298 dups)
+[1] filling 43328 regions, 117233 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 43328
+You are now connected to database "hint" as user "pshannon".
+COPY 117233
+[1] 9125713 hits in 3852507 regions
+[1] ---- ENCSR000EMR.hint.bed (chr5) (16/18)
+[1] novel locs: 5457 new/25404 possible (532621 now known, 19947 dups)
+[1] filling 5457 regions, 38322 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 5457
+You are now connected to database "hint" as user "pshannon".
+COPY 38322
+[1] 9164035 hits in 3857964 regions
+[1] ---- ENCSR000EMS.hint.bed (chr5) (17/18)
+[1] novel locs: 28075 new/67393 possible (560696 now known, 39318 dups)
+[1] filling 28075 regions, 98765 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 28075
+You are now connected to database "hint" as user "pshannon".
+COPY 98765
+[1] 9262800 hits in 3886039 regions
+[1] ---- ENCSR000EMT.hint.bed (chr5) (18/18)
+[1] novel locs: 32048 new/82624 possible (592744 now known, 50576 dups)
+[1] filling 32048 regions, 120874 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 32048
+You are now connected to database "hint" as user "pshannon".
+COPY 120874
+[1] 9383674 hits in 3918087 regions
+[1] ---- ENCSR000DBY.hint.bed (chr6) (1/18)
+[1] novel locs: 13569 new/13569 possible (13569 now known, 0 dups)
+[1] filling 13569 regions, 20299 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 13569
+You are now connected to database "hint" as user "pshannon".
+COPY 20299
+[1] 9403973 hits in 3931656 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr6) (2/18)
+[1] novel locs: 90904 new/92599 possible (104473 now known, 1695 dups)
+[1] filling 90904 regions, 134323 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 90904
+You are now connected to database "hint" as user "pshannon".
+COPY 134323
+[1] 9538296 hits in 4022560 regions
+[1] ---- ENCSR000DCA.hint.bed (chr6) (3/18)
+[1] novel locs: 58318 new/66497 possible (162791 now known, 8179 dups)
+[1] filling 58318 regions, 96530 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 58318
+You are now connected to database "hint" as user "pshannon".
+COPY 96530
+[1] 9634826 hits in 4080878 regions
+[1] ---- ENCSR000DCB.hint.bed (chr6) (4/18)
+[1] novel locs: 75607 new/90728 possible (238398 now known, 15121 dups)
+[1] filling 75607 regions, 130174 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 75607
+You are now connected to database "hint" as user "pshannon".
+COPY 130174
+[1] 9765000 hits in 4156485 regions
+[1] ---- ENCSR000DCC.hint.bed (chr6) (5/18)
+[1] novel locs: 52479 new/69039 possible (290877 now known, 16560 dups)
+[1] filling 52479 regions, 99642 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 52479
+You are now connected to database "hint" as user "pshannon".
+COPY 99642
+[1] 9864642 hits in 4208964 regions
+[1] ---- ENCSR000EJB.hint.bed (chr6) (6/18)
+[1] novel locs: 52943 new/68294 possible (343820 now known, 15351 dups)
+[1] filling 52943 regions, 101398 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 52943
+You are now connected to database "hint" as user "pshannon".
+COPY 101398
+[1] 9966040 hits in 4261907 regions
+[1] ---- ENCSR000EJD.hint.bed (chr6) (7/18)
+[1] novel locs: 34462 new/55353 possible (378282 now known, 20891 dups)
+[1] filling 34462 regions, 83535 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 34462
+You are now connected to database "hint" as user "pshannon".
+COPY 83535
+[1] 10049575 hits in 4296369 regions
+[1] ---- ENCSR000EJE.hint.bed (chr6) (8/18)
+[1] novel locs: 45002 new/69434 possible (423284 now known, 24432 dups)
+[1] filling 45002 regions, 102827 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 45002
+You are now connected to database "hint" as user "pshannon".
+COPY 102827
+[1] 10152402 hits in 4341371 regions
+[1] ---- ENCSR000EJF.hint.bed (chr6) (9/18)
+[1] novel locs: 35174 new/62062 possible (458458 now known, 26888 dups)
+[1] filling 35174 regions, 92123 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 35174
+You are now connected to database "hint" as user "pshannon".
+COPY 92123
+[1] 10244525 hits in 4376545 regions
+[1] ---- ENCSR000EJG.hint.bed (chr6) (10/18)
+[1] novel locs: 2584 new/8646 possible (461042 now known, 6062 dups)
+[1] filling 2584 regions, 13340 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 2584
+You are now connected to database "hint" as user "pshannon".
+COPY 13340
+[1] 10257865 hits in 4379129 regions
+[1] ---- ENCSR000EJI.hint.bed (chr6) (11/18)
+[1] novel locs: 25163 new/55037 possible (486205 now known, 29874 dups)
+[1] filling 25163 regions, 82571 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 25163
+You are now connected to database "hint" as user "pshannon".
+COPY 82571
+[1] 10340436 hits in 4404292 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr6) (12/18)
+[1] novel locs: 20327 new/51109 possible (506532 now known, 30782 dups)
+[1] filling 20327 regions, 76313 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 20327
+You are now connected to database "hint" as user "pshannon".
+COPY 76313
+[1] 10416749 hits in 4424619 regions
+[1] ---- ENCSR000EJK.hint.bed (chr6) (13/18)
+[1] novel locs: 23798 new/58740 possible (530330 now known, 34942 dups)
+[1] filling 23798 regions, 88067 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 23798
+You are now connected to database "hint" as user "pshannon".
+COPY 88067
+[1] 10504816 hits in 4448417 regions
+[1] ---- ENCSR000EJL.hint.bed (chr6) (14/18)
+[1] novel locs: 13833 new/41201 possible (544163 now known, 27368 dups)
+[1] filling 13833 regions, 61778 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 13833
+You are now connected to database "hint" as user "pshannon".
+COPY 61778
+[1] 10566594 hits in 4462250 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr6) (15/18)
+[1] novel locs: 45092 new/89815 possible (589255 now known, 44723 dups)
+[1] filling 45092 regions, 130620 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 45092
+You are now connected to database "hint" as user "pshannon".
+COPY 130620
+[1] 10697214 hits in 4507342 regions
+[1] ---- ENCSR000EMR.hint.bed (chr6) (16/18)
+[1] novel locs: 6839 new/32848 possible (596094 now known, 26009 dups)
+[1] filling 6839 regions, 49216 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 6839
+You are now connected to database "hint" as user "pshannon".
+COPY 49216
+[1] 10746430 hits in 4514181 regions
+[1] ---- ENCSR000EMS.hint.bed (chr6) (17/18)
+[1] novel locs: 29437 new/77341 possible (625531 now known, 47904 dups)
+[1] filling 29437 regions, 114636 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 29437
+You are now connected to database "hint" as user "pshannon".
+COPY 114636
+[1] 10861066 hits in 4543618 regions
+[1] ---- ENCSR000EMT.hint.bed (chr6) (18/18)
+[1] novel locs: 32421 new/91965 possible (657952 now known, 59544 dups)
+[1] filling 32421 regions, 135003 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 32421
+You are now connected to database "hint" as user "pshannon".
+COPY 135003
+[1] 10996069 hits in 4576039 regions
+[1] ---- ENCSR000DBY.hint.bed (chr7) (1/18)
+[1] novel locs: 11896 new/11896 possible (11896 now known, 0 dups)
+[1] filling 11896 regions, 17551 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 11896
+You are now connected to database "hint" as user "pshannon".
+COPY 17551
+[1] 11013620 hits in 4587935 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr7) (2/18)
+[1] novel locs: 79835 new/81519 possible (91731 now known, 1684 dups)
+[1] filling 79835 regions, 118745 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 79835
+You are now connected to database "hint" as user "pshannon".
+COPY 118745
+[1] 11132365 hits in 4667770 regions
+[1] ---- ENCSR000DCA.hint.bed (chr7) (3/18)
+[1] novel locs: 48578 new/56177 possible (140309 now known, 7599 dups)
+[1] filling 48578 regions, 81939 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 48578
+You are now connected to database "hint" as user "pshannon".
+COPY 81939
+[1] 11214304 hits in 4716348 regions
+[1] ---- ENCSR000DCB.hint.bed (chr7) (4/18)
+[1] novel locs: 58234 new/71084 possible (198543 now known, 12850 dups)
+[1] filling 58234 regions, 102680 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 58234
+You are now connected to database "hint" as user "pshannon".
+COPY 102680
+[1] 11316984 hits in 4774582 regions
+[1] ---- ENCSR000DCC.hint.bed (chr7) (5/18)
+[1] novel locs: 36207 new/48751 possible (234750 now known, 12544 dups)
+[1] filling 36207 regions, 71218 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 36207
+You are now connected to database "hint" as user "pshannon".
+COPY 71218
+[1] 11388202 hits in 4810789 regions
+[1] ---- ENCSR000EJB.hint.bed (chr7) (6/18)
+[1] novel locs: 59266 new/72396 possible (294016 now known, 13130 dups)
+[1] filling 59266 regions, 108317 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 59266
+You are now connected to database "hint" as user "pshannon".
+COPY 108317
+[1] 11496519 hits in 4870055 regions
+[1] ---- ENCSR000EJD.hint.bed (chr7) (7/18)
+[1] novel locs: 37466 new/56163 possible (331482 now known, 18697 dups)
+[1] filling 37466 regions, 84394 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 37466
+You are now connected to database "hint" as user "pshannon".
+COPY 84394
+[1] 11580913 hits in 4907521 regions
+[1] ---- ENCSR000EJE.hint.bed (chr7) (8/18)
+[1] novel locs: 55565 new/78946 possible (387047 now known, 23381 dups)
+[1] filling 55565 regions, 116968 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 55565
+You are now connected to database "hint" as user "pshannon".
+COPY 116968
+[1] 11697881 hits in 4963086 regions
+[1] ---- ENCSR000EJF.hint.bed (chr7) (9/18)
+[1] novel locs: 43863 new/70463 possible (430910 now known, 26600 dups)
+[1] filling 43863 regions, 104073 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 43863
+You are now connected to database "hint" as user "pshannon".
+COPY 104073
+[1] 11801954 hits in 5006949 regions
+[1] ---- ENCSR000EJG.hint.bed (chr7) (10/18)
+[1] novel locs: 2735 new/8936 possible (433645 now known, 6201 dups)
+[1] filling 2735 regions, 13956 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 2735
+You are now connected to database "hint" as user "pshannon".
+COPY 13956
+[1] 11815910 hits in 5009684 regions
+[1] ---- ENCSR000EJI.hint.bed (chr7) (11/18)
+[1] novel locs: 32330 new/61163 possible (465975 now known, 28833 dups)
+[1] filling 32330 regions, 90905 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 32330
+You are now connected to database "hint" as user "pshannon".
+COPY 90905
+[1] 11906815 hits in 5042014 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr7) (12/18)
+[1] novel locs: 24413 new/53196 possible (490388 now known, 28783 dups)
+[1] filling 24413 regions, 79575 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 24413
+You are now connected to database "hint" as user "pshannon".
+COPY 79575
+[1] 11986390 hits in 5066427 regions
+[1] ---- ENCSR000EJK.hint.bed (chr7) (13/18)
+[1] novel locs: 38365 new/75825 possible (528753 now known, 37460 dups)
+[1] filling 38365 regions, 112105 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 38365
+You are now connected to database "hint" as user "pshannon".
+COPY 112105
+[1] 12098495 hits in 5104792 regions
+[1] ---- ENCSR000EJL.hint.bed (chr7) (14/18)
+[1] novel locs: 16424 new/43609 possible (545177 now known, 27185 dups)
+[1] filling 16424 regions, 65319 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 16424
+You are now connected to database "hint" as user "pshannon".
+COPY 65319
+[1] 12163814 hits in 5121216 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr7) (15/18)
+[1] novel locs: 62249 new/107239 possible (607426 now known, 44990 dups)
+[1] filling 62249 regions, 155819 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 62249
+You are now connected to database "hint" as user "pshannon".
+COPY 155819
+[1] 12319633 hits in 5183465 regions
+[1] ---- ENCSR000EMR.hint.bed (chr7) (16/18)
+[1] novel locs: 5457 new/26826 possible (612883 now known, 21369 dups)
+[1] filling 5457 regions, 40380 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 5457
+You are now connected to database "hint" as user "pshannon".
+COPY 40380
+[1] 12360013 hits in 5188922 regions
+[1] ---- ENCSR000EMS.hint.bed (chr7) (17/18)
+[1] novel locs: 29514 new/72296 possible (642397 now known, 42782 dups)
+[1] filling 29514 regions, 106502 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 29514
+You are now connected to database "hint" as user "pshannon".
+COPY 106502
+[1] 12466515 hits in 5218436 regions
+[1] ---- ENCSR000EMT.hint.bed (chr7) (18/18)
+[1] novel locs: 34060 new/88492 possible (676457 now known, 54432 dups)
+[1] filling 34060 regions, 130038 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 34060
+You are now connected to database "hint" as user "pshannon".
+COPY 130038
+[1] 12596553 hits in 5252496 regions
+[1] ---- ENCSR000DBY.hint.bed (chr8) (1/18)
+[1] novel locs: 9714 new/9714 possible (9714 now known, 0 dups)
+[1] filling 9714 regions, 14467 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 9714
+You are now connected to database "hint" as user "pshannon".
+COPY 14467
+[1] 12611020 hits in 5262210 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr8) (2/18)
+[1] novel locs: 61201 new/62433 possible (70915 now known, 1232 dups)
+[1] filling 61201 regions, 90679 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 61201
+You are now connected to database "hint" as user "pshannon".
+COPY 90679
+[1] 12701699 hits in 5323411 regions
+[1] ---- ENCSR000DCA.hint.bed (chr8) (3/18)
+[1] novel locs: 40831 new/46410 possible (111746 now known, 5579 dups)
+[1] filling 40831 regions, 67821 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 40831
+You are now connected to database "hint" as user "pshannon".
+COPY 67821
+[1] 12769520 hits in 5364242 regions
+[1] ---- ENCSR000DCB.hint.bed (chr8) (4/18)
+[1] novel locs: 47955 new/58300 possible (159701 now known, 10345 dups)
+[1] filling 47955 regions, 84761 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 47955
+You are now connected to database "hint" as user "pshannon".
+COPY 84761
+[1] 12854281 hits in 5412197 regions
+[1] ---- ENCSR000DCC.hint.bed (chr8) (5/18)
+[1] novel locs: 32085 new/42743 possible (191786 now known, 10658 dups)
+[1] filling 32085 regions, 62683 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 32085
+You are now connected to database "hint" as user "pshannon".
+COPY 62683
+[1] 12916964 hits in 5444282 regions
+[1] ---- ENCSR000EJB.hint.bed (chr8) (6/18)
+[1] novel locs: 46355 new/56356 possible (238141 now known, 10001 dups)
+[1] filling 46355 regions, 83960 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 46355
+You are now connected to database "hint" as user "pshannon".
+COPY 83960
+[1] 13000924 hits in 5490637 regions
+[1] ---- ENCSR000EJD.hint.bed (chr8) (7/18)
+[1] novel locs: 29076 new/43390 possible (267217 now known, 14314 dups)
+[1] filling 29076 regions, 65203 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 29076
+You are now connected to database "hint" as user "pshannon".
+COPY 65203
+[1] 13066127 hits in 5519713 regions
+[1] ---- ENCSR000EJE.hint.bed (chr8) (8/18)
+[1] novel locs: 35580 new/53497 possible (302797 now known, 17917 dups)
+[1] filling 35580 regions, 79250 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 35580
+You are now connected to database "hint" as user "pshannon".
+COPY 79250
+[1] 13145377 hits in 5555293 regions
+[1] ---- ENCSR000EJF.hint.bed (chr8) (9/18)
+[1] novel locs: 30366 new/50467 possible (333163 now known, 20101 dups)
+[1] filling 30366 regions, 75619 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 30366
+You are now connected to database "hint" as user "pshannon".
+COPY 75619
+[1] 13220996 hits in 5585659 regions
+[1] ---- ENCSR000EJG.hint.bed (chr8) (10/18)
+[1] novel locs: 1979 new/6465 possible (335142 now known, 4486 dups)
+[1] filling 1979 regions, 9893 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 1979
+You are now connected to database "hint" as user "pshannon".
+COPY 9893
+[1] 13230889 hits in 5587638 regions
+[1] ---- ENCSR000EJI.hint.bed (chr8) (11/18)
+[1] novel locs: 20097 new/41431 possible (355239 now known, 21334 dups)
+[1] filling 20097 regions, 62139 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 20097
+You are now connected to database "hint" as user "pshannon".
+COPY 62139
+[1] 13293028 hits in 5607735 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr8) (12/18)
+[1] novel locs: 17281 new/39480 possible (372520 now known, 22199 dups)
+[1] filling 17281 regions, 59438 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 17281
+You are now connected to database "hint" as user "pshannon".
+COPY 59438
+[1] 13352466 hits in 5625016 regions
+[1] ---- ENCSR000EJK.hint.bed (chr8) (13/18)
+[1] novel locs: 25139 new/51489 possible (397659 now known, 26350 dups)
+[1] filling 25139 regions, 76525 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 25139
+You are now connected to database "hint" as user "pshannon".
+COPY 76525
+[1] 13428991 hits in 5650155 regions
+[1] ---- ENCSR000EJL.hint.bed (chr8) (14/18)
+[1] novel locs: 11877 new/32200 possible (409536 now known, 20323 dups)
+[1] filling 11877 regions, 48730 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 11877
+You are now connected to database "hint" as user "pshannon".
+COPY 48730
+[1] 13477721 hits in 5662032 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr8) (15/18)
+[1] novel locs: 44055 new/76763 possible (453591 now known, 32708 dups)
+[1] filling 44055 regions, 111911 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 44055
+You are now connected to database "hint" as user "pshannon".
+COPY 111911
+[1] 13589632 hits in 5706087 regions
+[1] ---- ENCSR000EMR.hint.bed (chr8) (16/18)
+[1] novel locs: 5002 new/22755 possible (458593 now known, 17753 dups)
+[1] filling 5002 regions, 34087 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 5002
+You are now connected to database "hint" as user "pshannon".
+COPY 34087
+[1] 13623719 hits in 5711089 regions
+[1] ---- ENCSR000EMS.hint.bed (chr8) (17/18)
+[1] novel locs: 22598 new/56771 possible (481191 now known, 34173 dups)
+[1] filling 22598 regions, 83673 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 22598
+You are now connected to database "hint" as user "pshannon".
+COPY 83673
+[1] 13707392 hits in 5733687 regions
+[1] ---- ENCSR000EMT.hint.bed (chr8) (18/18)
+[1] novel locs: 27512 new/70606 possible (508703 now known, 43094 dups)
+[1] filling 27512 regions, 102745 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 27512
+You are now connected to database "hint" as user "pshannon".
+COPY 102745
+[1] 13810137 hits in 5761199 regions
+[1] ---- ENCSR000DBY.hint.bed (chr9) (1/18)
+[1] novel locs: 11423 new/11423 possible (11423 now known, 0 dups)
+[1] filling 11423 regions, 16964 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 11423
+You are now connected to database "hint" as user "pshannon".
+COPY 16964
+[1] 13827101 hits in 5772622 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr9) (2/18)
+[1] novel locs: 67485 new/68798 possible (78908 now known, 1313 dups)
+[1] filling 67485 regions, 98815 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 67485
+You are now connected to database "hint" as user "pshannon".
+COPY 98815
+[1] 13925916 hits in 5840107 regions
+[1] ---- ENCSR000DCA.hint.bed (chr9) (3/18)
+[1] novel locs: 44236 new/50931 possible (123144 now known, 6695 dups)
+[1] filling 44236 regions, 73772 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 44236
+You are now connected to database "hint" as user "pshannon".
+COPY 73772
+[1] 13999688 hits in 5884343 regions
+[1] ---- ENCSR000DCB.hint.bed (chr9) (4/18)
+[1] novel locs: 49420 new/60438 possible (172564 now known, 11018 dups)
+[1] filling 49420 regions, 86890 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 49420
+You are now connected to database "hint" as user "pshannon".
+COPY 86890
+[1] 14086578 hits in 5933763 regions
+[1] ---- ENCSR000DCC.hint.bed (chr9) (5/18)
+[1] novel locs: 31356 new/42475 possible (203920 now known, 11119 dups)
+[1] filling 31356 regions, 61312 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 31356
+You are now connected to database "hint" as user "pshannon".
+COPY 61312
+[1] 14147890 hits in 5965119 regions
+[1] ---- ENCSR000EJB.hint.bed (chr9) (6/18)
+[1] novel locs: 51895 new/62758 possible (255815 now known, 10863 dups)
+[1] filling 51895 regions, 92885 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 51895
+You are now connected to database "hint" as user "pshannon".
+COPY 92885
+[1] 14240775 hits in 6017014 regions
+[1] ---- ENCSR000EJD.hint.bed (chr9) (7/18)
+[1] novel locs: 35317 new/51911 possible (291132 now known, 16594 dups)
+[1] filling 35317 regions, 77893 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 35317
+You are now connected to database "hint" as user "pshannon".
+COPY 77893
+[1] 14318668 hits in 6052331 regions
+[1] ---- ENCSR000EJE.hint.bed (chr9) (8/18)
+[1] novel locs: 57100 new/78646 possible (348232 now known, 21546 dups)
+[1] filling 57100 regions, 115918 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 57100
+You are now connected to database "hint" as user "pshannon".
+COPY 115918
+[1] 14434586 hits in 6109431 regions
+[1] ---- ENCSR000EJF.hint.bed (chr9) (9/18)
+[1] novel locs: 45684 new/71546 possible (393916 now known, 25862 dups)
+[1] filling 45684 regions, 106043 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 45684
+You are now connected to database "hint" as user "pshannon".
+COPY 106043
+[1] 14540629 hits in 6155115 regions
+[1] ---- ENCSR000EJG.hint.bed (chr9) (10/18)
+[1] novel locs: 2249 new/7886 possible (396165 now known, 5637 dups)
+[1] filling 2249 regions, 12342 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 2249
+You are now connected to database "hint" as user "pshannon".
+COPY 12342
+[1] 14552971 hits in 6157364 regions
+[1] ---- ENCSR000EJI.hint.bed (chr9) (11/18)
+[1] novel locs: 31396 new/57860 possible (427561 now known, 26464 dups)
+[1] filling 31396 regions, 85580 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 31396
+You are now connected to database "hint" as user "pshannon".
+COPY 85580
+[1] 14638551 hits in 6188760 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr9) (12/18)
+[1] novel locs: 22464 new/49207 possible (450025 now known, 26743 dups)
+[1] filling 22464 regions, 73359 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 22464
+You are now connected to database "hint" as user "pshannon".
+COPY 73359
+[1] 14711910 hits in 6211224 regions
+[1] ---- ENCSR000EJK.hint.bed (chr9) (13/18)
+[1] novel locs: 29880 new/61842 possible (479905 now known, 31962 dups)
+[1] filling 29880 regions, 92160 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 29880
+You are now connected to database "hint" as user "pshannon".
+COPY 92160
+[1] 14804070 hits in 6241104 regions
+[1] ---- ENCSR000EJL.hint.bed (chr9) (14/18)
+[1] novel locs: 15444 new/39985 possible (495349 now known, 24541 dups)
+[1] filling 15444 regions, 60433 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 15444
+You are now connected to database "hint" as user "pshannon".
+COPY 60433
+[1] 14864503 hits in 6256548 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr9) (15/18)
+[1] novel locs: 53042 new/91655 possible (548391 now known, 38613 dups)
+[1] filling 53042 regions, 132992 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 53042
+You are now connected to database "hint" as user "pshannon".
+COPY 132992
+[1] 14997495 hits in 6309590 regions
+[1] ---- ENCSR000EMR.hint.bed (chr9) (16/18)
+[1] novel locs: 4906 new/23296 possible (553297 now known, 18390 dups)
+[1] filling 4906 regions, 35034 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 4906
+You are now connected to database "hint" as user "pshannon".
+COPY 35034
+[1] 15032529 hits in 6314496 regions
+[1] ---- ENCSR000EMS.hint.bed (chr9) (17/18)
+[1] novel locs: 23568 new/60932 possible (576865 now known, 37364 dups)
+[1] filling 23568 regions, 89452 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 23568
+You are now connected to database "hint" as user "pshannon".
+COPY 89452
+[1] 15121981 hits in 6338064 regions
+[1] ---- ENCSR000EMT.hint.bed (chr9) (18/18)
+[1] novel locs: 29274 new/76728 possible (606139 now known, 47454 dups)
+[1] filling 29274 regions, 112291 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 29274
+You are now connected to database "hint" as user "pshannon".
+COPY 112291
+[1] 15234272 hits in 6367338 regions
+[1] ---- ENCSR000DBY.hint.bed (chr10) (1/18)
+[1] novel locs: 10418 new/10418 possible (10418 now known, 0 dups)
+[1] filling 10418 regions, 15371 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 10418
+You are now connected to database "hint" as user "pshannon".
+COPY 15371
+[1] 15249643 hits in 6377756 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr10) (2/18)
+[1] novel locs: 73384 new/74756 possible (83802 now known, 1372 dups)
+[1] filling 73384 regions, 107534 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 73384
+You are now connected to database "hint" as user "pshannon".
+COPY 107534
+[1] 15357177 hits in 6451140 regions
+[1] ---- ENCSR000DCA.hint.bed (chr10) (3/18)
+[1] novel locs: 45481 new/51899 possible (129283 now known, 6418 dups)
+[1] filling 45481 regions, 75580 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 45481
+You are now connected to database "hint" as user "pshannon".
+COPY 75580
+[1] 15432757 hits in 6496621 regions
+[1] ---- ENCSR000DCB.hint.bed (chr10) (4/18)
+[1] novel locs: 55884 new/67856 possible (185167 now known, 11972 dups)
+[1] filling 55884 regions, 97744 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 55884
+You are now connected to database "hint" as user "pshannon".
+COPY 97744
+[1] 15530501 hits in 6552505 regions
+[1] ---- ENCSR000DCC.hint.bed (chr10) (5/18)
+[1] novel locs: 37158 new/49643 possible (222325 now known, 12485 dups)
+[1] filling 37158 regions, 72589 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 37158
+You are now connected to database "hint" as user "pshannon".
+COPY 72589
+[1] 15603090 hits in 6589663 regions
+[1] ---- ENCSR000EJB.hint.bed (chr10) (6/18)
+[1] novel locs: 66337 new/78008 possible (288662 now known, 11671 dups)
+[1] filling 66337 regions, 115536 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 66337
+You are now connected to database "hint" as user "pshannon".
+COPY 115536
+[1] 15718626 hits in 6656000 regions
+[1] ---- ENCSR000EJD.hint.bed (chr10) (7/18)
+[1] novel locs: 36361 new/53053 possible (325023 now known, 16692 dups)
+[1] filling 36361 regions, 79366 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 36361
+You are now connected to database "hint" as user "pshannon".
+COPY 79366
+[1] 15797992 hits in 6692361 regions
+[1] ---- ENCSR000EJE.hint.bed (chr10) (8/18)
+[1] novel locs: 51776 new/73689 possible (376799 now known, 21913 dups)
+[1] filling 51776 regions, 108757 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 51776
+You are now connected to database "hint" as user "pshannon".
+COPY 108757
+[1] 15906749 hits in 6744137 regions
+[1] ---- ENCSR000EJF.hint.bed (chr10) (9/18)
+[1] novel locs: 45980 new/72096 possible (422779 now known, 26116 dups)
+[1] filling 45980 regions, 106797 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 45980
+You are now connected to database "hint" as user "pshannon".
+COPY 106797
+[1] 16013546 hits in 6790117 regions
+[1] ---- ENCSR000EJG.hint.bed (chr10) (10/18)
+[1] novel locs: 2095 new/6909 possible (424874 now known, 4814 dups)
+[1] filling 2095 regions, 10582 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 2095
+You are now connected to database "hint" as user "pshannon".
+COPY 10582
+[1] 16024128 hits in 6792212 regions
+[1] ---- ENCSR000EJI.hint.bed (chr10) (11/18)
+[1] novel locs: 30545 new/56371 possible (455419 now known, 25826 dups)
+[1] filling 30545 regions, 84224 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 30545
+You are now connected to database "hint" as user "pshannon".
+COPY 84224
+[1] 16108352 hits in 6822757 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr10) (12/18)
+[1] novel locs: 22900 new/50176 possible (478319 now known, 27276 dups)
+[1] filling 22900 regions, 74803 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 22900
+You are now connected to database "hint" as user "pshannon".
+COPY 74803
+[1] 16183155 hits in 6845657 regions
+[1] ---- ENCSR000EJK.hint.bed (chr10) (13/18)
+[1] novel locs: 31616 new/64728 possible (509935 now known, 33112 dups)
+[1] filling 31616 regions, 95966 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 31616
+You are now connected to database "hint" as user "pshannon".
+COPY 95966
+[1] 16279121 hits in 6877273 regions
+[1] ---- ENCSR000EJL.hint.bed (chr10) (14/18)
+[1] novel locs: 14674 new/38896 possible (524609 now known, 24222 dups)
+[1] filling 14674 regions, 58696 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 14674
+You are now connected to database "hint" as user "pshannon".
+COPY 58696
+[1] 16337817 hits in 6891947 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr10) (15/18)
+[1] novel locs: 48253 new/86847 possible (572862 now known, 38594 dups)
+[1] filling 48253 regions, 126166 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 48253
+You are now connected to database "hint" as user "pshannon".
+COPY 126166
+[1] 16463983 hits in 6940200 regions
+[1] ---- ENCSR000EMR.hint.bed (chr10) (16/18)
+[1] novel locs: 5244 new/24177 possible (578106 now known, 18933 dups)
+[1] filling 5244 regions, 36095 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 5244
+You are now connected to database "hint" as user "pshannon".
+COPY 36095
+[1] 16500078 hits in 6945444 regions
+[1] ---- ENCSR000EMS.hint.bed (chr10) (17/18)
+[1] novel locs: 24388 new/62687 possible (602494 now known, 38299 dups)
+[1] filling 24388 regions, 92767 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 24388
+You are now connected to database "hint" as user "pshannon".
+COPY 92767
+[1] 16592845 hits in 6969832 regions
+[1] ---- ENCSR000EMT.hint.bed (chr10) (18/18)
+[1] novel locs: 31536 new/81900 possible (634030 now known, 50364 dups)
+[1] filling 31536 regions, 120365 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 31536
+You are now connected to database "hint" as user "pshannon".
+COPY 120365
+[1] 16713210 hits in 7001368 regions
+[1] ---- ENCSR000DBY.hint.bed (chr11) (1/18)
+[1] novel locs: 12606 new/12606 possible (12606 now known, 0 dups)
+[1] filling 12606 regions, 18687 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 12606
+You are now connected to database "hint" as user "pshannon".
+COPY 18687
+[1] 16731897 hits in 7013974 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr11) (2/18)
+[1] novel locs: 78427 new/80171 possible (91033 now known, 1744 dups)
+[1] filling 78427 regions, 116319 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 78427
+You are now connected to database "hint" as user "pshannon".
+COPY 116319
+[1] 16848216 hits in 7092401 regions
+[1] ---- ENCSR000DCA.hint.bed (chr11) (3/18)
+[1] novel locs: 105604 new/115945 possible (196637 now known, 10341 dups)
+[1] filling 105604 regions, 166902 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 105604
+You are now connected to database "hint" as user "pshannon".
+COPY 166902
+[1] 17015118 hits in 7198005 regions
+[1] ---- ENCSR000DCB.hint.bed (chr11) (4/18)
+[1] novel locs: 48961 new/63419 possible (245598 now known, 14458 dups)
+[1] filling 48961 regions, 92071 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 48961
+You are now connected to database "hint" as user "pshannon".
+COPY 92071
+[1] 17107189 hits in 7246966 regions
+[1] ---- ENCSR000DCC.hint.bed (chr11) (5/18)
+[1] novel locs: 33515 new/47667 possible (279113 now known, 14152 dups)
+[1] filling 33515 regions, 69756 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 33515
+You are now connected to database "hint" as user "pshannon".
+COPY 69756
+[1] 17176945 hits in 7280481 regions
+[1] ---- ENCSR000EJB.hint.bed (chr11) (6/18)
+[1] novel locs: 60068 new/74603 possible (339181 now known, 14535 dups)
+[1] filling 60068 regions, 109981 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 60068
+You are now connected to database "hint" as user "pshannon".
+COPY 109981
+[1] 17286926 hits in 7340549 regions
+[1] ---- ENCSR000EJD.hint.bed (chr11) (7/18)
+[1] novel locs: 38039 new/58602 possible (377220 now known, 20563 dups)
+[1] filling 38039 regions, 88681 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 38039
+You are now connected to database "hint" as user "pshannon".
+COPY 88681
+[1] 17375607 hits in 7378588 regions
+[1] ---- ENCSR000EJE.hint.bed (chr11) (8/18)
+[1] novel locs: 59141 new/85209 possible (436361 now known, 26068 dups)
+[1] filling 59141 regions, 125307 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 59141
+You are now connected to database "hint" as user "pshannon".
+COPY 125307
+[1] 17500914 hits in 7437729 regions
+[1] ---- ENCSR000EJF.hint.bed (chr11) (9/18)
+[1] novel locs: 50359 new/80468 possible (486720 now known, 30109 dups)
+[1] filling 50359 regions, 119565 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 50359
+You are now connected to database "hint" as user "pshannon".
+COPY 119565
+[1] 17620479 hits in 7488088 regions
+[1] ---- ENCSR000EJG.hint.bed (chr11) (10/18)
+[1] novel locs: 2487 new/9424 possible (489207 now known, 6937 dups)
+[1] filling 2487 regions, 14551 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 2487
+You are now connected to database "hint" as user "pshannon".
+COPY 14551
+[1] 17635030 hits in 7490575 regions
+[1] ---- ENCSR000EJI.hint.bed (chr11) (11/18)
+[1] novel locs: 32163 new/62991 possible (521370 now known, 30828 dups)
+[1] filling 32163 regions, 93574 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 32163
+You are now connected to database "hint" as user "pshannon".
+COPY 93574
+[1] 17728604 hits in 7522738 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr11) (12/18)
+[1] novel locs: 26560 new/58806 possible (547930 now known, 32246 dups)
+[1] filling 26560 regions, 87204 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 26560
+You are now connected to database "hint" as user "pshannon".
+COPY 87204
+[1] 17815808 hits in 7549298 regions
+[1] ---- ENCSR000EJK.hint.bed (chr11) (13/18)
+[1] novel locs: 39107 new/77586 possible (587037 now known, 38479 dups)
+[1] filling 39107 regions, 114302 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 39107
+You are now connected to database "hint" as user "pshannon".
+COPY 114302
+[1] 17930110 hits in 7588405 regions
+[1] ---- ENCSR000EJL.hint.bed (chr11) (14/18)
+[1] novel locs: 16868 new/45884 possible (603905 now known, 29016 dups)
+[1] filling 16868 regions, 69574 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 16868
+You are now connected to database "hint" as user "pshannon".
+COPY 69574
+[1] 17999684 hits in 7605273 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr11) (15/18)
+[1] novel locs: 57234 new/104070 possible (661139 now known, 46836 dups)
+[1] filling 57234 regions, 151052 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 57234
+You are now connected to database "hint" as user "pshannon".
+COPY 151052
+[1] 18150736 hits in 7662507 regions
+[1] ---- ENCSR000EMR.hint.bed (chr11) (16/18)
+[1] novel locs: 5833 new/28214 possible (666972 now known, 22381 dups)
+[1] filling 5833 regions, 42373 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 5833
+You are now connected to database "hint" as user "pshannon".
+COPY 42373
+[1] 18193109 hits in 7668340 regions
+[1] ---- ENCSR000EMS.hint.bed (chr11) (17/18)
+[1] novel locs: 25572 new/70206 possible (692544 now known, 44634 dups)
+[1] filling 25572 regions, 102580 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 25572
+You are now connected to database "hint" as user "pshannon".
+COPY 102580
+[1] 18295689 hits in 7693912 regions
+[1] ---- ENCSR000EMT.hint.bed (chr11) (18/18)
+[1] novel locs: 33259 new/90124 possible (725803 now known, 56865 dups)
+[1] filling 33259 regions, 131581 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 33259
+You are now connected to database "hint" as user "pshannon".
+COPY 131581
+[1] 18427270 hits in 7727171 regions
+[1] ---- ENCSR000DBY.hint.bed (chr12) (1/18)
+[1] novel locs: 13147 new/13147 possible (13147 now known, 0 dups)
+[1] filling 13147 regions, 19524 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 13147
+You are now connected to database "hint" as user "pshannon".
+COPY 19524
+[1] 18446794 hits in 7740318 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr12) (2/18)
+[1] novel locs: 79219 new/80999 possible (92366 now known, 1780 dups)
+[1] filling 79219 regions, 117741 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 79219
+You are now connected to database "hint" as user "pshannon".
+COPY 117741
+[1] 18564535 hits in 7819537 regions
+[1] ---- ENCSR000DCA.hint.bed (chr12) (3/18)
+[1] novel locs: 52038 new/59490 possible (144404 now known, 7452 dups)
+[1] filling 52038 regions, 86508 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 52038
+You are now connected to database "hint" as user "pshannon".
+COPY 86508
+[1] 18651043 hits in 7871575 regions
+[1] ---- ENCSR000DCB.hint.bed (chr12) (4/18)
+[1] novel locs: 58393 new/71711 possible (202797 now known, 13318 dups)
+[1] filling 58393 regions, 103453 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 58393
+You are now connected to database "hint" as user "pshannon".
+COPY 103453
+[1] 18754496 hits in 7929968 regions
+[1] ---- ENCSR000DCC.hint.bed (chr12) (5/18)
+[1] novel locs: 40461 new/54325 possible (243258 now known, 13864 dups)
+[1] filling 40461 regions, 79207 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 40461
+You are now connected to database "hint" as user "pshannon".
+COPY 79207
+[1] 18833703 hits in 7970429 regions
+[1] ---- ENCSR000EJB.hint.bed (chr12) (6/18)
+[1] novel locs: 50574 new/64070 possible (293832 now known, 13496 dups)
+[1] filling 50574 regions, 94926 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 50574
+You are now connected to database "hint" as user "pshannon".
+COPY 94926
+[1] 18928629 hits in 8021003 regions
+[1] ---- ENCSR000EJD.hint.bed (chr12) (7/18)
+[1] novel locs: 35981 new/55518 possible (329813 now known, 19537 dups)
+[1] filling 35981 regions, 83293 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 35981
+You are now connected to database "hint" as user "pshannon".
+COPY 83293
+[1] 19011922 hits in 8056984 regions
+[1] ---- ENCSR000EJE.hint.bed (chr12) (8/18)
+[1] novel locs: 52028 new/76528 possible (381841 now known, 24500 dups)
+[1] filling 52028 regions, 113447 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 52028
+You are now connected to database "hint" as user "pshannon".
+COPY 113447
+[1] 19125369 hits in 8109012 regions
+[1] ---- ENCSR000EJF.hint.bed (chr12) (9/18)
+[1] novel locs: 37956 new/65343 possible (419797 now known, 27387 dups)
+[1] filling 37956 regions, 96603 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 37956
+You are now connected to database "hint" as user "pshannon".
+COPY 96603
+[1] 19221972 hits in 8146968 regions
+[1] ---- ENCSR000EJG.hint.bed (chr12) (10/18)
+[1] novel locs: 2706 new/9264 possible (422503 now known, 6558 dups)
+[1] filling 2706 regions, 14421 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 2706
+You are now connected to database "hint" as user "pshannon".
+COPY 14421
+[1] 19236393 hits in 8149674 regions
+[1] ---- ENCSR000EJI.hint.bed (chr12) (11/18)
+[1] novel locs: 25810 new/55488 possible (448313 now known, 29678 dups)
+[1] filling 25810 regions, 83135 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 25810
+You are now connected to database "hint" as user "pshannon".
+COPY 83135
+[1] 19319528 hits in 8175484 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr12) (12/18)
+[1] novel locs: 20873 new/50604 possible (469186 now known, 29731 dups)
+[1] filling 20873 regions, 75593 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 20873
+You are now connected to database "hint" as user "pshannon".
+COPY 75593
+[1] 19395121 hits in 8196357 regions
+[1] ---- ENCSR000EJK.hint.bed (chr12) (13/18)
+[1] novel locs: 28616 new/64344 possible (497802 now known, 35728 dups)
+[1] filling 28616 regions, 95833 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 28616
+You are now connected to database "hint" as user "pshannon".
+COPY 95833
+[1] 19490954 hits in 8224973 regions
+[1] ---- ENCSR000EJL.hint.bed (chr12) (14/18)
+[1] novel locs: 14947 new/42560 possible (512749 now known, 27613 dups)
+[1] filling 14947 regions, 63571 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 14947
+You are now connected to database "hint" as user "pshannon".
+COPY 63571
+[1] 19554525 hits in 8239920 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr12) (15/18)
+[1] novel locs: 46761 new/89847 possible (559510 now known, 43086 dups)
+[1] filling 46761 regions, 131266 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 46761
+You are now connected to database "hint" as user "pshannon".
+COPY 131266
+[1] 19685791 hits in 8286681 regions
+[1] ---- ENCSR000EMR.hint.bed (chr12) (16/18)
+[1] novel locs: 6023 new/28573 possible (565533 now known, 22550 dups)
+[1] filling 6023 regions, 43016 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 6023
+You are now connected to database "hint" as user "pshannon".
+COPY 43016
+[1] 19728807 hits in 8292704 regions
+[1] ---- ENCSR000EMS.hint.bed (chr12) (17/18)
+[1] novel locs: 25888 new/68389 possible (591421 now known, 42501 dups)
+[1] filling 25888 regions, 100529 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 25888
+You are now connected to database "hint" as user "pshannon".
+COPY 100529
+[1] 19829336 hits in 8318592 regions
+[1] ---- ENCSR000EMT.hint.bed (chr12) (18/18)
+[1] novel locs: 31995 new/87667 possible (623416 now known, 55672 dups)
+[1] filling 31995 regions, 128866 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 31995
+You are now connected to database "hint" as user "pshannon".
+COPY 128866
+[1] 19958202 hits in 8350587 regions
+[1] ---- ENCSR000DBY.hint.bed (chr13) (1/18)
+[1] novel locs: 4319 new/4319 possible (4319 now known, 0 dups)
+[1] filling 4319 regions, 6413 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 4319
+You are now connected to database "hint" as user "pshannon".
+COPY 6413
+[1] 19964615 hits in 8354906 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr13) (2/18)
+[1] novel locs: 32613 new/33163 possible (36932 now known, 550 dups)
+[1] filling 32613 regions, 48569 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 32613
+You are now connected to database "hint" as user "pshannon".
+COPY 48569
+[1] 20013184 hits in 8387519 regions
+[1] ---- ENCSR000DCA.hint.bed (chr13) (3/18)
+[1] novel locs: 20576 new/23308 possible (57508 now known, 2732 dups)
+[1] filling 20576 regions, 34026 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 20576
+You are now connected to database "hint" as user "pshannon".
+COPY 34026
+[1] 20047210 hits in 8408095 regions
+[1] ---- ENCSR000DCB.hint.bed (chr13) (4/18)
+[1] novel locs: 27238 new/32051 possible (84746 now known, 4813 dups)
+[1] filling 27238 regions, 46601 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 27238
+You are now connected to database "hint" as user "pshannon".
+COPY 46601
+[1] 20093811 hits in 8435333 regions
+[1] ---- ENCSR000DCC.hint.bed (chr13) (5/18)
+[1] novel locs: 17321 new/22245 possible (102067 now known, 4924 dups)
+[1] filling 17321 regions, 32559 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 17321
+You are now connected to database "hint" as user "pshannon".
+COPY 32559
+[1] 20126370 hits in 8452654 regions
+[1] ---- ENCSR000EJB.hint.bed (chr13) (6/18)
+[1] novel locs: 24540 new/29292 possible (126607 now known, 4752 dups)
+[1] filling 24540 regions, 43406 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 24540
+You are now connected to database "hint" as user "pshannon".
+COPY 43406
+[1] 20169776 hits in 8477194 regions
+[1] ---- ENCSR000EJD.hint.bed (chr13) (7/18)
+[1] novel locs: 14354 new/21305 possible (140961 now known, 6951 dups)
+[1] filling 14354 regions, 32020 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 14354
+You are now connected to database "hint" as user "pshannon".
+COPY 32020
+[1] 20201796 hits in 8491548 regions
+[1] ---- ENCSR000EJE.hint.bed (chr13) (8/18)
+[1] novel locs: 19192 new/27810 possible (160153 now known, 8618 dups)
+[1] filling 19192 regions, 41108 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 19192
+You are now connected to database "hint" as user "pshannon".
+COPY 41108
+[1] 20242904 hits in 8510740 regions
+[1] ---- ENCSR000EJF.hint.bed (chr13) (9/18)
+[1] novel locs: 16856 new/26954 possible (177009 now known, 10098 dups)
+[1] filling 16856 regions, 39930 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 16856
+You are now connected to database "hint" as user "pshannon".
+COPY 39930
+[1] 20282834 hits in 8527596 regions
+[1] ---- ENCSR000EJG.hint.bed (chr13) (10/18)
+[1] novel locs: 1099 new/3328 possible (178108 now known, 2229 dups)
+[1] filling 1099 regions, 5193 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 1099
+You are now connected to database "hint" as user "pshannon".
+COPY 5193
+[1] 20288027 hits in 8528695 regions
+[1] ---- ENCSR000EJI.hint.bed (chr13) (11/18)
+[1] novel locs: 11434 new/22453 possible (189542 now known, 11019 dups)
+[1] filling 11434 regions, 34054 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 11434
+You are now connected to database "hint" as user "pshannon".
+COPY 34054
+[1] 20322081 hits in 8540129 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr13) (12/18)
+[1] novel locs: 8751 new/20104 possible (198293 now known, 11353 dups)
+[1] filling 8751 regions, 29922 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 8751
+You are now connected to database "hint" as user "pshannon".
+COPY 29922
+[1] 20352003 hits in 8548880 regions
+[1] ---- ENCSR000EJK.hint.bed (chr13) (13/18)
+[1] novel locs: 11954 new/25815 possible (210247 now known, 13861 dups)
+[1] filling 11954 regions, 38026 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 11954
+You are now connected to database "hint" as user "pshannon".
+COPY 38026
+[1] 20390029 hits in 8560834 regions
+[1] ---- ENCSR000EJL.hint.bed (chr13) (14/18)
+[1] novel locs: 5904 new/15927 possible (216151 now known, 10023 dups)
+[1] filling 5904 regions, 23910 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 5904
+You are now connected to database "hint" as user "pshannon".
+COPY 23910
+[1] 20413939 hits in 8566738 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr13) (15/18)
+[1] novel locs: 21150 new/37896 possible (237301 now known, 16746 dups)
+[1] filling 21150 regions, 54972 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 21150
+You are now connected to database "hint" as user "pshannon".
+COPY 54972
+[1] 20468911 hits in 8587888 regions
+[1] ---- ENCSR000EMR.hint.bed (chr13) (16/18)
+[1] novel locs: 2463 new/10691 possible (239764 now known, 8228 dups)
+[1] filling 2463 regions, 15974 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 2463
+You are now connected to database "hint" as user "pshannon".
+COPY 15974
+[1] 20484885 hits in 8590351 regions
+[1] ---- ENCSR000EMS.hint.bed (chr13) (17/18)
+[1] novel locs: 13400 new/30709 possible (253164 now known, 17309 dups)
+[1] filling 13400 regions, 45336 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 13400
+You are now connected to database "hint" as user "pshannon".
+COPY 45336
+[1] 20530221 hits in 8603751 regions
+[1] ---- ENCSR000EMT.hint.bed (chr13) (18/18)
+[1] novel locs: 14005 new/35679 possible (267169 now known, 21674 dups)
+[1] filling 14005 regions, 52316 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 14005
+You are now connected to database "hint" as user "pshannon".
+COPY 52316
+[1] 20582537 hits in 8617756 regions
+[1] ---- ENCSR000DBY.hint.bed (chr14) (1/18)
+[1] novel locs: 8409 new/8409 possible (8409 now known, 0 dups)
+[1] filling 8409 regions, 12552 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 8409
+You are now connected to database "hint" as user "pshannon".
+COPY 12552
+[1] 20595089 hits in 8626165 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr14) (2/18)
+[1] novel locs: 51373 new/52397 possible (59782 now known, 1024 dups)
+[1] filling 51373 regions, 75037 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 51373
+You are now connected to database "hint" as user "pshannon".
+COPY 75037
+[1] 20670126 hits in 8677538 regions
+[1] ---- ENCSR000DCA.hint.bed (chr14) (3/18)
+[1] novel locs: 35773 new/40766 possible (95555 now known, 4993 dups)
+[1] filling 35773 regions, 58466 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 35773
+You are now connected to database "hint" as user "pshannon".
+COPY 58466
+[1] 20728592 hits in 8713311 regions
+[1] ---- ENCSR000DCB.hint.bed (chr14) (4/18)
+[1] novel locs: 38189 new/47230 possible (133744 now known, 9041 dups)
+[1] filling 38189 regions, 68322 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 38189
+You are now connected to database "hint" as user "pshannon".
+COPY 68322
+[1] 20796914 hits in 8751500 regions
+[1] ---- ENCSR000DCC.hint.bed (chr14) (5/18)
+[1] novel locs: 27310 new/36681 possible (161054 now known, 9371 dups)
+[1] filling 27310 regions, 52660 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 27310
+You are now connected to database "hint" as user "pshannon".
+COPY 52660
+[1] 20849574 hits in 8778810 regions
+[1] ---- ENCSR000EJB.hint.bed (chr14) (6/18)
+[1] novel locs: 36811 new/45932 possible (197865 now known, 9121 dups)
+[1] filling 36811 regions, 67989 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 36811
+You are now connected to database "hint" as user "pshannon".
+COPY 67989
+[1] 20917563 hits in 8815621 regions
+[1] ---- ENCSR000EJD.hint.bed (chr14) (7/18)
+[1] novel locs: 24131 new/37083 possible (221996 now known, 12952 dups)
+[1] filling 24131 regions, 56063 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 24131
+You are now connected to database "hint" as user "pshannon".
+COPY 56063
+[1] 20973626 hits in 8839752 regions
+[1] ---- ENCSR000EJE.hint.bed (chr14) (8/18)
+[1] novel locs: 37274 new/53059 possible (259270 now known, 15785 dups)
+[1] filling 37274 regions, 78514 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 37274
+You are now connected to database "hint" as user "pshannon".
+COPY 78514
+[1] 21052140 hits in 8877026 regions
+[1] ---- ENCSR000EJF.hint.bed (chr14) (9/18)
+[1] novel locs: 29550 new/48490 possible (288820 now known, 18940 dups)
+[1] filling 29550 regions, 71448 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 29550
+You are now connected to database "hint" as user "pshannon".
+COPY 71448
+[1] 21123588 hits in 8906576 regions
+[1] ---- ENCSR000EJG.hint.bed (chr14) (10/18)
+[1] novel locs: 1474 new/5665 possible (290294 now known, 4191 dups)
+[1] filling 1474 regions, 8627 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 1474
+You are now connected to database "hint" as user "pshannon".
+COPY 8627
+[1] 21132215 hits in 8908050 regions
+[1] ---- ENCSR000EJI.hint.bed (chr14) (11/18)
+[1] novel locs: 20592 new/39665 possible (310886 now known, 19073 dups)
+[1] filling 20592 regions, 59563 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 20592
+You are now connected to database "hint" as user "pshannon".
+COPY 59563
+[1] 21191778 hits in 8928642 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr14) (12/18)
+[1] novel locs: 17226 new/37383 possible (328112 now known, 20157 dups)
+[1] filling 17226 regions, 56282 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 17226
+You are now connected to database "hint" as user "pshannon".
+COPY 56282
+[1] 21248060 hits in 8945868 regions
+[1] ---- ENCSR000EJK.hint.bed (chr14) (13/18)
+[1] novel locs: 21201 new/44460 possible (349313 now known, 23259 dups)
+[1] filling 21201 regions, 66366 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 21201
+You are now connected to database "hint" as user "pshannon".
+COPY 66366
+[1] 21314426 hits in 8967069 regions
+[1] ---- ENCSR000EJL.hint.bed (chr14) (14/18)
+[1] novel locs: 10946 new/29397 possible (360259 now known, 18451 dups)
+[1] filling 10946 regions, 44460 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 10946
+You are now connected to database "hint" as user "pshannon".
+COPY 44460
+[1] 21358886 hits in 8978015 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr14) (15/18)
+[1] novel locs: 33369 new/62055 possible (393628 now known, 28686 dups)
+[1] filling 33369 regions, 90907 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 33369
+You are now connected to database "hint" as user "pshannon".
+COPY 90907
+[1] 21449793 hits in 9011384 regions
+[1] ---- ENCSR000EMR.hint.bed (chr14) (16/18)
+[1] novel locs: 4029 new/18894 possible (397657 now known, 14865 dups)
+[1] filling 4029 regions, 28619 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 4029
+You are now connected to database "hint" as user "pshannon".
+COPY 28619
+[1] 21478412 hits in 9015413 regions
+[1] ---- ENCSR000EMS.hint.bed (chr14) (17/18)
+[1] novel locs: 17020 new/45650 possible (414677 now known, 28630 dups)
+[1] filling 17020 regions, 67058 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 17020
+You are now connected to database "hint" as user "pshannon".
+COPY 67058
+[1] 21545470 hits in 9032433 regions
+[1] ---- ENCSR000EMT.hint.bed (chr14) (18/18)
+[1] novel locs: 20599 new/56191 possible (435276 now known, 35592 dups)
+[1] filling 20599 regions, 81328 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 20599
+You are now connected to database "hint" as user "pshannon".
+COPY 81328
+[1] 21626798 hits in 9053032 regions
+[1] ---- ENCSR000DBY.hint.bed (chr15) (1/18)
+[1] novel locs: 9742 new/9742 possible (9742 now known, 0 dups)
+[1] filling 9742 regions, 14110 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 9742
+You are now connected to database "hint" as user "pshannon".
+COPY 14110
+[1] 21640908 hits in 9062774 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr15) (2/18)
+[1] novel locs: 54500 new/55563 possible (64242 now known, 1063 dups)
+[1] filling 54500 regions, 79725 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 54500
+You are now connected to database "hint" as user "pshannon".
+COPY 79725
+[1] 21720633 hits in 9117274 regions
+[1] ---- ENCSR000DCA.hint.bed (chr15) (3/18)
+[1] novel locs: 35272 new/40354 possible (99514 now known, 5082 dups)
+[1] filling 35272 regions, 58429 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 35272
+You are now connected to database "hint" as user "pshannon".
+COPY 58429
+[1] 21779062 hits in 9152546 regions
+[1] ---- ENCSR000DCB.hint.bed (chr15) (4/18)
+[1] novel locs: 42029 new/50665 possible (141543 now known, 8636 dups)
+[1] filling 42029 regions, 73305 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 42029
+You are now connected to database "hint" as user "pshannon".
+COPY 73305
+[1] 21852367 hits in 9194575 regions
+[1] ---- ENCSR000DCC.hint.bed (chr15) (5/18)
+[1] novel locs: 28041 new/37330 possible (169584 now known, 9289 dups)
+[1] filling 28041 regions, 53984 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 28041
+You are now connected to database "hint" as user "pshannon".
+COPY 53984
+[1] 21906351 hits in 9222616 regions
+[1] ---- ENCSR000EJB.hint.bed (chr15) (6/18)
+[1] novel locs: 41850 new/50994 possible (211434 now known, 9144 dups)
+[1] filling 41850 regions, 75914 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 41850
+You are now connected to database "hint" as user "pshannon".
+COPY 75914
+[1] 21982265 hits in 9264466 regions
+[1] ---- ENCSR000EJD.hint.bed (chr15) (7/18)
+[1] novel locs: 26309 new/39375 possible (237743 now known, 13066 dups)
+[1] filling 26309 regions, 58859 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 26309
+You are now connected to database "hint" as user "pshannon".
+COPY 58859
+[1] 22041124 hits in 9290775 regions
+[1] ---- ENCSR000EJE.hint.bed (chr15) (8/18)
+[1] novel locs: 41211 new/58775 possible (278954 now known, 17564 dups)
+[1] filling 41211 regions, 86013 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 41211
+You are now connected to database "hint" as user "pshannon".
+COPY 86013
+[1] 22127137 hits in 9331986 regions
+[1] ---- ENCSR000EJF.hint.bed (chr15) (9/18)
+[1] novel locs: 33694 new/53402 possible (312648 now known, 19708 dups)
+[1] filling 33694 regions, 78235 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 33694
+You are now connected to database "hint" as user "pshannon".
+COPY 78235
+[1] 22205372 hits in 9365680 regions
+[1] ---- ENCSR000EJG.hint.bed (chr15) (10/18)
+[1] novel locs: 1742 new/5909 possible (314390 now known, 4167 dups)
+[1] filling 1742 regions, 9219 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 1742
+You are now connected to database "hint" as user "pshannon".
+COPY 9219
+[1] 22214591 hits in 9367422 regions
+[1] ---- ENCSR000EJI.hint.bed (chr15) (11/18)
+[1] novel locs: 23131 new/45072 possible (337521 now known, 21941 dups)
+[1] filling 23131 regions, 66769 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 23131
+You are now connected to database "hint" as user "pshannon".
+COPY 66769
+[1] 22281360 hits in 9390553 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr15) (12/18)
+[1] novel locs: 17900 new/40318 possible (355421 now known, 22418 dups)
+[1] filling 17900 regions, 59981 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 17900
+You are now connected to database "hint" as user "pshannon".
+COPY 59981
+[1] 22341341 hits in 9408453 regions
+[1] ---- ENCSR000EJK.hint.bed (chr15) (13/18)
+[1] novel locs: 22103 new/47976 possible (377524 now known, 25873 dups)
+[1] filling 22103 regions, 70276 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 22103
+You are now connected to database "hint" as user "pshannon".
+COPY 70276
+[1] 22411617 hits in 9430556 regions
+[1] ---- ENCSR000EJL.hint.bed (chr15) (14/18)
+[1] novel locs: 12059 new/31211 possible (389583 now known, 19152 dups)
+[1] filling 12059 regions, 46530 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 12059
+You are now connected to database "hint" as user "pshannon".
+COPY 46530
+[1] 22458147 hits in 9442615 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr15) (15/18)
+[1] novel locs: 29738 new/59497 possible (419321 now known, 29759 dups)
+[1] filling 29738 regions, 86400 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 29738
+You are now connected to database "hint" as user "pshannon".
+COPY 86400
+[1] 22544547 hits in 9472353 regions
+[1] ---- ENCSR000EMR.hint.bed (chr15) (16/18)
+[1] novel locs: 4190 new/19441 possible (423511 now known, 15251 dups)
+[1] filling 4190 regions, 29398 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 4190
+You are now connected to database "hint" as user "pshannon".
+COPY 29398
+[1] 22573945 hits in 9476543 regions
+[1] ---- ENCSR000EMS.hint.bed (chr15) (17/18)
+[1] novel locs: 18067 new/47759 possible (441578 now known, 29692 dups)
+[1] filling 18067 regions, 69868 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 18067
+You are now connected to database "hint" as user "pshannon".
+COPY 69868
+[1] 22643813 hits in 9494610 regions
+[1] ---- ENCSR000EMT.hint.bed (chr15) (18/18)
+[1] novel locs: 20258 new/57695 possible (461836 now known, 37437 dups)
+[1] filling 20258 regions, 83814 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 20258
+You are now connected to database "hint" as user "pshannon".
+COPY 83814
+[1] 22727627 hits in 9514868 regions
+[1] ---- ENCSR000DBY.hint.bed (chr16) (1/18)
+[1] novel locs: 12564 new/12564 possible (12564 now known, 0 dups)
+[1] filling 12564 regions, 17954 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 12564
+You are now connected to database "hint" as user "pshannon".
+COPY 17954
+[1] 22745581 hits in 9527432 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr16) (2/18)
+[1] novel locs: 66544 new/68024 possible (79108 now known, 1480 dups)
+[1] filling 66544 regions, 98077 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 66544
+You are now connected to database "hint" as user "pshannon".
+COPY 98077
+[1] 22843658 hits in 9593976 regions
+[1] ---- ENCSR000DCA.hint.bed (chr16) (3/18)
+[1] novel locs: 39136 new/45794 possible (118244 now known, 6658 dups)
+[1] filling 39136 regions, 67037 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 39136
+You are now connected to database "hint" as user "pshannon".
+COPY 67037
+[1] 22910695 hits in 9633112 regions
+[1] ---- ENCSR000DCB.hint.bed (chr16) (4/18)
+[1] novel locs: 42292 new/53240 possible (160536 now known, 10948 dups)
+[1] filling 42292 regions, 76787 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 42292
+You are now connected to database "hint" as user "pshannon".
+COPY 76787
+[1] 22987482 hits in 9675404 regions
+[1] ---- ENCSR000DCC.hint.bed (chr16) (5/18)
+[1] novel locs: 26305 new/37267 possible (186841 now known, 10962 dups)
+[1] filling 26305 regions, 54228 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 26305
+You are now connected to database "hint" as user "pshannon".
+COPY 54228
+[1] 23041710 hits in 9701709 regions
+[1] ---- ENCSR000EJB.hint.bed (chr16) (6/18)
+[1] novel locs: 49800 new/62144 possible (236641 now known, 12344 dups)
+[1] filling 49800 regions, 93074 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 49800
+You are now connected to database "hint" as user "pshannon".
+COPY 93074
+[1] 23134784 hits in 9751509 regions
+[1] ---- ENCSR000EJD.hint.bed (chr16) (7/18)
+[1] novel locs: 36075 new/53188 possible (272716 now known, 17113 dups)
+[1] filling 36075 regions, 80489 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 36075
+You are now connected to database "hint" as user "pshannon".
+COPY 80489
+[1] 23215273 hits in 9787584 regions
+[1] ---- ENCSR000EJE.hint.bed (chr16) (8/18)
+[1] novel locs: 57702 new/81530 possible (330418 now known, 23828 dups)
+[1] filling 57702 regions, 121807 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 57702
+You are now connected to database "hint" as user "pshannon".
+COPY 121807
+[1] 23337080 hits in 9845286 regions
+[1] ---- ENCSR000EJF.hint.bed (chr16) (9/18)
+[1] novel locs: 43568 new/71364 possible (373986 now known, 27796 dups)
+[1] filling 43568 regions, 106423 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 43568
+You are now connected to database "hint" as user "pshannon".
+COPY 106423
+[1] 23443503 hits in 9888854 regions
+[1] ---- ENCSR000EJG.hint.bed (chr16) (10/18)
+[1] novel locs: 2823 new/10044 possible (376809 now known, 7221 dups)
+[1] filling 2823 regions, 15932 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 2823
+You are now connected to database "hint" as user "pshannon".
+COPY 15932
+[1] 23459435 hits in 9891677 regions
+[1] ---- ENCSR000EJI.hint.bed (chr16) (11/18)
+[1] novel locs: 31619 new/61522 possible (408428 now known, 29903 dups)
+[1] filling 31619 regions, 92540 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 31619
+You are now connected to database "hint" as user "pshannon".
+COPY 92540
+[1] 23551975 hits in 9923296 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr16) (12/18)
+[1] novel locs: 22357 new/52730 possible (430785 now known, 30373 dups)
+[1] filling 22357 regions, 79695 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 22357
+You are now connected to database "hint" as user "pshannon".
+COPY 79695
+[1] 23631670 hits in 9945653 regions
+[1] ---- ENCSR000EJK.hint.bed (chr16) (13/18)
+[1] novel locs: 40930 new/78289 possible (471715 now known, 37359 dups)
+[1] filling 40930 regions, 116690 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 40930
+You are now connected to database "hint" as user "pshannon".
+COPY 116690
+[1] 23748360 hits in 9986583 regions
+[1] ---- ENCSR000EJL.hint.bed (chr16) (14/18)
+[1] novel locs: 16260 new/44015 possible (487975 now known, 27755 dups)
+[1] filling 16260 regions, 66154 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 16260
+You are now connected to database "hint" as user "pshannon".
+COPY 66154
+[1] 23814514 hits in 10002843 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr16) (15/18)
+[1] novel locs: 58746 new/100692 possible (546721 now known, 41946 dups)
+[1] filling 58746 regions, 145351 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 58746
+You are now connected to database "hint" as user "pshannon".
+COPY 145351
+[1] 23959865 hits in 10061589 regions
+[1] ---- ENCSR000EMR.hint.bed (chr16) (16/18)
+[1] novel locs: 5867 new/27828 possible (552588 now known, 21961 dups)
+[1] filling 5867 regions, 41959 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 5867
+You are now connected to database "hint" as user "pshannon".
+COPY 41959
+[1] 24001824 hits in 10067456 regions
+[1] ---- ENCSR000EMS.hint.bed (chr16) (17/18)
+[1] novel locs: 22105 new/61132 possible (574693 now known, 39027 dups)
+[1] filling 22105 regions, 90187 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 22105
+You are now connected to database "hint" as user "pshannon".
+COPY 90187
+[1] 24092011 hits in 10089561 regions
+[1] ---- ENCSR000EMT.hint.bed (chr16) (18/18)
+[1] novel locs: 29199 new/80043 possible (603892 now known, 50844 dups)
+[1] filling 29199 regions, 116412 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 29199
+You are now connected to database "hint" as user "pshannon".
+COPY 116412
+[1] 24208423 hits in 10118760 regions
+[1] ---- ENCSR000DBY.hint.bed (chr17) (1/18)
+[1] novel locs: 15656 new/15656 possible (15656 now known, 0 dups)
+[1] filling 15656 regions, 22992 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 15656
+You are now connected to database "hint" as user "pshannon".
+COPY 22992
+[1] 24231415 hits in 10134416 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr17) (2/18)
+[1] novel locs: 84873 new/86723 possible (100529 now known, 1850 dups)
+[1] filling 84873 regions, 124953 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 84873
+You are now connected to database "hint" as user "pshannon".
+COPY 124953
+[1] 24356368 hits in 10219289 regions
+[1] ---- ENCSR000DCA.hint.bed (chr17) (3/18)
+[1] novel locs: 56928 new/66011 possible (157457 now known, 9083 dups)
+[1] filling 56928 regions, 95680 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 56928
+You are now connected to database "hint" as user "pshannon".
+COPY 95680
+[1] 24452048 hits in 10276217 regions
+[1] ---- ENCSR000DCB.hint.bed (chr17) (4/18)
+[1] novel locs: 56716 new/72091 possible (214173 now known, 15375 dups)
+[1] filling 56716 regions, 104589 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 56716
+You are now connected to database "hint" as user "pshannon".
+COPY 104589
+[1] 24556637 hits in 10332933 regions
+[1] ---- ENCSR000DCC.hint.bed (chr17) (5/18)
+[1] novel locs: 39008 new/55515 possible (253181 now known, 16507 dups)
+[1] filling 39008 regions, 80284 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 39008
+You are now connected to database "hint" as user "pshannon".
+COPY 80284
+[1] 24636921 hits in 10371941 regions
+[1] ---- ENCSR000EJB.hint.bed (chr17) (6/18)
+[1] novel locs: 59827 new/75806 possible (313008 now known, 15979 dups)
+[1] filling 59827 regions, 112357 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 59827
+You are now connected to database "hint" as user "pshannon".
+COPY 112357
+[1] 24749278 hits in 10431768 regions
+[1] ---- ENCSR000EJD.hint.bed (chr17) (7/18)
+[1] novel locs: 43515 new/66804 possible (356523 now known, 23289 dups)
+[1] filling 43515 regions, 100637 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 43515
+You are now connected to database "hint" as user "pshannon".
+COPY 100637
+[1] 24849915 hits in 10475283 regions
+[1] ---- ENCSR000EJE.hint.bed (chr17) (8/18)
+[1] novel locs: 87618 new/120378 possible (444141 now known, 32760 dups)
+[1] filling 87618 regions, 176307 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 87618
+You are now connected to database "hint" as user "pshannon".
+COPY 176307
+[1] 25026222 hits in 10562901 regions
+[1] ---- ENCSR000EJF.hint.bed (chr17) (9/18)
+[1] novel locs: 57552 new/93602 possible (501693 now known, 36050 dups)
+[1] filling 57552 regions, 138098 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 57552
+You are now connected to database "hint" as user "pshannon".
+COPY 138098
+[1] 25164320 hits in 10620453 regions
+[1] ---- ENCSR000EJG.hint.bed (chr17) (10/18)
+[1] novel locs: 3173 new/11785 possible (504866 now known, 8612 dups)
+[1] filling 3173 regions, 18282 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 3173
+You are now connected to database "hint" as user "pshannon".
+COPY 18282
+[1] 25182602 hits in 10623626 regions
+[1] ---- ENCSR000EJI.hint.bed (chr17) (11/18)
+[1] novel locs: 43412 new/83374 possible (548278 now known, 39962 dups)
+[1] filling 43412 regions, 123417 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 43412
+You are now connected to database "hint" as user "pshannon".
+COPY 123417
+[1] 25306019 hits in 10667038 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr17) (12/18)
+[1] novel locs: 33279 new/73560 possible (581557 now known, 40281 dups)
+[1] filling 33279 regions, 110254 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 33279
+You are now connected to database "hint" as user "pshannon".
+COPY 110254
+[1] 25416273 hits in 10700317 regions
+[1] ---- ENCSR000EJK.hint.bed (chr17) (13/18)
+[1] novel locs: 49322 new/99888 possible (630879 now known, 50566 dups)
+[1] filling 49322 regions, 147492 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 49322
+You are now connected to database "hint" as user "pshannon".
+COPY 147492
+[1] 25563765 hits in 10749639 regions
+[1] ---- ENCSR000EJL.hint.bed (chr17) (14/18)
+[1] novel locs: 21941 new/57829 possible (652820 now known, 35888 dups)
+[1] filling 21941 regions, 86346 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 21941
+You are now connected to database "hint" as user "pshannon".
+COPY 86346
+[1] 25650111 hits in 10771580 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr17) (15/18)
+[1] novel locs: 61703 new/117850 possible (714523 now known, 56147 dups)
+[1] filling 61703 regions, 170294 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 61703
+You are now connected to database "hint" as user "pshannon".
+COPY 170294
+[1] 25820405 hits in 10833283 regions
+[1] ---- ENCSR000EMR.hint.bed (chr17) (16/18)
+[1] novel locs: 7084 new/34890 possible (721607 now known, 27806 dups)
+[1] filling 7084 regions, 52475 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 7084
+You are now connected to database "hint" as user "pshannon".
+COPY 52475
+[1] 25872880 hits in 10840367 regions
+[1] ---- ENCSR000EMS.hint.bed (chr17) (17/18)
+[1] novel locs: 25236 new/76530 possible (746843 now known, 51294 dups)
+[1] filling 25236 regions, 112351 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 25236
+You are now connected to database "hint" as user "pshannon".
+COPY 112351
+[1] 25985231 hits in 10865603 regions
+[1] ---- ENCSR000EMT.hint.bed (chr17) (18/18)
+[1] novel locs: 34303 new/100821 possible (781146 now known, 66518 dups)
+[1] filling 34303 regions, 147113 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 34303
+You are now connected to database "hint" as user "pshannon".
+COPY 147113
+[1] 26132344 hits in 10899906 regions
+[1] ---- ENCSR000DBY.hint.bed (chr18) (1/18)
+[1] novel locs: 4965 new/4965 possible (4965 now known, 0 dups)
+[1] filling 4965 regions, 7110 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 4965
+You are now connected to database "hint" as user "pshannon".
+COPY 7110
+[1] 26139454 hits in 10904871 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr18) (2/18)
+[1] novel locs: 30721 new/31255 possible (35686 now known, 534 dups)
+[1] filling 30721 regions, 45199 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 30721
+You are now connected to database "hint" as user "pshannon".
+COPY 45199
+[1] 26184653 hits in 10935592 regions
+[1] ---- ENCSR000DCA.hint.bed (chr18) (3/18)
+[1] novel locs: 18681 new/21134 possible (54367 now known, 2453 dups)
+[1] filling 18681 regions, 31408 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 18681
+You are now connected to database "hint" as user "pshannon".
+COPY 31408
+[1] 26216061 hits in 10954273 regions
+[1] ---- ENCSR000DCB.hint.bed (chr18) (4/18)
+[1] novel locs: 23033 new/27263 possible (77400 now known, 4230 dups)
+[1] filling 23033 regions, 39408 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 23033
+You are now connected to database "hint" as user "pshannon".
+COPY 39408
+[1] 26255469 hits in 10977306 regions
+[1] ---- ENCSR000DCC.hint.bed (chr18) (5/18)
+[1] novel locs: 14802 new/19469 possible (92202 now known, 4667 dups)
+[1] filling 14802 regions, 28353 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 14802
+You are now connected to database "hint" as user "pshannon".
+COPY 28353
+[1] 26283822 hits in 10992108 regions
+[1] ---- ENCSR000EJB.hint.bed (chr18) (6/18)
+[1] novel locs: 25774 new/30598 possible (117976 now known, 4824 dups)
+[1] filling 25774 regions, 45185 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 25774
+You are now connected to database "hint" as user "pshannon".
+COPY 45185
+[1] 26329007 hits in 11017882 regions
+[1] ---- ENCSR000EJD.hint.bed (chr18) (7/18)
+[1] novel locs: 15807 new/22608 possible (133783 now known, 6801 dups)
+[1] filling 15807 regions, 33722 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 15807
+You are now connected to database "hint" as user "pshannon".
+COPY 33722
+[1] 26362729 hits in 11033689 regions
+[1] ---- ENCSR000EJE.hint.bed (chr18) (8/18)
+[1] novel locs: 20124 new/28634 possible (153907 now known, 8510 dups)
+[1] filling 20124 regions, 42199 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 20124
+You are now connected to database "hint" as user "pshannon".
+COPY 42199
+[1] 26404928 hits in 11053813 regions
+[1] ---- ENCSR000EJF.hint.bed (chr18) (9/18)
+[1] novel locs: 16370 new/26314 possible (170277 now known, 9944 dups)
+[1] filling 16370 regions, 38983 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 16370
+You are now connected to database "hint" as user "pshannon".
+COPY 38983
+[1] 26443911 hits in 11070183 regions
+[1] ---- ENCSR000EJG.hint.bed (chr18) (10/18)
+[1] novel locs: 860 new/2681 possible (171137 now known, 1821 dups)
+[1] filling 860 regions, 4283 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 860
+You are now connected to database "hint" as user "pshannon".
+COPY 4283
+[1] 26448194 hits in 11071043 regions
+[1] ---- ENCSR000EJI.hint.bed (chr18) (11/18)
+[1] novel locs: 11624 new/22053 possible (182761 now known, 10429 dups)
+[1] filling 11624 regions, 32915 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 11624
+You are now connected to database "hint" as user "pshannon".
+COPY 32915
+[1] 26481109 hits in 11082667 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr18) (12/18)
+[1] novel locs: 9097 new/19790 possible (191858 now known, 10693 dups)
+[1] filling 9097 regions, 29428 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 9097
+You are now connected to database "hint" as user "pshannon".
+COPY 29428
+[1] 26510537 hits in 11091764 regions
+[1] ---- ENCSR000EJK.hint.bed (chr18) (13/18)
+[1] novel locs: 11797 new/24914 possible (203655 now known, 13117 dups)
+[1] filling 11797 regions, 36889 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 11797
+You are now connected to database "hint" as user "pshannon".
+COPY 36889
+[1] 26547426 hits in 11103561 regions
+[1] ---- ENCSR000EJL.hint.bed (chr18) (14/18)
+[1] novel locs: 6537 new/16237 possible (210192 now known, 9700 dups)
+[1] filling 6537 regions, 24227 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 6537
+You are now connected to database "hint" as user "pshannon".
+COPY 24227
+[1] 26571653 hits in 11110098 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr18) (15/18)
+[1] novel locs: 20370 new/35818 possible (230562 now known, 15448 dups)
+[1] filling 20370 regions, 52216 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 20370
+You are now connected to database "hint" as user "pshannon".
+COPY 52216
+[1] 26623869 hits in 11130468 regions
+[1] ---- ENCSR000EMR.hint.bed (chr18) (16/18)
+[1] novel locs: 2070 new/9503 possible (232632 now known, 7433 dups)
+[1] filling 2070 regions, 14266 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 2070
+You are now connected to database "hint" as user "pshannon".
+COPY 14266
+[1] 26638135 hits in 11132538 regions
+[1] ---- ENCSR000EMS.hint.bed (chr18) (17/18)
+[1] novel locs: 10761 new/25982 possible (243393 now known, 15221 dups)
+[1] filling 10761 regions, 38080 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 10761
+You are now connected to database "hint" as user "pshannon".
+COPY 38080
+[1] 26676215 hits in 11143299 regions
+[1] ---- ENCSR000EMT.hint.bed (chr18) (18/18)
+[1] novel locs: 13918 new/34309 possible (257311 now known, 20391 dups)
+[1] filling 13918 regions, 50187 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 13918
+You are now connected to database "hint" as user "pshannon".
+COPY 50187
+[1] 26726402 hits in 11157217 regions
+[1] ---- ENCSR000DBY.hint.bed (chr19) (1/18)
+[1] novel locs: 18292 new/18292 possible (18292 now known, 0 dups)
+[1] filling 18292 regions, 26662 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 18292
+You are now connected to database "hint" as user "pshannon".
+COPY 26662
+[1] 26753064 hits in 11175509 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr19) (2/18)
+[1] novel locs: 67003 new/69309 possible (85295 now known, 2306 dups)
+[1] filling 67003 regions, 100510 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 67003
+You are now connected to database "hint" as user "pshannon".
+COPY 100510
+[1] 26853574 hits in 11242512 regions
+[1] ---- ENCSR000DCA.hint.bed (chr19) (3/18)
+[1] novel locs: 49190 new/58207 possible (134485 now known, 9017 dups)
+[1] filling 49190 regions, 84474 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 49190
+You are now connected to database "hint" as user "pshannon".
+COPY 84474
+[1] 26938048 hits in 11291702 regions
+[1] ---- ENCSR000DCB.hint.bed (chr19) (4/18)
+[1] novel locs: 44429 new/59253 possible (178914 now known, 14824 dups)
+[1] filling 44429 regions, 86675 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 44429
+You are now connected to database "hint" as user "pshannon".
+COPY 86675
+[1] 27024723 hits in 11336131 regions
+[1] ---- ENCSR000DCC.hint.bed (chr19) (5/18)
+[1] novel locs: 27530 new/42460 possible (206444 now known, 14930 dups)
+[1] filling 27530 regions, 61712 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 27530
+You are now connected to database "hint" as user "pshannon".
+COPY 61712
+[1] 27086435 hits in 11363661 regions
+[1] ---- ENCSR000EJB.hint.bed (chr19) (6/18)
+[1] novel locs: 52444 new/70521 possible (258888 now known, 18077 dups)
+[1] filling 52444 regions, 106329 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 52444
+You are now connected to database "hint" as user "pshannon".
+COPY 106329
+[1] 27192764 hits in 11416105 regions
+[1] ---- ENCSR000EJD.hint.bed (chr19) (7/18)
+[1] novel locs: 40750 new/65064 possible (299638 now known, 24314 dups)
+[1] filling 40750 regions, 97638 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 40750
+You are now connected to database "hint" as user "pshannon".
+COPY 97638
+[1] 27290402 hits in 11456855 regions
+[1] ---- ENCSR000EJE.hint.bed (chr19) (8/18)
+[1] novel locs: 78061 new/111355 possible (377699 now known, 33294 dups)
+[1] filling 78061 regions, 163619 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 78061
+You are now connected to database "hint" as user "pshannon".
+COPY 163619
+[1] 27454021 hits in 11534916 regions
+[1] ---- ENCSR000EJF.hint.bed (chr19) (9/18)
+[1] novel locs: 50067 new/87714 possible (427766 now known, 37647 dups)
+[1] filling 50067 regions, 130671 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 50067
+You are now connected to database "hint" as user "pshannon".
+COPY 130671
+[1] 27584692 hits in 11584983 regions
+[1] ---- ENCSR000EJG.hint.bed (chr19) (10/18)
+[1] novel locs: 4299 new/16513 possible (432065 now known, 12214 dups)
+[1] filling 4299 regions, 26023 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 4299
+You are now connected to database "hint" as user "pshannon".
+COPY 26023
+[1] 27610715 hits in 11589282 regions
+[1] ---- ENCSR000EJI.hint.bed (chr19) (11/18)
+[1] novel locs: 32600 new/73201 possible (464665 now known, 40601 dups)
+[1] filling 32600 regions, 109668 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 32600
+You are now connected to database "hint" as user "pshannon".
+COPY 109668
+[1] 27720383 hits in 11621882 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr19) (12/18)
+[1] novel locs: 24285 new/63250 possible (488950 now known, 38965 dups)
+[1] filling 24285 regions, 95502 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 24285
+You are now connected to database "hint" as user "pshannon".
+COPY 95502
+[1] 27815885 hits in 11646167 regions
+[1] ---- ENCSR000EJK.hint.bed (chr19) (13/18)
+[1] novel locs: 50480 new/102394 possible (539430 now known, 51914 dups)
+[1] filling 50480 regions, 150475 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 50480
+You are now connected to database "hint" as user "pshannon".
+COPY 150475
+[1] 27966360 hits in 11696647 regions
+[1] ---- ENCSR000EJL.hint.bed (chr19) (14/18)
+[1] novel locs: 17490 new/53870 possible (556920 now known, 36380 dups)
+[1] filling 17490 regions, 80779 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 17490
+You are now connected to database "hint" as user "pshannon".
+COPY 80779
+[1] 28047139 hits in 11714137 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr19) (15/18)
+[1] novel locs: 74606 new/136496 possible (631526 now known, 61890 dups)
+[1] filling 74606 regions, 197528 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 74606
+You are now connected to database "hint" as user "pshannon".
+COPY 197528
+[1] 28244667 hits in 11788743 regions
+[1] ---- ENCSR000EMR.hint.bed (chr19) (16/18)
+[1] novel locs: 8875 new/43382 possible (640401 now known, 34507 dups)
+[1] filling 8875 regions, 65874 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 8875
+You are now connected to database "hint" as user "pshannon".
+COPY 65874
+[1] 28310541 hits in 11797618 regions
+[1] ---- ENCSR000EMS.hint.bed (chr19) (17/18)
+[1] novel locs: 25106 new/79307 possible (665507 now known, 54201 dups)
+[1] filling 25106 regions, 116281 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 25106
+You are now connected to database "hint" as user "pshannon".
+COPY 116281
+[1] 28426822 hits in 11822724 regions
+[1] ---- ENCSR000EMT.hint.bed (chr19) (18/18)
+[1] novel locs: 39190 new/106784 possible (704697 now known, 67594 dups)
+[1] filling 39190 regions, 154952 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 39190
+You are now connected to database "hint" as user "pshannon".
+COPY 154952
+[1] 28581774 hits in 11861914 regions
+[1] ---- ENCSR000DBY.hint.bed (chr20) (1/18)
+[1] novel locs: 10331 new/10331 possible (10331 now known, 0 dups)
+[1] filling 10331 regions, 14914 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 10331
+You are now connected to database "hint" as user "pshannon".
+COPY 14914
+[1] 28596688 hits in 11872245 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr20) (2/18)
+[1] novel locs: 40598 new/41637 possible (50929 now known, 1039 dups)
+[1] filling 40598 regions, 59963 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 40598
+You are now connected to database "hint" as user "pshannon".
+COPY 59963
+[1] 28656651 hits in 11912843 regions
+[1] ---- ENCSR000DCA.hint.bed (chr20) (3/18)
+[1] novel locs: 29145 new/33062 possible (80074 now known, 3917 dups)
+[1] filling 29145 regions, 47949 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 29145
+You are now connected to database "hint" as user "pshannon".
+COPY 47949
+[1] 28704600 hits in 11941988 regions
+[1] ---- ENCSR000DCB.hint.bed (chr20) (4/18)
+[1] novel locs: 29866 new/36504 possible (109940 now known, 6638 dups)
+[1] filling 29866 regions, 52500 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 29866
+You are now connected to database "hint" as user "pshannon".
+COPY 52500
+[1] 28757100 hits in 11971854 regions
+[1] ---- ENCSR000DCC.hint.bed (chr20) (5/18)
+[1] novel locs: 17607 new/24226 possible (127547 now known, 6619 dups)
+[1] filling 17607 regions, 35477 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 17607
+You are now connected to database "hint" as user "pshannon".
+COPY 35477
+[1] 28792577 hits in 11989461 regions
+[1] ---- ENCSR000EJB.hint.bed (chr20) (6/18)
+[1] novel locs: 44602 new/52031 possible (172149 now known, 7429 dups)
+[1] filling 44602 regions, 77039 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 44602
+You are now connected to database "hint" as user "pshannon".
+COPY 77039
+[1] 28869616 hits in 12034063 regions
+[1] ---- ENCSR000EJD.hint.bed (chr20) (7/18)
+[1] novel locs: 28574 new/39785 possible (200723 now known, 11211 dups)
+[1] filling 28574 regions, 60037 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 28574
+You are now connected to database "hint" as user "pshannon".
+COPY 60037
+[1] 28929653 hits in 12062637 regions
+[1] ---- ENCSR000EJE.hint.bed (chr20) (8/18)
+[1] novel locs: 39444 new/54440 possible (240167 now known, 14996 dups)
+[1] filling 39444 regions, 79812 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 39444
+You are now connected to database "hint" as user "pshannon".
+COPY 79812
+[1] 29009465 hits in 12102081 regions
+[1] ---- ENCSR000EJF.hint.bed (chr20) (9/18)
+[1] novel locs: 39000 new/58010 possible (279167 now known, 19010 dups)
+[1] filling 39000 regions, 85287 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 39000
+You are now connected to database "hint" as user "pshannon".
+COPY 85287
+[1] 29094752 hits in 12141081 regions
+[1] ---- ENCSR000EJG.hint.bed (chr20) (10/18)
+[1] novel locs: 1625 new/5409 possible (280792 now known, 3784 dups)
+[1] filling 1625 regions, 8577 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 1625
+You are now connected to database "hint" as user "pshannon".
+COPY 8577
+[1] 29103329 hits in 12142706 regions
+[1] ---- ENCSR000EJI.hint.bed (chr20) (11/18)
+[1] novel locs: 24000 new/42865 possible (304792 now known, 18865 dups)
+[1] filling 24000 regions, 64356 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 24000
+You are now connected to database "hint" as user "pshannon".
+COPY 64356
+[1] 29167685 hits in 12166706 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr20) (12/18)
+[1] novel locs: 18663 new/38987 possible (323455 now known, 20324 dups)
+[1] filling 18663 regions, 58691 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 18663
+You are now connected to database "hint" as user "pshannon".
+COPY 58691
+[1] 29226376 hits in 12185369 regions
+[1] ---- ENCSR000EJK.hint.bed (chr20) (13/18)
+[1] novel locs: 24167 new/47226 possible (347622 now known, 23059 dups)
+[1] filling 24167 regions, 69953 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 24167
+You are now connected to database "hint" as user "pshannon".
+COPY 69953
+[1] 29296329 hits in 12209536 regions
+[1] ---- ENCSR000EJL.hint.bed (chr20) (14/18)
+[1] novel locs: 13880 new/33283 possible (361502 now known, 19403 dups)
+[1] filling 13880 regions, 49871 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 13880
+You are now connected to database "hint" as user "pshannon".
+COPY 49871
+[1] 29346200 hits in 12223416 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr20) (15/18)
+[1] novel locs: 38047 new/65430 possible (399549 now known, 27383 dups)
+[1] filling 38047 regions, 95115 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 38047
+You are now connected to database "hint" as user "pshannon".
+COPY 95115
+[1] 29441315 hits in 12261463 regions
+[1] ---- ENCSR000EMR.hint.bed (chr20) (16/18)
+[1] novel locs: 3865 new/16621 possible (403414 now known, 12756 dups)
+[1] filling 3865 regions, 25451 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 3865
+You are now connected to database "hint" as user "pshannon".
+COPY 25451
+[1] 29466766 hits in 12265328 regions
+[1] ---- ENCSR000EMS.hint.bed (chr20) (17/18)
+[1] novel locs: 14945 new/41061 possible (418359 now known, 26116 dups)
+[1] filling 14945 regions, 60207 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 14945
+You are now connected to database "hint" as user "pshannon".
+COPY 60207
+[1] 29526973 hits in 12280273 regions
+[1] ---- ENCSR000EMT.hint.bed (chr20) (18/18)
+[1] novel locs: 21178 new/54287 possible (439537 now known, 33109 dups)
+[1] filling 21178 regions, 78563 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 21178
+You are now connected to database "hint" as user "pshannon".
+COPY 78563
+[1] 29605536 hits in 12301451 regions
+[1] ---- ENCSR000DBY.hint.bed (chr21) (1/18)
+[1] novel locs: 6971 new/6971 possible (6971 now known, 0 dups)
+[1] filling 6971 regions, 10231 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 6971
+You are now connected to database "hint" as user "pshannon".
+COPY 10231
+[1] 29615767 hits in 12308422 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr21) (2/18)
+[1] novel locs: 20343 new/21057 possible (27314 now known, 714 dups)
+[1] filling 20343 regions, 30757 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 20343
+You are now connected to database "hint" as user "pshannon".
+COPY 30757
+[1] 29646524 hits in 12328765 regions
+[1] ---- ENCSR000DCA.hint.bed (chr21) (3/18)
+[1] novel locs: 14515 new/17041 possible (41829 now known, 2526 dups)
+[1] filling 14515 regions, 24567 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 14515
+You are now connected to database "hint" as user "pshannon".
+COPY 24567
+[1] 29671091 hits in 12343280 regions
+[1] ---- ENCSR000DCB.hint.bed (chr21) (4/18)
+[1] novel locs: 18044 new/21547 possible (59873 now known, 3503 dups)
+[1] filling 18044 regions, 30564 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 18044
+You are now connected to database "hint" as user "pshannon".
+COPY 30564
+[1] 29701655 hits in 12361324 regions
+[1] ---- ENCSR000DCC.hint.bed (chr21) (5/18)
+[1] novel locs: 9016 new/12307 possible (68889 now known, 3291 dups)
+[1] filling 9016 regions, 17575 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 9016
+You are now connected to database "hint" as user "pshannon".
+COPY 17575
+[1] 29719230 hits in 12370340 regions
+[1] ---- ENCSR000EJB.hint.bed (chr21) (6/18)
+[1] novel locs: 16763 new/19946 possible (85652 now known, 3183 dups)
+[1] filling 16763 regions, 30011 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 16763
+You are now connected to database "hint" as user "pshannon".
+COPY 30011
+[1] 29749241 hits in 12387103 regions
+[1] ---- ENCSR000EJD.hint.bed (chr21) (7/18)
+[1] novel locs: 13308 new/18115 possible (98960 now known, 4807 dups)
+[1] filling 13308 regions, 27511 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 13308
+You are now connected to database "hint" as user "pshannon".
+COPY 27511
+[1] 29776752 hits in 12400411 regions
+[1] ---- ENCSR000EJE.hint.bed (chr21) (8/18)
+[1] novel locs: 26626 new/33486 possible (125586 now known, 6860 dups)
+[1] filling 26626 regions, 49411 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 26626
+You are now connected to database "hint" as user "pshannon".
+COPY 49411
+[1] 29826163 hits in 12427037 regions
+[1] ---- ENCSR000EJF.hint.bed (chr21) (9/18)
+[1] novel locs: 14056 new/22064 possible (139642 now known, 8008 dups)
+[1] filling 14056 regions, 32760 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 14056
+You are now connected to database "hint" as user "pshannon".
+COPY 32760
+[1] 29858923 hits in 12441093 regions
+[1] ---- ENCSR000EJG.hint.bed (chr21) (10/18)
+[1] novel locs: 772 new/2270 possible (140414 now known, 1498 dups)
+[1] filling 772 regions, 3603 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 772
+You are now connected to database "hint" as user "pshannon".
+COPY 3603
+[1] 29862526 hits in 12441865 regions
+[1] ---- ENCSR000EJI.hint.bed (chr21) (11/18)
+[1] novel locs: 12713 new/21816 possible (153127 now known, 9103 dups)
+[1] filling 12713 regions, 32636 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 12713
+You are now connected to database "hint" as user "pshannon".
+COPY 32636
+[1] 29895162 hits in 12454578 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr21) (12/18)
+[1] novel locs: 9981 new/19518 possible (163108 now known, 9537 dups)
+[1] filling 9981 regions, 29276 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 9981
+You are now connected to database "hint" as user "pshannon".
+COPY 29276
+[1] 29924438 hits in 12464559 regions
+[1] ---- ENCSR000EJK.hint.bed (chr21) (13/18)
+[1] novel locs: 12936 new/24719 possible (176044 now known, 11783 dups)
+[1] filling 12936 regions, 36546 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 12936
+You are now connected to database "hint" as user "pshannon".
+COPY 36546
+[1] 29960984 hits in 12477495 regions
+[1] ---- ENCSR000EJL.hint.bed (chr21) (14/18)
+[1] novel locs: 6277 new/14969 possible (182321 now known, 8692 dups)
+[1] filling 6277 regions, 22333 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 6277
+You are now connected to database "hint" as user "pshannon".
+COPY 22333
+[1] 29983317 hits in 12483772 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr21) (15/18)
+[1] novel locs: 19864 new/33197 possible (202185 now known, 13333 dups)
+[1] filling 19864 regions, 48513 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 19864
+You are now connected to database "hint" as user "pshannon".
+COPY 48513
+[1] 30031830 hits in 12503636 regions
+[1] ---- ENCSR000EMR.hint.bed (chr21) (16/18)
+[1] novel locs: 2273 new/8099 possible (204458 now known, 5826 dups)
+[1] filling 2273 regions, 12020 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 2273
+You are now connected to database "hint" as user "pshannon".
+COPY 12020
+[1] 30043850 hits in 12505909 regions
+[1] ---- ENCSR000EMS.hint.bed (chr21) (17/18)
+[1] novel locs: 8335 new/20410 possible (212793 now known, 12075 dups)
+[1] filling 8335 regions, 30234 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 8335
+You are now connected to database "hint" as user "pshannon".
+COPY 30234
+[1] 30074084 hits in 12514244 regions
+[1] ---- ENCSR000EMT.hint.bed (chr21) (18/18)
+[1] novel locs: 9867 new/25218 possible (222660 now known, 15351 dups)
+[1] filling 9867 regions, 36315 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 9867
+You are now connected to database "hint" as user "pshannon".
+COPY 36315
+[1] 30110399 hits in 12524111 regions
+[1] ---- ENCSR000DBY.hint.bed (chr22) (1/18)
+[1] novel locs: 12449 new/12449 possible (12449 now known, 0 dups)
+[1] filling 12449 regions, 17719 hits for ENCSR000DBY
+You are now connected to database "hint" as user "pshannon".
+COPY 12449
+You are now connected to database "hint" as user "pshannon".
+COPY 17719
+[1] 30128118 hits in 12536560 regions
+[1] ---- ENCSR000DBZ.hint.bed (chr22) (2/18)
+[1] novel locs: 41096 new/42307 possible (53545 now known, 1211 dups)
+[1] filling 41096 regions, 61327 hits for ENCSR000DBZ
+You are now connected to database "hint" as user "pshannon".
+COPY 41096
+You are now connected to database "hint" as user "pshannon".
+COPY 61327
+[1] 30189445 hits in 12577656 regions
+[1] ---- ENCSR000DCA.hint.bed (chr22) (3/18)
+[1] novel locs: 27850 new/32271 possible (81395 now known, 4421 dups)
+[1] filling 27850 regions, 47256 hits for ENCSR000DCA
+You are now connected to database "hint" as user "pshannon".
+COPY 27850
+You are now connected to database "hint" as user "pshannon".
+COPY 47256
+[1] 30236701 hits in 12605506 regions
+[1] ---- ENCSR000DCB.hint.bed (chr22) (4/18)
+[1] novel locs: 28157 new/34993 possible (109552 now known, 6836 dups)
+[1] filling 28157 regions, 50290 hits for ENCSR000DCB
+You are now connected to database "hint" as user "pshannon".
+COPY 28157
+You are now connected to database "hint" as user "pshannon".
+COPY 50290
+[1] 30286991 hits in 12633663 regions
+[1] ---- ENCSR000DCC.hint.bed (chr22) (5/18)
+[1] novel locs: 16017 new/22538 possible (125569 now known, 6521 dups)
+[1] filling 16017 regions, 32377 hits for ENCSR000DCC
+You are now connected to database "hint" as user "pshannon".
+COPY 16017
+You are now connected to database "hint" as user "pshannon".
+COPY 32377
+[1] 30319368 hits in 12649680 regions
+[1] ---- ENCSR000EJB.hint.bed (chr22) (6/18)
+[1] novel locs: 36640 new/43582 possible (162209 now known, 6942 dups)
+[1] filling 36640 regions, 64524 hits for ENCSR000EJB
+You are now connected to database "hint" as user "pshannon".
+COPY 36640
+You are now connected to database "hint" as user "pshannon".
+COPY 64524
+[1] 30383892 hits in 12686320 regions
+[1] ---- ENCSR000EJD.hint.bed (chr22) (7/18)
+[1] novel locs: 27120 new/37583 possible (189329 now known, 10463 dups)
+[1] filling 27120 regions, 56303 hits for ENCSR000EJD
+You are now connected to database "hint" as user "pshannon".
+COPY 27120
+You are now connected to database "hint" as user "pshannon".
+COPY 56303
+[1] 30440195 hits in 12713440 regions
+[1] ---- ENCSR000EJE.hint.bed (chr22) (8/18)
+[1] novel locs: 61364 new/77295 possible (250693 now known, 15931 dups)
+[1] filling 61364 regions, 113669 hits for ENCSR000EJE
+You are now connected to database "hint" as user "pshannon".
+COPY 61364
+You are now connected to database "hint" as user "pshannon".
+COPY 113669
+[1] 30553864 hits in 12774804 regions
+[1] ---- ENCSR000EJF.hint.bed (chr22) (9/18)
+[1] novel locs: 37891 new/56020 possible (288584 now known, 18129 dups)
+[1] filling 37891 regions, 83266 hits for ENCSR000EJF
+You are now connected to database "hint" as user "pshannon".
+COPY 37891
+You are now connected to database "hint" as user "pshannon".
+COPY 83266
+[1] 30637130 hits in 12812695 regions
+[1] ---- ENCSR000EJG.hint.bed (chr22) (10/18)
+[1] novel locs: 1575 new/5454 possible (290159 now known, 3879 dups)
+[1] filling 1575 regions, 8585 hits for ENCSR000EJG
+You are now connected to database "hint" as user "pshannon".
+COPY 1575
+You are now connected to database "hint" as user "pshannon".
+COPY 8585
+[1] 30645715 hits in 12814270 regions
+[1] ---- ENCSR000EJI.hint.bed (chr22) (11/18)
+[1] novel locs: 21748 new/39741 possible (311907 now known, 17993 dups)
+[1] filling 21748 regions, 58878 hits for ENCSR000EJI
+You are now connected to database "hint" as user "pshannon".
+COPY 21748
+You are now connected to database "hint" as user "pshannon".
+COPY 58878
+[1] 30704593 hits in 12836018 regions
+[1] ---- ENCSR000EJJ.hint.bed (chr22) (12/18)
+[1] novel locs: 19340 new/38469 possible (331247 now known, 19129 dups)
+[1] filling 19340 regions, 57131 hits for ENCSR000EJJ
+You are now connected to database "hint" as user "pshannon".
+COPY 19340
+You are now connected to database "hint" as user "pshannon".
+COPY 57131
+[1] 30761724 hits in 12855358 regions
+[1] ---- ENCSR000EJK.hint.bed (chr22) (13/18)
+[1] novel locs: 36520 new/63480 possible (367767 now known, 26960 dups)
+[1] filling 36520 regions, 93532 hits for ENCSR000EJK
+You are now connected to database "hint" as user "pshannon".
+COPY 36520
+You are now connected to database "hint" as user "pshannon".
+COPY 93532
+[1] 30855256 hits in 12891878 regions
+[1] ---- ENCSR000EJL.hint.bed (chr22) (14/18)
+[1] novel locs: 14307 new/31917 possible (382074 now known, 17610 dups)
+[1] filling 14307 regions, 47590 hits for ENCSR000EJL
+You are now connected to database "hint" as user "pshannon".
+COPY 14307
+You are now connected to database "hint" as user "pshannon".
+COPY 47590
+[1] 30902846 hits in 12906185 regions
+[1] ---- ENCSR000EMQ.hint.bed (chr22) (15/18)
+[1] novel locs: 39174 new/65544 possible (421248 now known, 26370 dups)
+[1] filling 39174 regions, 94823 hits for ENCSR000EMQ
+You are now connected to database "hint" as user "pshannon".
+COPY 39174
+You are now connected to database "hint" as user "pshannon".
+COPY 94823
+[1] 30997669 hits in 12945359 regions
+[1] ---- ENCSR000EMR.hint.bed (chr22) (16/18)
+[1] novel locs: 3210 new/15323 possible (424458 now known, 12113 dups)
+[1] filling 3210 regions, 23316 hits for ENCSR000EMR
+You are now connected to database "hint" as user "pshannon".
+COPY 3210
+You are now connected to database "hint" as user "pshannon".
+COPY 23316
+[1] 31020985 hits in 12948569 regions
+[1] ---- ENCSR000EMS.hint.bed (chr22) (17/18)
+[1] novel locs: 13540 new/37542 possible (437998 now known, 24002 dups)
+[1] filling 13540 regions, 55717 hits for ENCSR000EMS
+You are now connected to database "hint" as user "pshannon".
+COPY 13540
+You are now connected to database "hint" as user "pshannon".
+COPY 55717
+[1] 31076702 hits in 12962109 regions
+[1] ---- ENCSR000EMT.hint.bed (chr22) (18/18)
+[1] novel locs: 18496 new/48620 possible (456494 now known, 30124 dups)
+[1] filling 18496 regions, 71389 hits for ENCSR000EMT
+You are now connected to database "hint" as user "pshannon".
+COPY 18496
+You are now connected to database "hint" as user "pshannon".
+COPY 71389
+[1] 31148091 hits in 12980605 regions
+> 
