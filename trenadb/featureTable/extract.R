@@ -29,7 +29,8 @@ runTests <- function()
   test.addFimoRegions()
   test.toFeatureTable()
   test.toFeatureTable.big()
-      
+  test.hintToFeatureTable()
+  
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
 getHits <- function(db, chrom, start, end)
@@ -75,7 +76,6 @@ addFimoRegions <- function(tbl.cs, tbl.fimo)
       return(found)
       }
 
-   browser()
    tbl.combined$bindingSite <- sapply(1:nrow(tbl.combined),
                                    function(i) sharedMotif(tbl.combined$name[i], tbl.combined$motifname[i]))
 
@@ -258,7 +258,6 @@ test.toFeatureTable.big <- function(shoulder=15000)
    printf("    testing freshly created 'tbl.expanded': %d x %d", nrow(tbl.expanded), ncol(tbl.expanded))
    tbl <- toFeatureTable(tbl.expanded)
    checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
-   browser()
    x <- 99
 
 } # test.toFeatureTable.big
@@ -311,76 +310,32 @@ test.hintToFeatureTable <- function(shoulder=1000)
 
 } # test.hintToFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
-#
-#
-#       # fimo identifies 511 binding sites, among 164 unique motifs
-#   tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-#   printf("   tbl.fimo: %d rows", nrow(tbl.fimo))
-#
-#       # our current fimo database lists chromosome names as, e.g., "10".  standardize them
-#   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-#
-#   tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
-#   printf("    testing freshly created 'tbl.expanded': %d x %d", nrow(tbl.expanded), ncol(tbl.expanded))
-#   tbl <- toFeatureTable(tbl.expanded)
-#   checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
-#
-#
-#} # hist.featureTable
-#------------------------------------------------------------------------------------------------------------------------
-explore <- function()
+ensembl <- function(chrom, start, end)
 {
-   shoulder <- 2000
-   
-   if(!exists("tbl.apoe"))
-      tbl.apoe <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-   
-   if(!exists("tbl.fimo")){
-      tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-      tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-      }
-   
-   # tbl.apoe <- tbl.apoe[1,]
-   print(dim(tbl.apoe))
-   print(dim(tbl.fimo))
-   gr.fimo <- with(tbl.fimo, GRanges(seqnames=chrom, IRanges(start=start, end=endpos)))
-   gr.cs   <- with(tbl.apoe, GRanges(seqnames=chrom, IRanges(start=start-100, end=endpos+100)))
-   tbl.overlaps <- as.data.frame(findOverlaps(gr.fimo, gr.cs, type="any"))
-   tbl.combined <- cbind(tbl.apoe[tbl.overlaps$subjectHits,],
-                         tbl.fimo[tbl.overlaps$queryHits,])[, c("loc", "name", "motifname")]
-   tbl.combined <- unique(tbl.combined)
-   dim(tbl.combined)
-   
-   # consult the tfmotifs table in trenadb, find each tf's 
-   f <- function(gene){
-     dbGetQuery(db.trena, sprintf("select motif from tfmotifs where gene = '%s'", gene))[,1]
-     }
-   
-   # find all known motifs for the genes bound to the apoe region as predicted by chipseq
-   x <- sapply(unique(tbl.combined$name), f)
-   
-   sharedMotif <- function(gene, motif){
-       motifs.for.this.gene <- dbGetQuery(db.trena, sprintf("select motif from tfmotifs where gene='%s'", gene))$motif
-       printf("gene: %s   has motifs: %s  includes? %s", gene, paste(motifs.for.this.gene, collapse=","), motif)
-       return(motif %in% motifs.for.this.gene)
-       }
-   
-   tbl.combined$bindingSite <- sapply(1:nrow(tbl.combined),
-                                      function(i) sharedMotif(tbl.combined$name[i], tbl.combined$motif[i]))
-   
-   rownames(tbl.combined) <- NULL
-   subset(tbl.combined, bindingSite==TRUE)
-   tbl.combined.chipseq.with.motif <- subset(tbl.combined, bindingSite==TRUE)
-   #                         loc  name motifname bindingSite
-   #  2  chr19:44904803-44904953 RUNX3  MA0002.2        TRUE
-   #  9  chr19:44906503-44906653  PBX3  MA0070.1        TRUE
-   #  24 chr19:44904803-44904953  CTCF  MA0139.1        TRUE
-   #  26 chr19:44904803-44904953  CTCF  MA0139.1        TRUE
-   #  40 chr19:44906503-44906653  PBX3  MA0498.2        TRUE
-   #  46 chr19:44904803-44904953 RUNX3  MA0511.2        TRUE
-   #  67 chr19:44904803-44904953 RUNX3  MA0684.1        TRUE
-   tbl.x <- merge(tbl.apoe, tbl.combined.chipseq.with.motif, by=c("loc", "name"))
-   tbl.x$id <- paste(tbl.x$loc, tbl.x$name, sep="-")
+   #browser()
+   tbl.hits.cs <- getHits(db.chipseq, chrom, start, end)
+   tbl.fimo.cs <- getFimoHits(chrom, start, end)
+   tbl.fimo.cs$chrom <- paste("chr", tbl.fimo.cs$chrom, sep="")
 
-} # explore
+   tbl.expanded.cs <- addFimoRegions(tbl.hits.cs, tbl.fimo.cs)
+   tbl.feature.cs <- toFeatureTable(tbl.expanded.cs)
+
+   tbl.hits.hint <- getHits(db.hint, chrom, start, end)
+   tbl.feature.hint <- hintToFeatureTable(tbl.hits.hint)
+   printf ("uLoc overlap: %d", length(intersect(tbl.feature.hint$uLoc, tbl.feature.cs$uLoc)))
+   x <- tbl.feature.cs$uLoc; y <- tbl.feature.hint$uLoc;
+   printf("chipseq regions: %d", length(x))
+   printf("   HINT regions: %d", length(y))
+   browser()
+   x <- 99
+    
+} # ensembl
+#------------------------------------------------------------------------------------------------------------------------
+test.ensembl <- function()
+{
+   printf("--- test.ensembl")
+   shoulder <- 1000
+   tbl <- ensembl(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
+   
+} # test.ensembl
 #------------------------------------------------------------------------------------------------------------------------
