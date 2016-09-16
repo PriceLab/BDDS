@@ -18,7 +18,7 @@ runTests <- function()
   test.readHintTable()
   test.mergeFootprintsWithFimo()
   test.splitTableIntoRegionsAndHintHits()
-  test.fill.to.database()
+  #test.fill.to.database()
     
   #test.combineFootprintsAndFimo()
   #test.combineFootprintsAndDatabasedFimo()
