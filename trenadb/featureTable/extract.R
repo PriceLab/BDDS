@@ -1,6 +1,8 @@
 library(RPostgreSQL)
 library(GenomicRanges)
 library(RUnit)
+library(igvR)
+#------------------------------------------------------------------------------------------------------------------------
 source("../regionAndHitsSchemas.R")
 #------------------------------------------------------------------------------------------------------------------------
 if(!exists("db.chipseq"))
@@ -17,19 +19,29 @@ if(!exists("apoe")){
 if(!exists("db.hint"))
    db.hint <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="hint", host="whovian")
 
+if(!exists("db.wellington"))
+   db.wellington <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="wellington", host="whovian")
+
 if(!exists("db.trena"))
-  db.trena <- dbConnect(PostgreSQL(), user="pshannon", dbname="trena")
+  db.trena <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="trena", host="whovian")
       
 if(!exists("tbl.genesmotifs"))
     tbl.genesmotifs <- dbGetQuery(db.trena, "select * from tfmotifs")
 
+if(!exists("igv"))
+    igv <- igvR()
+
 #------------------------------------------------------------------------------------------------------------------------
 runTests <- function()
 {
-  test.addFimoRegions()
-  test.toFeatureTable()
-  test.toFeatureTable.big()
-  test.hintToFeatureTable()
+   test.locStringToBedTable()
+   test.addFimoRegions()
+   test.chipseqToFeatureTable()
+   test.ensemble()
+   #test.toFeatureTable()
+   #test.toFeatureTable.big()
+   #test.hintToFeatureTable()
+   
   
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -62,7 +74,7 @@ getFimoHits <- function(chrom, start, end)
 # associated with the transcript factor reported in tbl.cs
 addFimoRegions <- function(tbl.cs, tbl.fimo)
 {
-   printf("--- entering addFimoRegions, %d cs, %d fimo", nrow(tbl.cs), nrow(tbl.fimo))
+   #printf("--- entering addFimoRegions, %d cs, %d fimo", nrow(tbl.cs), nrow(tbl.fimo))
     
    gr.fimo <- with(tbl.fimo, GRanges(seqnames=chrom, IRanges(start=start, end=endpos)))
    gr.cs   <- with(tbl.cs,   GRanges(seqnames=chrom, IRanges(start=start, end=endpos)))
@@ -81,16 +93,17 @@ addFimoRegions <- function(tbl.cs, tbl.fimo)
 
    rownames(tbl.combined) <- NULL
 
-   printf("tbl.combined: %d %d", nrow(tbl.combined), ncol(tbl.combined))
+   #printf("tbl.combined: %d %d", nrow(tbl.combined), ncol(tbl.combined))
    
       # discard the rows where the fimo motif is not associated with the tf
-   tbl.out <- subset(tbl.combined, bindingSite==TRUE)
+   tbl.out <- tbl.combined
+   #tbl.out <- subset(tbl.combined, bindingSite==TRUE)
 
       # add a loc & length field
    tbl.out$loc <- with(tbl.out, sprintf("%s:%d-%d", chrom, start, endpos))
    tbl.out$length <- with(tbl.out, 1 + endpos - start)
 
-   printf("tbl.out: %d %d", nrow(tbl.out), ncol(tbl.out))
+   # printf("tbl.out: %d %d", nrow(tbl.out), ncol(tbl.out))
 
    invisible(tbl.out)
 
@@ -99,11 +112,13 @@ addFimoRegions <- function(tbl.cs, tbl.fimo)
 test.addFimoRegions <- function()
 {
    printf("--- test.addFimoRegions")
-   shoulder <- 1000
-   tbl.apoe.chipseq <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-   tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
+   chrom <- "chr19"
+   start <- 44906493
+   end <-  44906663
+   tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
+   tbl.fimo <- getFimoHits(chrom, start, end)
    tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-   tbl.expanded <- addFimoRegions(tbl.apoe.chipseq, tbl.fimo)
+   tbl.expanded <- addFimoRegions(tbl.chipseq, tbl.fimo)
    expected.colnames <- c("motifname", "chrom", "start", "endpos", "strand", "motifscore", "pval",
                           "empty", "sequence", "type", "name", "score1", "bindingSite", "loc", "length")
    checkTrue(all(expected.colnames %in% colnames(tbl.expanded)))
@@ -176,65 +191,65 @@ test.annotateWithMotifs <- function()
 
 } # test.annotateWithMotifs
 #------------------------------------------------------------------------------------------------------------------------
-toFeatureTable <- function(tbl.hits)
-{
-   printf("--- entering toFeatureTable, tbl.hits is (%d, %d)", nrow(tbl.hits), ncol(tbl.hits))
-
-   motifNames <- paste("chipseq", sort(unique(tbl.hits$motifname)), sep="_")
-   column.names <- c("uLoc", motifNames)
-   uLocs <- unique(tbl.hits$loc)
-   tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
-   colnames(tbl) <- column.names
-   tbl$uLoc <- uLocs
-   for(r in 1:nrow(tbl.hits)){
-      row <- tbl.hits[r, "loc"]
-      col <- sprintf("chipseq_%s", tbl.hits[r, "motifname"])
-      tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
-      }
-
-   tbl
-
-} # toFeatureTable
+# toFeatureTable <- function(tbl.hits)
+# {
+#    printf("--- entering toFeatureTable, tbl.hits is (%d, %d)", nrow(tbl.hits), ncol(tbl.hits))
+# 
+#    motifNames <- paste("chipseq", sort(unique(tbl.hits$motifname)), sep="_")
+#    column.names <- c("uLoc", motifNames)
+#    uLocs <- unique(tbl.hits$loc)
+#    tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
+#    colnames(tbl) <- column.names
+#    tbl$uLoc <- uLocs
+#    for(r in 1:nrow(tbl.hits)){
+#       row <- tbl.hits[r, "loc"]
+#       col <- sprintf("chipseq_%s", tbl.hits[r, "motifname"])
+#       tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
+#       }
+# 
+#    tbl
+# 
+# } # toFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
-test.toFeatureTable <- function(shoulder=1000)
-{
-   printf("--- test.toFeatureTable")
-
-       # chipseq data: one 151 base pair hit, claims that this is shared by 3 tfs: CTCF, RUNX3, PBX3
-   tbl.apoe <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-       # fimo identifies 511 binding sites, among 164 unique motifs
-   tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-       # our current fimo database lists chromosome names as, e.g., "10".  standardize them
-   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-
-   tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
-   tbl <- toFeatureTable(tbl.expanded)
-
-      # we expect one entry in the feature table for every row in tbl.expanded
-   printf("found %d loc/motif hits from tbl.expanded of %d rows", sum(tbl[, -1]), nrow(tbl.expanded))
-   checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
-
-      # for every row, identify each column with a 1, make sure tbl.expanded[
-
-   for(r in 1:nrow(tbl)){
-      hits <- which(tbl[r,] == 1)
-      this.loc <- tbl$uLoc[r]
-      if(length(hits) > 0){
-         column.names <- sub("chipseq_", "", colnames(tbl)[hits])
-         #if(length(column.names) > 10) browser()
-         #printf("loc: %s   column.names: %s", this.loc, paste(column.names, collapse=","))
-         #printf("checked out? %s (%d,%d)", 
-         #       nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)) == length(hits),
-         #       nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)), length(hits))
-                
-         checkEquals(nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)), length(hits))
-         } # if hits
-      } # for r
-
-   #browser();
-   #x <- 99
-
-} # test.toFeatureTable
+# test.chipseqToFeatureTable <- function(shoulder=1000)
+# {
+#    printf("--- test.chipseqToFeatureTable")
+# 
+#        # chipseq data: one 151 base pair hit, claims that this is shared by 3 tfs: CTCF, RUNX3, PBX3
+#    tbl.apoe <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
+#        # fimo identifies 511 binding sites, among 164 unique motifs
+#    tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
+#        # our current fimo database lists chromosome names as, e.g., "10".  standardize them
+#    tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+# 
+#    tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
+#    tbl <- toFeatureTable(tbl.expanded)
+# 
+#       # we expect one entry in the feature table for every row in tbl.expanded
+#    printf("found %d loc/motif hits from tbl.expanded of %d rows", sum(tbl[, -1]), nrow(tbl.expanded))
+#    checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
+# 
+#       # for every row, identify each column with a 1, make sure tbl.expanded[
+# 
+#    for(r in 1:nrow(tbl)){
+#       hits <- which(tbl[r,] == 1)
+#       this.loc <- tbl$uLoc[r]
+#       if(length(hits) > 0){
+#          column.names <- sub("chipseq_", "", colnames(tbl)[hits])
+#          #if(length(column.names) > 10) browser()
+#          #printf("loc: %s   column.names: %s", this.loc, paste(column.names, collapse=","))
+#          #printf("checked out? %s (%d,%d)", 
+#          #       nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)) == length(hits),
+#          #       nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)), length(hits))
+#                 
+#          checkEquals(nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)), length(hits))
+#          } # if hits
+#       } # for r
+# 
+#    #browser();
+#    #x <- 99
+# 
+# } # test.chipseqToFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
 test.toFeatureTable.big <- function(shoulder=15000)
 {
@@ -262,34 +277,77 @@ test.toFeatureTable.big <- function(shoulder=15000)
 
 } # test.toFeatureTable.big
 #------------------------------------------------------------------------------------------------------------------------
-hintToFeatureTable <- function(tbl.hits)
+toFeatureTable <- function(tbl.hits, methodName)
 {
-
-   motifNames <- paste("hint", sort(unique(tbl.hits$name)), sep="_")
+   motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
    column.names <- c("uLoc", motifNames)
    uLocs <- unique(tbl.hits$loc)
    tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
    colnames(tbl) <- column.names
    tbl$uLoc <- uLocs
+
    for(r in 1:nrow(tbl.hits)){
       row <- tbl.hits[r, "loc"]
-      col <- sprintf("hint_%s", tbl.hits[r, "name"])
+      col <- sprintf("%s_%s", methodName, tbl.hits[r, "name"])
+      #printf("[%s, %s]", row, col)
       tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
       }
 
    invisible(tbl)
 
-} # hintToFeatureTable
+} # toFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
-test.hintToFeatureTable <- function(shoulder=1000)
+chipseqToFeatureTable <- function(tbl.hits, methodName)
 {
-   #tbl.apoe <- getHits(db.hint, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-   load("tbl.apoe.hint.RData")
-   tbl.hits <- tbl.apoe
-   printf("   tbl.hits: %d rows", nrow(tbl.hits))
+   motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
+   column.names <- c("uLoc", motifNames)
+   uLocs <- unique(tbl.hits$loc)
+   tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
+   colnames(tbl) <- column.names
+   tbl$uLoc <- uLocs
 
-   tbl <- hintToFeatureTable(tbl.hits)
-   checkEquals(nrow(tbl.hits), sum(tbl[, -1]))
+
+   for(r in 1:nrow(tbl.hits)){
+      row <- tbl.hits[r, "loc"]
+      col <- sprintf("%s_%s", methodName, tbl.hits[r, "name"])
+      #printf("[%s, %s]", row, col)
+      tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
+      }
+
+   invisible(tbl)
+
+} # chipseqToFeatureTable
+#------------------------------------------------------------------------------------------------------------------------
+test.chipseqToFeatureTable <- function()
+{
+   printf("--- test.chipseqToFeatureTable")
+   chrom <- "chr19"
+   start <- 44906493
+   end <-  44906663
+   tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
+   tbl.fimo <- getFimoHits(chrom, start, end)
+   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+   tbl.csWithFimo <- addFimoRegions(tbl.chipseq, tbl.fimo)
+
+   tbl.exact.features  <- chipseqToFeatureTable(subset(tbl.csWithFimo, bindingSite==TRUE), "chipseqFimoTfMatch")
+   checkEquals(dim(tbl.exact.features), c(2, 2))
+   checkEquals(colnames(tbl.exact.features), c("uLoc", "chipseqFimoTfMatch_PBX3"))
+   tbl.all.features  <- chipseqToFeatureTable(tbl.csWithFimo, "chipseqFimoRegionMatch")
+   checkEquals(colnames(tbl.all.features), c("uLoc", "chipseqFimoRegionMatch_PBX3"))
+   checkEquals(sum(tbl.all.features[, -1]), nrow(tbl.csWithFimo))
+
+}  # test.chipseqToFeatureTable
+#------------------------------------------------------------------------------------------------------------------------
+test.toFeatureTable <- function(shoulder=100)
+{
+   tbl.apoe <- getHits(db.hint, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
+     # chr19:44,904,793-44,904,958 includes two 151-bp chipseq hits about 800bp upstream of apoe tss
+     # chr19:44,906,493-44,906,663 includes one 151-bp chipssq hit (PBX3) just downstream of the tss
+   tbl.hhits <- getHits(db.hint, "chr19", 44906493, 44906663)
+   tbl.whits <- getHits(db.wellington, "chr19", 44906493, 44906663)
+   tbl.hft <- toFeatureTable(tbl.hhits, "hint")
+   tbl.wft <- toFeatureTable(tbl.whits, "wellington")
+   #checkEquals(nrow(tbl.hits), sum(tbl[, -1]))
 
       # for every row, identify each column with a 1, make sure tbl.expanded[
 
@@ -297,7 +355,7 @@ test.hintToFeatureTable <- function(shoulder=1000)
       hits <- which(tbl[r,] == 1)
       this.loc <- tbl$uLoc[r]
       if(length(hits) > 0){
-         column.names <- sub("hint_", "", colnames(tbl)[hits])
+         column.names <- sub("HINT_", "", colnames(tbl)[hits])
          #if(length(column.names) > 10) browser()
          #printf("loc: %s   column.names: %s", this.loc, paste(column.names, collapse=","))
          #printf("checked out? %s (%d,%d)", 
@@ -308,9 +366,9 @@ test.hintToFeatureTable <- function(shoulder=1000)
       } # for r
 
 
-} # test.hintToFeatureTable
+} # test.toFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
-ensembl <- function(chrom, start, end)
+oldEnsembl <- function(chrom, start, end)
 {
    #browser()
    tbl.hits.cs <- getHits(db.chipseq, chrom, start, end)
@@ -322,20 +380,93 @@ ensembl <- function(chrom, start, end)
 
    tbl.hits.hint <- getHits(db.hint, chrom, start, end)
    tbl.feature.hint <- hintToFeatureTable(tbl.hits.hint)
-   printf ("uLoc overlap: %d", length(intersect(tbl.feature.hint$uLoc, tbl.feature.cs$uLoc)))
+   #printf ("uLoc overlap: %d", length(intersect(tbl.feature.hint$uLoc, tbl.feature.cs$uLoc)))
    x <- tbl.feature.cs$uLoc; y <- tbl.feature.hint$uLoc;
    printf("chipseq regions: %d", length(x))
    printf("   HINT regions: %d", length(y))
    browser()
    x <- 99
     
-} # ensembl
+} # oldEnsembl
 #------------------------------------------------------------------------------------------------------------------------
-test.ensembl <- function()
+test.oldEnsembl <- function()
 {
    printf("--- test.ensembl")
    shoulder <- 1000
    tbl <- ensembl(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
    
 } # test.ensembl
+#------------------------------------------------------------------------------------------------------------------------
+ensemble <- function(chrom, start, end)
+{
+   tbl.hhits <- getHits(db.hint, chrom, start, end)
+   tbl.whits <- getHits(db.wellington, chrom, start, end)
+   tbl.hft <- toFeatureTable(tbl.hhits, "hint")
+   tbl.wft <- toFeatureTable(tbl.whits, "wellington")
+
+   tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
+   tbl.fimo <- getFimoHits(chrom, start, end)
+   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+   tbl.csWithFimo <- addFimoRegions(tbl.chipseq, tbl.fimo)
+
+   tbl.exact.features  <- chipseqToFeatureTable(subset(tbl.csWithFimo, bindingSite==TRUE), "chipseqFimoTfMatch")
+   checkEquals(dim(tbl.exact.features), c(2, 2))
+   checkEquals(colnames(tbl.exact.features), c("uLoc", "chipseqFimoTfMatch_PBX3"))
+   tbl.all.features  <- chipseqToFeatureTable(tbl.csWithFimo, "chipseqFimoRegionMatch")
+
+   tbl.m0 <- merge(tbl.hft, tbl.wft, by="uLoc", all=TRUE)
+   tbl.m1 <- merge(tbl.m0, tbl.exact.features, all=TRUE)
+   tbl.m2 <- merge(tbl.m1, tbl.all.features, all=TRUE)
+   
+   m <- as.matrix(tbl.m2[, -1])
+   m[is.na(m)] <- 0
+   tbl.out <- cbind(tbl.m2$uLoc, as.data.frame(m), stringsAsFactors=FALSE)
+   invisible(tbl.out)
+
+} # esemble
+#------------------------------------------------------------------------------------------------------------------------
+test.ensemble <- function()
+{
+   printf("--- test.ensemble")
+    
+   chrom <- "chr19"
+   start <- 44906493
+   end <-  44906663
+   tbl <- ensemble(chrom, start, end)
+
+   checkEquals(dim(tbl), c(39, 64))
+   checkEquals(sum(tbl[, -1]), 248)
+   checkEquals(length(grep("hint", colnames(tbl))), 36)
+   checkEquals(length(grep("wellington", colnames(tbl))),  25)
+   checkEquals(length(grep("chipseqFimoTfMatch", colnames(tbl))), 1)
+   checkEquals(length(grep("chipseqFimoRegionMatch", colnames(tbl))), 1)
+
+} # test.ensemble
+#------------------------------------------------------------------------------------------------------------------------
+locStringToBedTable <- function(locStrings)
+{
+   tokensList <- strsplit(locStrings, ":")
+   chroms     <- unlist(lapply(tokensList, "[", 1))
+   posPairStrings  <- unlist(lapply(tokensList, "[", 2))
+
+   posPairs <- lapply(strsplit(posPairStrings, "-"), as.integer)
+   tbl.startEnd <- data.frame(matrix(as.integer(unlist(posPairs)), ncol=2, byrow=TRUE))
+   
+   tbl <- cbind(chrom=chroms, tbl.startEnd, stringsAsFactors=FALSE)   
+   colnames(tbl) <- c("chrom", "start", "end")
+   tbl[order(tbl$chrom, tbl$start),]
+   
+}  # locStringToBedTable
+#------------------------------------------------------------------------------------------------------------------------
+test.locStringToBedTable <- function()
+{
+   printf("--- test.locStringToBedTable")
+   s <- c("chr19:44906708-44906728", "chr19:44906711-44906731", "chr19:44906550-44906559")
+   tbl <- locStringToBedTable(s)
+   checkEquals(colnames(tbl), c("chrom", "start", "end"))
+   checkEquals(as.list(tbl[1,]), list(chrom="chr19", start=44906550, end=44906559))
+   checkEquals(as.list(tbl[3,]), list(chrom="chr19", start=44906711, end=44906731))
+   checkEquals(as.list(tbl[2,]), list(chrom="chr19", start=44906708, end=44906728))
+
+}  # test.locStringToBedTable
 #------------------------------------------------------------------------------------------------------------------------
