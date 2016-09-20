@@ -3,7 +3,7 @@ library(GenomicRanges)
 library(RUnit)
 library(igvR)
 #------------------------------------------------------------------------------------------------------------------------
-source("../regionAndHitsSchemas.R")
+source("../../regionAndHitsSchemas.R")
 #------------------------------------------------------------------------------------------------------------------------
 if(!exists("db.chipseq"))
    db.chipseq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="chipseq", host="whovian")
@@ -22,11 +22,20 @@ if(!exists("db.hint"))
 if(!exists("db.wellington"))
    db.wellington <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="wellington", host="whovian")
 
+if(!exists("db.piq"))
+   db.piq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="piq", host="whovian")
+
 if(!exists("db.trena"))
-  db.trena <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="trena", host="whovian")
+   db.trena <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="trena", host="whovian")
       
 if(!exists("tbl.genesmotifs"))
     tbl.genesmotifs <- dbGetQuery(db.trena, "select * from tfmotifs")
+
+if(!exists("db.fimo"))
+    db.fimo <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="fimo", host="whovian")
+
+if(!exists("tbl.chipseq"))
+    db.chipseq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="chipseq", host="whovian")
 
 if(!exists("igv"))
     igv <- igvR()
@@ -67,6 +76,190 @@ getFimoHits <- function(chrom, start, end)
    dbGetQuery(db.trena, query)
 
 } # getFimoHits
+#------------------------------------------------------------------------------------------------------------------------
+createWellingtonTable <- function(chrom, start, end)
+{
+   tbl.hitsw <- getHits(db.wellington, chrom, start, end) # 6 x 17
+   printf("found %d wellington hits in %d bases", nrow(tbl.hitsw), 1 + end - start)
+   #displayBedTable(igv, tbl.hitsw[, c("chrom", "start", "endpos", "name", "score2")], "wellington")
+   tbl.std <- tbl.hitsw[, c("loc",  "name", "length", "score1", "score2", "score3")]
+   tbl.collapsed <- as.data.frame(table(tbl.std$loc, tbl.std$name))
+   tbl.collapsed <- subset(tbl.collapsed, Freq != 0)
+   colnames(tbl.collapsed) <- c("loc", "motif.w", "sample.count.w")
+
+      # preallocate and zero fill the summary columns for each row
+
+   distinct.hits.count <- nrow(tbl.collapsed)  # unique loc/motif combinations
+   length <- rep(0, distinct.hits.count)
+   score1.median <- rep(0.0, distinct.hits.count)
+   score1.best <-   rep(0.0, distinct.hits.count)
+   score2.median <- rep(0.0, distinct.hits.count)
+   score2.best <-   rep(0.0, distinct.hits.count)
+   score3.median <- rep(0.0, distinct.hits.count)
+   score3.best <-   rep(0.0, distinct.hits.count)
+   length <-        rep(0,   distinct.hits.count)
+
+   for(r in 1:nrow(tbl.collapsed)){
+       this.loc <- tbl.collapsed$loc[r]
+       this.motif <- tbl.collapsed$motif.w[r]
+       tbl.sub <- subset(tbl.std, loc==this.loc & name==this.motif)
+       score1.median[r] <- median(tbl.sub$score1)
+       score1.best[r]   <- max(tbl.sub$score1)
+       score2.median[r] <- median(tbl.sub$score2)
+       score2.best[r]   <- max(tbl.sub$score2)
+       score3.median[r] <- median(tbl.sub$score3)
+       score3.best[r]   <- min(tbl.sub$score3)
+       length[r] <- median(tbl.sub$length) # should all be identical, but this covers all situations
+       #printf("  found %d rows for %s %s", nrow(tbl.sub), this.loc, this.motif)
+       x <- 99
+       } # for r
+
+   tbl.out <- cbind(tbl.collapsed, length, score1.median, score1.best, score2.median, score2.best, score3.median, score3.best)
+   colnames(tbl.out) <- c("loc", "motif.w", "samplecount.w", "length.w", "score1.w.median",  "score1.w.best",
+                          "score2.w.median",  "score2.w.best", "score3.w.median", "score3.w.best")
+   tbl.out
+
+}  # createWellingtonTable
+#------------------------------------------------------------------------------------------------------------------------
+test.createWellingtonTable <- function()
+{
+   printf("--- test.createWellingtonTable")
+
+     # try with the development test set, a region with 118 wellington footprints in only 6 locs, across just 19 bases
+
+   chrom <- "chr19"
+   start <- 44903772
+   end   <- 44903790
+
+   tbl.w <- createWellingtonTable(chrom, start, end)
+   checkEquals(dim(tbl.w), c(11, 10))
+   checkEquals(length(unique(tbl.w$loc)), 6)
+   checkEquals(length(unique(tbl.w$motif.w)), 11)
+
+      # expand upstream and downstream by an extra 10kb
+
+   tbl.w <- createWellingtonTable(chrom, start-10000, end+10000)
+   checkEquals(dim(tbl.w), c(179, 10))
+   checkEquals(length(unique(tbl.w$loc)), 139)
+
+   # make sure that not all score3 medians are equal to score3 best
+   checkTrue(length(which(!tbl.w$score3.w.median == tbl.w$score3.w.best)) > 0)
+   
+
+}  # test.createWellingtonTable
+#------------------------------------------------------------------------------------------------------------------------
+explore <- function()
+{
+   chrom <- apoe$chrom
+   start <- apoe$start - 2000
+   end  <- apoe$start + 500
+
+   tbl.hitsw <- getHits(db.wellington, chrom, start, end) # 6 x 17
+   tbl.hitsh <- getHits(db.hint, chrom, start, end)       # 97 17
+
+   #tbl.hitsp <- getHits(db.piq, chrom, start, end)
+   #load("tbl.piq.hits.chr19.1100bases.RData")
+   load("tbl.piq.hits.chr19.2500bases.RData")
+   
+
+   tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
+   tbl.fimo <- getFimoHits(chrom, start, end)
+   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+   tbl.csWithFimoAll <- addFimoRegions(tbl.chipseq, tbl.fimo)   # 76 15
+   tbl.csWithFimoBound <- subset(tbl.csWithFimoAll, bindingSite==TRUE)
+   tbl.csWithFimoBound$fullname <- paste(tbl.csWithFimoBound$name, tbl.csWithFimoBound$motifname, sep="-") # 5 16
+
+   displayBedTable(igv, tbl.hitsw[, c("chrom", "start", "endpos", "name", "score2")], "wellington")
+   displayBedTable(igv, tbl.hitsh[, c("chrom", "start", "endpos", "name", "score2")], "hint")
+   displayBedTable(igv, tbl.csWithFimoBound[, c("chrom", "start", "endpos", "fullname", "score1")], "chipseq-fimo")
+   tbl.piqFiltered <- subset(tbl.hitsp, score4 > 0.7)
+   displayBedTable(igv, tbl.piqFiltered[, c("chrom", "start", "endpos", "name", "score4")], "piqFiltered")
+
+   tbl.wellington <- tbl.hitsw[, c("loc",  "name", "length", "score1", "score2", "score3")]
+   colnames(tbl.wellington) <- c("loc", "motif.w", "length",  "well1", "well2", "well3")
+
+   tbl.chipseq <- tbl.csWithFimoBound[, c("loc", "name", "length", "score1", "motifscore", "pval")]
+   colnames(tbl.chipseq) <- c("loc", "tf", "length",  "chip1", "chip2", "chip3")
+
+   tbl.hint <- tbl.hitsh[, c("loc",  "name", "length", "score1", "score2", "score3")]
+   colnames(tbl.hint) <-  c("loc", "motif.h", "length",  "hint1", "hint2", "hint3")
+   
+   tbl.piq <- tbl.hitsp[, c("chrom", "start", "endpos", "loc", "name", "length", "score1", "score2", "score3", "score4")]
+   colnames(tbl.piq) <- c("chrom", "start", "endpos", "loc", "motif.p", "length", "piq1", "piq2", "piq3", "piq4")
+   tbl.piq2 <- tbl.piq[order (tbl.piq$loc, tbl.piq$motif, tbl.piq$piq4, decreasing=TRUE),]
+   dups <- which(duplicated(tbl.piq2[, c("loc", "motif.p")]))
+   tbl.piq3 <- tbl.piq2[-dups,]
+   tbl.piq4 <- refimo(tbl.piq3)
+
+   #tbl.csw <- merge(tbl.chipseq, tbl.wellington, by=c("loc", "name", "length"), all=TRUE)
+   #tbl.cswh <- merge(tbl.csw, tbl.hint,  by=c("loc", "name", "length"), all=TRUE)
+   #tbl.cswhp <- merge(tbl.cswh, tbl.piq3, by=c("loc", "name", "length"), all=TRUE)
+
+   tbl.csw <- merge(tbl.chipseq, tbl.wellington, by=c("loc", "length"), all=TRUE)
+   tbl.cswh <- merge(tbl.csw, tbl.hint,  by=c("loc",  "length"), all=TRUE)
+   tbl.cswhp <- merge(tbl.cswh, tbl.piq4, by=c("loc",  "length"), all=TRUE)
+   
+} # explore
+#------------------------------------------------------------------------------------------------------------------------
+# we want wellington, hint, chipseq and piq to all use the same fimo regions
+# in contrast to the other methods, where i do the fimo intersections, piq does its own
+# and apparently does so on an obsolete motif library.  and it may eliminate second-best hits
+# case in point:
+#   tbl.cswhp
+# 13  chr19:44904896-44904914     19  CTCF    69 13.14750 8.31e-06     <NA>       NA       NA       NA                 <NA>    NA        NA       NA     <NA>       NA          NA         NA       NA
+# 14  chr19:44904896-44904915     20  <NA>    NA       NA       NA     <NA>       NA       NA       NA                 <NA>    NA        NA       NA MA0139.1  8.12448 -0.19550100   5.687290 0.876744
+# 15  chr19:44904899-44904917     19  CTCF    69  9.70492 4.36e-05     <NA>       NA       NA       NA                 <NA>    NA        NA       NA     <NA>       NA          NA         NA       NA
+#
+# solution:
+#  getFimoHits("chr19", 44904895, 44904915)
+#   motifname chrom    start   endpos strand motifscore     pval empty            sequence
+# 1  MA0139.1    19 44904896 44904914      +    13.1475 8.31e-06       TGGCAGCCAGGGGGAGGTG
+# 2  MA0155.1    19 44904900 44904911      +    12.5816 2.35e-05              AGCCAGGGGGAG
+# 3  GTF2I.p2    19 44904904 44904912      +    13.5610 1.50e-05                 AGGGGGAGG
+# choose motif with minium pval, thus getting the best full-length character match
+#
+#  tbl.refimo <- getFimoHits("chr19", 44904896-2, 44904915+2)
+#  tbl.refimo[which(tbl.refimo$pval == min(tbl.refimo$pval)),]
+#   motifname chrom    start   endpos strand motifscore     pval empty            sequence
+# 2  MA0139.1    19 44904896 44904914      +    13.1475 8.31e-06       TGGCAGCCAGGGGGAGGTG
+# rewirte tbl with this corrected finding
+
+refimo <- function(tbl, shoulder=1)
+{
+   for(r in 1:nrow(tbl)){
+     chrom <- tbl$chrom[r]
+     start <- tbl$start[r]
+     end <-  tbl$endpos[r]
+     tbl.fimo <- getFimoHits(chrom, start-shoulder, end+shoulder)
+     if(nrow(tbl.fimo) == 0) next;
+     replacement <-tbl.fimo[order(tbl.fimo$pval),][1,,drop=TRUE]
+     if(replacement$motifname ==  tbl$motif[r]){
+        printf("changing %s  %s", tbl$loc[r], tbl$motif[r])
+        tbl$start[r] <- replacement$start
+        tbl$endpos[r] <- replacement$endpos
+        tbl$loc[r] <- sprintf("%s:%d-%d", tbl$chrom[r], tbl$start[r], tbl$endpos[r]);
+        tbl$length[r] <- 1 + tbl$endpos[r] - tbl$start[r]
+        printf("new loc: %s", tbl$loc[r]);
+        } # if matched motif, possibly changed start:end
+   } # for r
+   
+   tbl   
+
+} # refimo
+#------------------------------------------------------------------------------------------------------------------------
+test.refimo <- function()
+{
+   printf("--- test.refimo")
+   if(!exists("tbl.piq3"))
+      load("tbl.piq3.RData", envir=.GlobalEnv)
+   x <- refimo(tbl.piq3[35,,drop=FALSE])
+   checkEquals(x$loc, "chr19:44904896-44904914")
+   checkEquals(x$length, 19)
+   tbl.changed <- refimo(tbl.piq3)
+   checkEquals(dim(tbl.changed), dim(tbl.piq3))
+   checkEquals(length(setdiff(tbl.changed$loc, tbl.changed$piq3)), 39)
+
+} # test.refimo
 #------------------------------------------------------------------------------------------------------------------------
 # find all overlaps between the 151 base pair chipseq regions, and short motif-based fimo regions
 # then expand the tbl.cs by joining it with all the tbl.fimo regions which overlap with each chipseq region
@@ -113,8 +306,8 @@ test.addFimoRegions <- function()
 {
    printf("--- test.addFimoRegions")
    chrom <- "chr19"
-   start <- 44906493
-   end <-  44906663
+   start <- 44904800
+   end <-   44905000
    tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
    tbl.fimo <- getFimoHits(chrom, start, end)
    tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
@@ -190,92 +383,6 @@ test.annotateWithMotifs <- function()
    checkTrue(nrow(tbl.anno) >= nrow(tbl.apoe))  # should be true of any chipseq table.
 
 } # test.annotateWithMotifs
-#------------------------------------------------------------------------------------------------------------------------
-# toFeatureTable <- function(tbl.hits)
-# {
-#    printf("--- entering toFeatureTable, tbl.hits is (%d, %d)", nrow(tbl.hits), ncol(tbl.hits))
-# 
-#    motifNames <- paste("chipseq", sort(unique(tbl.hits$motifname)), sep="_")
-#    column.names <- c("uLoc", motifNames)
-#    uLocs <- unique(tbl.hits$loc)
-#    tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
-#    colnames(tbl) <- column.names
-#    tbl$uLoc <- uLocs
-#    for(r in 1:nrow(tbl.hits)){
-#       row <- tbl.hits[r, "loc"]
-#       col <- sprintf("chipseq_%s", tbl.hits[r, "motifname"])
-#       tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
-#       }
-# 
-#    tbl
-# 
-# } # toFeatureTable
-#------------------------------------------------------------------------------------------------------------------------
-# test.chipseqToFeatureTable <- function(shoulder=1000)
-# {
-#    printf("--- test.chipseqToFeatureTable")
-# 
-#        # chipseq data: one 151 base pair hit, claims that this is shared by 3 tfs: CTCF, RUNX3, PBX3
-#    tbl.apoe <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-#        # fimo identifies 511 binding sites, among 164 unique motifs
-#    tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-#        # our current fimo database lists chromosome names as, e.g., "10".  standardize them
-#    tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-# 
-#    tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
-#    tbl <- toFeatureTable(tbl.expanded)
-# 
-#       # we expect one entry in the feature table for every row in tbl.expanded
-#    printf("found %d loc/motif hits from tbl.expanded of %d rows", sum(tbl[, -1]), nrow(tbl.expanded))
-#    checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
-# 
-#       # for every row, identify each column with a 1, make sure tbl.expanded[
-# 
-#    for(r in 1:nrow(tbl)){
-#       hits <- which(tbl[r,] == 1)
-#       this.loc <- tbl$uLoc[r]
-#       if(length(hits) > 0){
-#          column.names <- sub("chipseq_", "", colnames(tbl)[hits])
-#          #if(length(column.names) > 10) browser()
-#          #printf("loc: %s   column.names: %s", this.loc, paste(column.names, collapse=","))
-#          #printf("checked out? %s (%d,%d)", 
-#          #       nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)) == length(hits),
-#          #       nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)), length(hits))
-#                 
-#          checkEquals(nrow(subset(tbl.expanded, motifname %in% column.names & loc==this.loc)), length(hits))
-#          } # if hits
-#       } # for r
-# 
-#    #browser();
-#    #x <- 99
-# 
-# } # test.chipseqToFeatureTable
-#------------------------------------------------------------------------------------------------------------------------
-test.toFeatureTable.big <- function(shoulder=15000)
-{
-   printf("--- test.toFeatureTable.big")
-
-       # chipseq data: one 151 base pair hit, claims that this is shared by 3 tfs: CTCF, RUNX3, PBX3
-
-   #browser()
-   printf("   shoulder: %d", shoulder)
-   tbl.apoe <- getHits(db.chipseq, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-   printf("   tbl.apoe: %d rows", nrow(tbl.apoe))
-
-       # fimo identifies 511 binding sites, among 164 unique motifs
-   tbl.fimo <- getFimoHits(apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-   printf("   tbl.fimo: %d rows", nrow(tbl.fimo))
-
-       # our current fimo database lists chromosome names as, e.g., "10".  standardize them
-   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-
-   tbl.expanded <- addFimoRegions(tbl.apoe, tbl.fimo)
-   printf("    testing freshly created 'tbl.expanded': %d x %d", nrow(tbl.expanded), ncol(tbl.expanded))
-   tbl <- toFeatureTable(tbl.expanded)
-   checkEquals(nrow(tbl.expanded), sum(tbl[, -1]))
-   x <- 99
-
-} # test.toFeatureTable.big
 #------------------------------------------------------------------------------------------------------------------------
 toFeatureTable <- function(tbl.hits, methodName)
 {
