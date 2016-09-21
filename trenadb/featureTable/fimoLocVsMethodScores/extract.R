@@ -43,12 +43,13 @@ if(!exists("igv"))
 #------------------------------------------------------------------------------------------------------------------------
 runTests <- function()
 {
+   test.createWellingtonTable()
    test.locStringToBedTable()
    test.addFimoRegions()
    test.chipseqToFeatureTable()
    test.ensemble()
-   #test.toFeatureTable()
-   #test.toFeatureTable.big()
+   #test.old.toFeatureTable()
+   #test.old.toFeatureTable.big()
    #test.hintToFeatureTable()
    
   
@@ -94,7 +95,7 @@ createWellingtonTable <- function(chrom, start, end)
    score1.median <- rep(0.0, distinct.hits.count)
    score1.best <-   rep(0.0, distinct.hits.count)
    score2.median <- rep(0.0, distinct.hits.count)
-   score2.best <-   rep(0.0, distinct.hits.count)
+   score2.best  <-   rep(0.0, distinct.hits.count)
    score3.median <- rep(0.0, distinct.hits.count)
    score3.best <-   rep(0.0, distinct.hits.count)
    length <-        rep(0,   distinct.hits.count)
@@ -147,6 +148,86 @@ test.createWellingtonTable <- function()
    
 
 }  # test.createWellingtonTable
+#------------------------------------------------------------------------------------------------------------------------
+createHintTable <- function(chrom, start, end)
+{
+   tbl.hitsh <- getHits(db.hint, chrom, start, end) # 6 x 17
+   printf("found %d hint hits in %d bases", nrow(tbl.hitsh), 1 + end - start)
+   displayBedTable(igv, tbl.hitsw[, c("chrom", "start", "endpos", "name", "score2")], "hint")
+   tbl.std <- tbl.hitsh[, c("loc",  "name", "length", "sample_id", "score1", "score2", "score3")]
+   tbl.collapsed <- as.data.frame(table(tbl.std$loc, tbl.std$name))
+   tbl.collapsed <- subset(tbl.collapsed, Freq != 0)
+   colnames(tbl.collapsed) <- c("loc", "motif.h", "sample.count.h")
+
+      # preallocate and zero fill the summary columns for each row
+
+   distinct.hits.count <- nrow(tbl.collapsed)  # unique loc/motif combinations
+   length <- rep(0, distinct.hits.count)
+   score1.median <- rep(0.0, distinct.hits.count)
+   score1.best <-   rep(0.0, distinct.hits.count)
+   score2.median <- rep(0.0, distinct.hits.count)
+   score2.best <-   rep(0.0, distinct.hits.count)
+   score3.median <- rep(0.0, distinct.hits.count)
+   score3.best <-   rep(0.0, distinct.hits.count)
+   length <-        rep(0,   distinct.hits.count)
+
+    # score1: hint score, ranges from 2 to 10,160, mean of ~123, median 44
+    # score2: fimo score, -18.7 to 30.9, mean and median both about 11.5
+    # score3: fimo pval, min 5.9e-13, max 1e-4, mean 4.3e-5, median 4.01 e-5
+
+   for(r in 1:nrow(tbl.collapsed)){
+       this.loc <- tbl.collapsed$loc[r]
+       this.motif <- tbl.collapsed$motif.h[r]
+       tbl.sub <- subset(tbl.std, loc==this.loc & name==this.motif)
+       score1.median[r] <- median(tbl.sub$score1)
+       score1.best[r]   <- max(tbl.sub$score1)
+       score2.median[r] <- median(tbl.sub$score2)
+       score2.best[r]   <- max(tbl.sub$score2)
+       score3.median[r] <- median(tbl.sub$score3)
+       score3.best[r]   <- min(tbl.sub$score3)
+       length[r] <- median(tbl.sub$length) # should all be identical, but this covers all situations
+       #printf("  found %d rows for %s %s", nrow(tbl.sub), this.loc, this.motif)
+       x <- 99
+       } # for r
+
+   tbl.out <- cbind(tbl.collapsed, length, score1.median, score1.best, score2.median, score2.best, score3.median, score3.best)
+   colnames(tbl.out) <- c("loc", "motif.h", "samplecount.h", "length.h", "score1.h.median",  "score1.h.best",
+                          "score2.h.median",  "score2.h.best", "score3.h.median", "score3.h.best")
+   tbl.out
+
+}  # createHintTable
+#------------------------------------------------------------------------------------------------------------------------
+test.createHintTable <- function()
+{
+   printf("--- test.createHintTable")
+
+     # try with the development test set,
+
+   chrom <- "chr19"
+   start <- 44903772
+   end   <- 44903790
+   tbl.h <- createHintTable(chrom, start, end)
+   checkEquals(dim(tbl.h), c(5, 10))
+   checkEquals(length(unique(tbl.h$loc)), 3)
+   checkEquals(length(unique(tbl.h$motif.h)), 5)
+
+      # expand upstream and downstream by an extra 10kb
+      # "found 995 hint hits in 20019 bases"
+
+   tbl.h <- createHintTable(chrom, start-10000, end+10000)
+   checkEquals(dim(tbl.h), c(641, 10))
+   checkEquals(length(unique(tbl.h$loc)), 497)
+
+   checkEquals(range(tbl.h$score1.h.best), c(6, 318))
+
+     # make sure that not all score3 medians are equal to score3 best
+
+   checkTrue(length(which(!tbl.h$score3.h.median == tbl.h$score3.h.best)) > 0)
+   checkEquals(round(range(tbl.h$score2.h.best)), c(-14, 23))
+   checkEqualsNumeric(min(tbl.h$score3.h.best), 2.46e-08)
+   checkEqualsNumeric(max(tbl.h$score3.h.best), 9.99e-05)
+   
+}  # test.createHintTable
 #------------------------------------------------------------------------------------------------------------------------
 explore <- function()
 {
@@ -384,7 +465,7 @@ test.annotateWithMotifs <- function()
 
 } # test.annotateWithMotifs
 #------------------------------------------------------------------------------------------------------------------------
-toFeatureTable <- function(tbl.hits, methodName)
+old.toFeatureTable <- function(tbl.hits, methodName)
 {
    motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
    column.names <- c("uLoc", motifNames)
@@ -402,7 +483,36 @@ toFeatureTable <- function(tbl.hits, methodName)
 
    invisible(tbl)
 
-} # toFeatureTable
+} # old.toFeatureTable
+#------------------------------------------------------------------------------------------------------------------------
+toFeatureTable.v1 <- function(tbl.std)
+{
+   browser()
+   #motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
+   column.names <- c("uLoc", motifNames)
+   uLocs <- unique(tbl.hits$loc)
+   tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
+   colnames(tbl) <- column.names
+   tbl$uLoc <- uLocs
+
+   for(r in 1:nrow(tbl.hits)){
+      row <- tbl.hits[r, "loc"]
+      col <- sprintf("%s_%s", methodName, tbl.hits[r, "name"])
+      #printf("[%s, %s]", row, col)
+      tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
+      }
+
+   invisible(tbl)
+
+} # toFeatureTable.v1
+#------------------------------------------------------------------------------------------------------------------------
+test.toFeatureTable.v1 <- function()
+{
+   printf("--- test.toFeatureTable.v1")
+   load("hint.normalized.5rows.10hits.RData")
+   ft <- toFeatureTable.v1(tbl.h)
+
+} # test.toFeatureTable.v1
 #------------------------------------------------------------------------------------------------------------------------
 chipseqToFeatureTable <- function(tbl.hits, methodName)
 {
@@ -445,15 +555,15 @@ test.chipseqToFeatureTable <- function()
 
 }  # test.chipseqToFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
-test.toFeatureTable <- function(shoulder=100)
+test.old.toFeatureTable <- function(shoulder=100)
 {
    tbl.apoe <- getHits(db.hint, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
      # chr19:44,904,793-44,904,958 includes two 151-bp chipseq hits about 800bp upstream of apoe tss
      # chr19:44,906,493-44,906,663 includes one 151-bp chipssq hit (PBX3) just downstream of the tss
    tbl.hhits <- getHits(db.hint, "chr19", 44906493, 44906663)
    tbl.whits <- getHits(db.wellington, "chr19", 44906493, 44906663)
-   tbl.hft <- toFeatureTable(tbl.hhits, "hint")
-   tbl.wft <- toFeatureTable(tbl.whits, "wellington")
+   tbl.hft <- old.toFeatureTable(tbl.hhits, "hint")
+   tbl.wft <- old.toFeatureTable(tbl.whits, "wellington")
    #checkEquals(nrow(tbl.hits), sum(tbl[, -1]))
 
       # for every row, identify each column with a 1, make sure tbl.expanded[
@@ -473,7 +583,7 @@ test.toFeatureTable <- function(shoulder=100)
       } # for r
 
 
-} # test.toFeatureTable
+} # test.old.toFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
 oldEnsembl <- function(chrom, start, end)
 {
@@ -483,7 +593,7 @@ oldEnsembl <- function(chrom, start, end)
    tbl.fimo.cs$chrom <- paste("chr", tbl.fimo.cs$chrom, sep="")
 
    tbl.expanded.cs <- addFimoRegions(tbl.hits.cs, tbl.fimo.cs)
-   tbl.feature.cs <- toFeatureTable(tbl.expanded.cs)
+   tbl.feature.cs <- old.toFeatureTable(tbl.expanded.cs)
 
    tbl.hits.hint <- getHits(db.hint, chrom, start, end)
    tbl.feature.hint <- hintToFeatureTable(tbl.hits.hint)
@@ -508,8 +618,8 @@ ensemble <- function(chrom, start, end)
 {
    tbl.hhits <- getHits(db.hint, chrom, start, end)
    tbl.whits <- getHits(db.wellington, chrom, start, end)
-   tbl.hft <- toFeatureTable(tbl.hhits, "hint")
-   tbl.wft <- toFeatureTable(tbl.whits, "wellington")
+   tbl.hft <- old.toFeatureTable(tbl.hhits, "hint")
+   tbl.wft <- old.toFeatureTable(tbl.whits, "wellington")
 
    tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
    tbl.fimo <- getFimoHits(chrom, start, end)
@@ -549,6 +659,47 @@ test.ensemble <- function()
    checkEquals(length(grep("chipseqFimoRegionMatch", colnames(tbl))), 1)
 
 } # test.ensemble
+#------------------------------------------------------------------------------------------------------------------------
+ensemble.v1 <- function(chrom, start, end)
+{
+   tbl.w <- createWellingtonTable(chrom, start, end)
+   tbl.h <- createHintTable(chrom, start, end)
+   tbl.merged <- merge(tbl.w, tbl.h, by=c("loc"), all=TRUE)
+   
+   tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
+   tbl.fimo <- getFimoHits(chrom, start, end)
+   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+   tbl.csWithFimo <- addFimoRegions(tbl.chipseq, tbl.fimo)
+   tbl.csWithTrueFimo <- subset(tbl.csWithFimo, bindingSite==TRUE)
+   
+   tbl.csft <- tbl.csWithTrueFimo[, c("loc", "motifname", "name", "score1")]
+   colnames(tbl.csft) <- c("loc", "csmotif", "csTF", "csscore")
+   tbl.wfc <- merge(tbl.merged, tbl.csft, by="loc", all=TRUE)
+
+   invisible(tbl.wfc)
+
+} # ensemble.v1
+#------------------------------------------------------------------------------------------------------------------------
+test.ensemble.v1 <- function()
+{
+   printf("--- test.ensemble.v1")
+   chrom <- "chr19"
+     # 229 bases
+   start <- 44903672
+   end   <- 44903900
+
+   ft <- ensemble.v1(chrom, start, end)
+   checkEquals(dim(ft), c(32, 22))
+   tfHits <- ft[which(!is.na(ft$csTF)), "csTF"]
+   checkEquals(length(tfHits), 1)
+   checkEquals(tfHits, "CTCF")
+    
+   start <- 42000000
+   end   <- 47000000
+
+   ft <- ensemble.v1(chrom, start, end)
+
+} # test.ensemble.v1
 #------------------------------------------------------------------------------------------------------------------------
 locStringToBedTable <- function(locStrings)
 {
