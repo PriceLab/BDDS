@@ -1,6 +1,14 @@
-The scores each footprinting algorithm output are not well documented. As such, I will have notes here that function as a repository for what we can find regarding the scores
+The scores each footprinting algorithm output are not well documented. As such, I will have notes 
+here that function as a repository for what we can find regarding the scores
 
 from: http://pythonhosted.org/pyDNase/bam.html?highlight=occupancy%20score
 
-It appears Wellington uses the Neph math for calculation Footprint Occupancy Score (FOS). It does say what is the better score, but all of them appear negative and the more negative the better (best guess).
+It appears Wellington uses the Neph math for calculation Footprint Occupancy Score (FOS). 
+It does say what is the better score, but all of them appear negative and the more 
+negative the better (best guess).
 
+hint score columns (pshannon, 21 sep 2016):
+  score1: hint score, ranges from 2 to 10,160, mean of ~123, median 44
+  score2: fimo score, -18.7 to 30.9, mean and median both about 11.5
+          [what does a negative fimo score mean?]
+  score3: fimo pval, min 5.9e-13, max 1e-4, mean 4.3e-5, median 4.01 e-5
