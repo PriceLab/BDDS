@@ -832,10 +832,16 @@ test.cleanFeatureTable <- function()
 #------------------------------------------------------------------------------------------------------------------------
 run <- function()
 {
+   chrom <- "chr19"
    start <- 42000000
    end   <- 47000000
 
-   ft <- ensemble(chrom, start, end)
+   ft.0 <- ensemble(chrom, start, end)
+   ft <- cleanFeatureTable(ft.0)
+   filename <- sprintf("ft.%s.RData", format (Sys.time(), "%a.%b.%d.%Y-%H:%M:%S"))
+   save(ft, file=filename)
    
 } # run
 #------------------------------------------------------------------------------------------------------------------------
+if(!interactive())
+    run()
