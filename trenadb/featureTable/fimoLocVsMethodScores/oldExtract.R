@@ -48,14 +48,17 @@ runTests <- function()
    test.addFimoRegions()
    test.chipseqToFeatureTable()
    test.ensemble()
-   test.cleanFeatureTable()
+   #test.old.toFeatureTable()
+   #test.old.toFeatureTable.big()
+   #test.hintToFeatureTable()
+   
   
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
 getHits <- function(db, chrom, start, end)
 {
    query.p0 <- "select loc, chrom, start, endpos from regions"
-   query.p1 <- sprintf("where chrom='%s' and start >= %d and endpos <= %d", chrom, start, end)
+   query.p1 <- sprintf("where chrom='%s' and start > %d and endpos < %d", chrom, start, end)
    query.regions <- paste(query.p0, query.p1)
    tbl.regions <- dbGetQuery(db, query.regions)
    if(nrow(tbl.regions) == 0)
@@ -130,9 +133,9 @@ test.createWellingtonTable <- function()
    end   <- 44903790
 
    tbl.w <- createWellingtonTable(chrom, start, end)
-   checkEquals(dim(tbl.w), c(12, 10))
-   checkEquals(length(unique(tbl.w$loc)), 7)
-   checkEquals(length(unique(tbl.w$motif.w)), 12)
+   checkEquals(dim(tbl.w), c(11, 10))
+   checkEquals(length(unique(tbl.w$loc)), 6)
+   checkEquals(length(unique(tbl.w$motif.w)), 11)
 
       # expand upstream and downstream by an extra 10kb
 
@@ -146,9 +149,9 @@ test.createWellingtonTable <- function()
    # does a motif-rich, high-sample footprint produce a properly reduced table?
    
    tbl.wx <- createWellingtonTable("chr19", 45423910, 45423921)
-   checkEquals(dim(tbl.wx), c(17, 10))
-   checkEquals(dim(unique(tbl.wx)), c(17, 10))
-   checkEquals(dim(unique(tbl.wx[, c("loc", "motif.w")])), c(17, 2))
+   checkEquals(dim(tbl.wx), c(14, 10))
+   checkEquals(dim(unique(tbl.wx)), c(14, 10))
+   checkEquals(dim(unique(tbl.wx[, c("loc", "motif.w")])), c(14, 2))
 
 }  # test.createWellingtonTable
 #------------------------------------------------------------------------------------------------------------------------
@@ -619,6 +622,52 @@ test.oldEnsembl <- function()
 #------------------------------------------------------------------------------------------------------------------------
 ensemble <- function(chrom, start, end)
 {
+   tbl.hhits <- getHits(db.hint, chrom, start, end)
+   tbl.whits <- getHits(db.wellington, chrom, start, end)
+   tbl.hft <- old.toFeatureTable(tbl.hhits, "hint")
+   tbl.wft <- old.toFeatureTable(tbl.whits, "wellington")
+
+   tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
+   tbl.fimo <- getFimoHits(chrom, start, end)
+   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+   tbl.csWithFimo <- addFimoRegions(tbl.chipseq, tbl.fimo)
+
+   tbl.exact.features  <- chipseqToFeatureTable(subset(tbl.csWithFimo, bindingSite==TRUE), "chipseqFimoTfMatch")
+   checkEquals(dim(tbl.exact.features), c(2, 2))
+   checkEquals(colnames(tbl.exact.features), c("uLoc", "chipseqFimoTfMatch_PBX3"))
+   tbl.all.features  <- chipseqToFeatureTable(tbl.csWithFimo, "chipseqFimoRegionMatch")
+
+   tbl.m0 <- merge(tbl.hft, tbl.wft, by="uLoc", all=TRUE)
+   tbl.m1 <- merge(tbl.m0, tbl.exact.features, all=TRUE)
+   tbl.m2 <- merge(tbl.m1, tbl.all.features, all=TRUE)
+   
+   m <- as.matrix(tbl.m2[, -1])
+   m[is.na(m)] <- 0
+   tbl.out <- cbind(tbl.m2$uLoc, as.data.frame(m), stringsAsFactors=FALSE)
+   invisible(tbl.out)
+
+} # esemble
+#------------------------------------------------------------------------------------------------------------------------
+test.ensemble <- function()
+{
+   printf("--- test.ensemble")
+    
+   chrom <- "chr19"
+   start <- 44906493
+   end <-  44906663
+   tbl <- ensemble(chrom, start, end)
+
+   checkEquals(dim(tbl), c(39, 64))
+   checkEquals(sum(tbl[, -1]), 248)
+   checkEquals(length(grep("hint", colnames(tbl))), 36)
+   checkEquals(length(grep("wellington", colnames(tbl))),  25)
+   checkEquals(length(grep("chipseqFimoTfMatch", colnames(tbl))), 1)
+   checkEquals(length(grep("chipseqFimoRegionMatch", colnames(tbl))), 1)
+
+} # test.ensemble
+#------------------------------------------------------------------------------------------------------------------------
+ensemble.v1 <- function(chrom, start, end)
+{
    tbl.w <- createWellingtonTable(chrom, start, end)
    tbl.h <- createHintTable(chrom, start, end)
    tbl.merged <- merge(tbl.w, tbl.h, by=c("loc"), all=TRUE)
@@ -644,29 +693,29 @@ ensemble <- function(chrom, start, end)
 
    invisible(tbl.wfc)
 
-} # ensemble
+} # ensemble.v1
 #------------------------------------------------------------------------------------------------------------------------
-test.ensemble <- function()
+test.ensemble.v1 <- function()
 {
-   printf("--- test.ensemble")
+   printf("--- test.ensemble.v1")
 
    chrom <- "chr19"
      # 229 bases
    start <- 44903672
    end   <- 44903900
 
-   ft <- ensemble(chrom, start, end)
-   checkEquals(dim(ft), c(33, 22))
+   ft <- ensemble.v1(chrom, start, end)
+   checkEquals(dim(ft), c(32, 22))
    tfHits <- ft[which(!is.na(ft$csTF)), "csTF"]
    checkEquals(length(tfHits), 1)
    checkEquals(tfHits, "CTCF")
     
-     # test in one 12 base region, very rich in motifs, includes all most combinations of present & missing motifs
+     # test in one 12 base region, very rich in motifs
    chrom <- "chr19"
    target.loc <- "chr19:45423911-45423920"
    start <- 45423910
    end   <- 45423921
-   ft.x  <- ensemble(chrom, start-1000, end + 1000) # be sure to get a chipseq hit.  5400 hits
+   ft.x  <- ensemble.v1(chrom, start-1000, end + 1000) # be sure to get a chipseq hit.  5400 hits
      # eliminate the off target rows (present only because the footprint is wider than our target.loc
    ft.xs <- ft.x # subset(ft.x, loc==target.loc)  # 5401
    ft.xs.1 <- subset(ft.xs, (motif.w == csmotif & is.na(motif.h)) |
@@ -674,27 +723,7 @@ test.ensemble <- function()
                             (motif.w == motif.h & motif.w == csmotif) |
                             (is.na(csTF)))  # 27 22
 
-     # tbl <- ft.xs.1
-     # save(tbl, file="shortRichEnsemblTestResult.RData")
-
-     # make sure there are no factors!
-   checkEquals(sort(unique(unlist(lapply(ft.xs.1, class), use.names=FALSE))), c("character",  "integer",  "numeric"))
-
-     # make sure that we have rows of all kinds:  hint, wellington and chipseq and shared hits
-   checkEquals(nrow(ft.xs.1), 319)
-
-   checkEquals(nrow(subset(ft.xs.1, !is.na(motif.h)  &  is.na(motif.w)  &  is.na(csmotif))), 81)
-   checkEquals(nrow(subset(ft.xs.1, !is.na(motif.h)  &  is.na(motif.w)  & !is.na(csmotif))), 20)
-   checkEquals(nrow(subset(ft.xs.1, !is.na(motif.h)  & !is.na(motif.w)  &  is.na(csmotif))), 94)
-   checkEquals(nrow(subset(ft.xs.1, !is.na(motif.h)  & !is.na(motif.w)  & !is.na(csmotif))), 105)
-
-   checkEquals(nrow(subset(ft.xs.1, is.na(motif.h)  &  is.na(motif.w)  &  is.na(csmotif))),   0)
-   checkEquals(nrow(subset(ft.xs.1, is.na(motif.h)  &  is.na(motif.w)  & !is.na(csmotif))),   0)
-   checkEquals(nrow(subset(ft.xs.1, is.na(motif.h)  & !is.na(motif.w)  &  is.na(csmotif))),  16)
-   checkEquals(nrow(subset(ft.xs.1, is.na(motif.h)  & !is.na(motif.w)  & !is.na(csmotif))),   3)
-   checkEquals(81 + 20 + 94 + 105 + 0 + 0 + 16 + 3, 319)
-
-} # test.ensemble
+} # test.ensemble.v1
 #------------------------------------------------------------------------------------------------------------------------
 locStringToBedTable <- function(locStrings)
 {
@@ -714,7 +743,6 @@ locStringToBedTable <- function(locStrings)
 test.locStringToBedTable <- function()
 {
    printf("--- test.locStringToBedTable")
-
    s <- c("chr19:44906708-44906728", "chr19:44906711-44906731", "chr19:44906550-44906559")
    tbl <- locStringToBedTable(s)
    checkEquals(colnames(tbl), c("chrom", "start", "end"))
@@ -723,6 +751,9 @@ test.locStringToBedTable <- function()
    checkEquals(as.list(tbl[2,]), list(chrom="chr19", start=44906708, end=44906728))
 
 }  # test.locStringToBedTable
+
+
+
 #------------------------------------------------------------------------------------------------------------------------
 # fivenum(scores.hint)                 2          8         12         20     17836
 # fivenum(scores.wellington)  -1000.0000   -36.8523   -18.9043   -12.9359   -10.0000
@@ -733,15 +764,23 @@ cleanFeatureTable <- function(tbl)
 {
    x <- tbl
 
+   classInfo <- sapply(x, class)
+   for(colname in names(classInfo)){
+      if(classInfo[[colname]] == "factor"){
+          printf("correctoring character class in column '%s'", colname)
+          x[[colname]] <- as.character(x[[colname]])
+          } # if factor
+      } # for colname
+
    x$score1.w.median[is.na(x$score1.w.median)] <- 0
    x$score1.w.best[is.na(x$score1.w.best)] <- 0
    x$score1.h.median[is.na(x$score1.h.median)] <- 0
    x$score1.h.best[is.na(x$score1.h.best)] <- 0
 
-   x$score2.w.median[is.na(x$score2.w.median)] <- -99
-   x$score2.w.best[is.na(x$score2.w.best)] <- -99
-   x$score2.h.median[is.na(x$score2.h.median)] <- -99
-   x$score2.h.best[is.na(x$score2.h.best)] <- -99
+   x$score2.w.median[is.na(x$score2.w.median)] <- 0
+   x$score2.w.best[is.na(x$score2.w.best)] <- 0
+   x$score2.h.median[is.na(x$score2.h.median)] <- 0
+   x$score2.h.best[is.na(x$score2.h.best)] <- 0
 
    x$score3.w.median[is.na(x$score3.w.median)] <- 1.0
    x$score3.w.best[is.na(x$score3.w.best)] <- 1.0
@@ -769,15 +808,6 @@ cleanFeatureTable <- function(tbl)
    if(length(motif.columns.to.delete) > 0)
       x <- x[, -motif.columns.to.delete]
 
-   motiflength <- x$length.w
-   zeros <- which(motiflength == 0)
-   motiflength[zeros] <- x$length.h[zeros]
-   x$motiflength <- motiflength
-
-   length.columns.to.delete <- grep("length.", colnames(x), fixed=TRUE)
-   if(length(length.columns.to.delete) > 0)
-      x <- x[, -length.columns.to.delete]
-
    x$csscore[which(is.na(x$csscore))] <- 0
    
    invisible(unique(x))
@@ -787,46 +817,51 @@ cleanFeatureTable <- function(tbl)
 test.cleanFeatureTable <- function()
 {
    printf("--- test.cleanFeatureTable")
+   chrom <- "chr19"
+     # 229 bases
+   start <- 44903672
+   end   <- 44903900
 
-   load ("shortRichEnsemblTestResult.RData")
-   checkEquals(dim(tbl), c(319,22))
+   # ft.for.cleaning <- ensemble.v1(chrom, start, end)
 
-   ft <- cleanFeatureTable(tbl)
+   if(!exists("ft.for.cleaning"))
+      load("ft.for.cleaning.RData", envir=.GlobalEnv)
+   
+   ft2 <- cleanFeatureTable(ft.for.cleaning)
+   checkTrue("motif" %in% colnames(ft2))
+   checkTrue(!"motif.h" %in% colnames(ft2))
+   checkTrue(!"motif.w" %in% colnames(ft2))
+   checkEquals(nrow(ft.for.cleaning), nrow(ft2))
 
-   checkTrue("motif" %in% colnames(ft))
-   checkTrue(!"motif.h" %in% colnames(ft))
-   checkTrue(!"motif.w" %in% colnames(ft))
-   checkEquals(nrow(tbl), nrow(ft))
-
-   checkTrue(all(ft$score1.w.median <= 0))
-   checkTrue(all(ft$score1.w.best <= 0))
+   checkTrue(all(ft2$score1.w.median <= 0))
+   checkTrue(all(ft2$score1.w.best <= 0))
     
-   checkTrue(all(ft$score2.w.median >= -99))
-   checkTrue(all(ft$score2.w.best >= -99))
+   checkTrue(all(ft2$score2.w.median >= 0))
+   checkTrue(all(ft2$score2.w.best >= 0))
 
-   checkTrue(all(ft$score3.w.median >= 0))
-   checkTrue(all(ft$score3.w.median <= 1))
+   checkTrue(all(ft2$score3.w.median >= 0))
+   checkTrue(all(ft2$score3.w.median <= 1))
 
-   checkTrue(all(ft$score3.w.best >= 0))
-   checkTrue(all(ft$score3.w.best <= 1))
+   checkTrue(all(ft2$score3.w.best >= 0))
+   checkTrue(all(ft2$score3.w.best <= 1))
 
-   checkTrue(all(ft$score1.h.median >= 0))
-   checkTrue(all(ft$score1.h.best >= 0))
+   checkTrue(all(ft2$score1.h.median >= 0))
+   checkTrue(all(ft2$score1.h.best >= 0))
     
-   checkTrue(all(ft$score2.h.median >= -99))
-   checkTrue(all(ft$score2.h.best >= -99))
+   checkTrue(all(ft2$score2.h.median >= 0))
+   checkTrue(all(ft2$score2.h.best >= 0))
 
-   checkTrue(all(ft$score3.h.median >= 0))
-   checkTrue(all(ft$score3.h.median <= 1))
+   checkTrue(all(ft2$score3.h.median >= 0))
+   checkTrue(all(ft2$score3.h.median <= 1))
 
-   checkTrue(all(ft$score3.h.best >= 0))
-   checkTrue(all(ft$score3.h.best <= 1))
+   checkTrue(all(ft2$score3.h.best >= 0))
+   checkTrue(all(ft2$score3.h.best <= 1))
 
-   checkTrue(all(ft$samplecount.w >= 0))
-   checkTrue(all(ft$samplecount.h >= 0))
+   checkTrue(all(ft2$samplecount.w >= 0))
+   checkTrue(all(ft2$samplecount.h >= 0))
 
-   checkTrue(all(ft$length.w >= 0))
-   checkTrue(all(ft$length.h >= 0))
+   checkTrue(all(ft2$length.w >= 0))
+   checkTrue(all(ft2$length.h >= 0))
 
 } # test.cleanFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
@@ -835,7 +870,7 @@ run <- function()
    start <- 42000000
    end   <- 47000000
 
-   ft <- ensemble(chrom, start, end)
+   ft <- ensemble.v1(chrom, start, end)
    
 } # run
 #------------------------------------------------------------------------------------------------------------------------
