@@ -1,7 +1,7 @@
 library(RPostgreSQL)
 library(GenomicRanges)
 library(RUnit)
-library(igvR)
+#library(igvR)
 #------------------------------------------------------------------------------------------------------------------------
 source("../../regionAndHitsSchemas.R")
 #------------------------------------------------------------------------------------------------------------------------
@@ -37,8 +37,8 @@ if(!exists("db.fimo"))
 if(!exists("tbl.chipseq"))
     db.chipseq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="chipseq", host="whovian")
 
-if(!exists("igv"))
-    igv <- igvR()
+#if(!exists("igv"))
+#    igv <- igvR()
 
 #------------------------------------------------------------------------------------------------------------------------
 runTests <- function()
@@ -75,12 +75,18 @@ getFimoHits <- function(chrom, start, end)
 
 } # getFimoHits
 #------------------------------------------------------------------------------------------------------------------------
-createWellingtonTable <- function(chrom, start, end)
+# motif != NA used only for testing, to pull out interesting edge cases
+createWellingtonTable <- function(chrom, start, end, motif=NA, sampleID=NA)
 {
    tbl.hitsw <- getHits(db.wellington, chrom, start, end) # 6 x 17
+   browser()
+   if(!is.na(motif))
+      tbl.hitsw <- subset(tbl.hitsw, name==motif)
+   if(!is.na(sampleID))
+      tbl.hitsw <- subset(tbl.hitsw, sample_id==sampleID)
    printf("found %d wellington hits in %d bases", nrow(tbl.hitsw), 1 + end - start)
    #displayBedTable(igv, tbl.hitsw[, c("chrom", "start", "endpos", "name", "score2")], "wellington")
-   tbl.std <- tbl.hitsw[, c("loc",  "name", "length", "score1", "score2", "score3")]
+   tbl.std <- tbl.hitsw[, c("loc",  "name", "length", "score1", "score2", "score3", "sample_id")]
    tbl.collapsed <- as.data.frame(table(tbl.std$loc, tbl.std$name))
    tbl.collapsed <- subset(tbl.collapsed, Freq != 0)
    colnames(tbl.collapsed) <- c("loc", "motif.w", "sample.count.w")
@@ -89,8 +95,9 @@ createWellingtonTable <- function(chrom, start, end)
 
    distinct.hits.count <- nrow(tbl.collapsed)  # unique loc/motif combinations
    length <- rep(0, distinct.hits.count)
-   score1.median <- rep(0.0, distinct.hits.count)
-   score1.best <-   rep(0.0, distinct.hits.count)
+   #score1.median <- rep(0.0, distinct.hits.count)
+   score1       <-   rep(0.0, distinct.hits.count)
+   #score1.best <-   rep(0.0, distinct.hits.count)
    score2.median <- rep(0.0, distinct.hits.count)
    score2.best  <-   rep(0.0, distinct.hits.count)
    score3.median <- rep(0.0, distinct.hits.count)
@@ -101,8 +108,10 @@ createWellingtonTable <- function(chrom, start, end)
        this.loc <- tbl.collapsed$loc[r]
        this.motif <- tbl.collapsed$motif.w[r]
        tbl.sub <- subset(tbl.std, loc==this.loc & name==this.motif)
-       score1.median[r] <- median(tbl.sub$score1)
-       score1.best[r]   <- max(tbl.sub$score1)
+       printf("count of duplicated samples: %d, %s, %s", length(which(duplicated(tbl.sub$sample_id))),
+              this.loc, this.motif)
+       browser()
+       score1[r]        <- max(tbl.sub$score1)
        score2.median[r] <- median(tbl.sub$score2)
        score2.best[r]   <- max(tbl.sub$score2)
        score3.median[r] <- median(tbl.sub$score3)
@@ -112,8 +121,8 @@ createWellingtonTable <- function(chrom, start, end)
        x <- 99
        } # for r
 
-   tbl.out <- cbind(tbl.collapsed, length, score1.median, score1.best, score2.median, score2.best, score3.median, score3.best)
-   colnames(tbl.out) <- c("loc", "motif.w", "samplecount.w", "length.w", "score1.w.median",  "score1.w.best",
+   tbl.out <- cbind(tbl.collapsed, length, score1, score2.median, score2.best, score3.median, score3.best)
+   colnames(tbl.out) <- c("loc", "motif.w", "samplecount.w", "length.w", "score1",
                           "score2.w.median",  "score2.w.best", "score3.w.median", "score3.w.best")
    tbl.out
 
@@ -129,7 +138,8 @@ test.createWellingtonTable <- function()
    start <- 44903772
    end   <- 44903790
 
-   tbl.w <- createWellingtonTable(chrom, start, end)
+      # MA0813.1 hits on both strands, provides chance to test reduction to one hit only
+   tbl.w <- createWellingtonTable(chrom, start, end, motif="MA0813.1", sampleID="ENCSR000EJE")
    checkEquals(dim(tbl.w), c(12, 10))
    checkEquals(length(unique(tbl.w$loc)), 7)
    checkEquals(length(unique(tbl.w$motif.w)), 12)
@@ -193,7 +203,8 @@ createHintTable <- function(chrom, start, end)
        x <- 99
        } # for r
 
-   tbl.out <- cbind(tbl.collapsed, length, score1.median, score1.best, score2.median, score2.best, score3.median, score3.best)
+   tbl.out <- cbind(tbl.collapsed, length, score1.median, score1.best, score2.median, score2.best,
+                    score3.median, score3.best)
    colnames(tbl.out) <- c("loc", "motif.h", "samplecount.h", "length.h", "score1.h.median",  "score1.h.best",
                           "score2.h.median",  "score2.h.best", "score3.h.median", "score3.h.best")
    tbl.out
@@ -622,6 +633,7 @@ ensemble <- function(chrom, start, end)
    tbl.w <- createWellingtonTable(chrom, start, end)
    tbl.h <- createHintTable(chrom, start, end)
    tbl.merged <- merge(tbl.w, tbl.h, by=c("loc"), all=TRUE)
+   browser()
    
    tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
    stopifnot(nrow(tbl.chipseq) > 0)
@@ -666,6 +678,8 @@ test.ensemble <- function()
    target.loc <- "chr19:45423911-45423920"
    start <- 45423910
    end   <- 45423921
+   tbl.h <- getHits(db.hint, chrom, start, end)
+   tbl.w <- getHits(db.wellington, chrom, start, end)
    ft.x  <- ensemble(chrom, start-1000, end + 1000) # be sure to get a chipseq hit.  5400 hits
      # eliminate the off target rows (present only because the footprint is wider than our target.loc
    ft.xs <- ft.x # subset(ft.x, loc==target.loc)  # 5401
@@ -693,6 +707,16 @@ test.ensemble <- function()
    checkEquals(nrow(subset(ft.xs.1, is.na(motif.h)  & !is.na(motif.w)  &  is.na(csmotif))),  16)
    checkEquals(nrow(subset(ft.xs.1, is.na(motif.h)  & !is.na(motif.w)  & !is.na(csmotif))),   3)
    checkEquals(81 + 20 + 94 + 105 + 0 + 0 + 16 + 3, 319)
+
+     #--------- test a rich region: 89 hint hits of 6 motifs
+     # MA0058.3 MA0104.3 MA0617.1 MA0622.1 MA0626.1 MA0825.1 
+     #       14       15       16       16       14       14 
+     #  65 wellington 
+     #  MA0058.3 MA0104.3 MA0617.1 MA0622.1 MA0626.1 MA0825.1 
+     #        10       11       12       12       10       10 
+
+
+
 
 } # test.ensemble
 #------------------------------------------------------------------------------------------------------------------------
