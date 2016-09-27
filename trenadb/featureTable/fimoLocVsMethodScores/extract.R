@@ -79,7 +79,6 @@ getFimoHits <- function(chrom, start, end)
 createWellingtonTable <- function(chrom, start, end, motif=NA, sampleID=NA)
 {
    tbl.hitsw <- getHits(db.wellington, chrom, start, end) # 6 x 17
-   browser()
    if(!is.na(motif))
       tbl.hitsw <- subset(tbl.hitsw, name==motif)
    if(!is.na(sampleID))
@@ -95,9 +94,8 @@ createWellingtonTable <- function(chrom, start, end, motif=NA, sampleID=NA)
 
    distinct.hits.count <- nrow(tbl.collapsed)  # unique loc/motif combinations
    length <- rep(0, distinct.hits.count)
-   #score1.median <- rep(0.0, distinct.hits.count)
-   score1       <-   rep(0.0, distinct.hits.count)
-   #score1.best <-   rep(0.0, distinct.hits.count)
+   score1.median <- rep(0.0, distinct.hits.count)
+   score1.best <-   rep(0.0, distinct.hits.count)
    score2.median <- rep(0.0, distinct.hits.count)
    score2.best  <-   rep(0.0, distinct.hits.count)
    score3.median <- rep(0.0, distinct.hits.count)
@@ -108,10 +106,11 @@ createWellingtonTable <- function(chrom, start, end, motif=NA, sampleID=NA)
        this.loc <- tbl.collapsed$loc[r]
        this.motif <- tbl.collapsed$motif.w[r]
        tbl.sub <- subset(tbl.std, loc==this.loc & name==this.motif)
-       printf("count of duplicated samples: %d, %s, %s", length(which(duplicated(tbl.sub$sample_id))),
-              this.loc, this.motif)
-       browser()
-       score1[r]        <- max(tbl.sub$score1)
+       #printf("count of duplicated samples: %d, %s, %s", length(which(duplicated(tbl.sub$sample_id))),
+       #       this.loc, this.motif)
+       #browser()
+       score1.median[r] <- median(tbl.sub$score1)
+       score1.best[r]   <- max(tbl.sub$score1)
        score2.median[r] <- median(tbl.sub$score2)
        score2.best[r]   <- max(tbl.sub$score2)
        score3.median[r] <- median(tbl.sub$score3)
@@ -121,8 +120,9 @@ createWellingtonTable <- function(chrom, start, end, motif=NA, sampleID=NA)
        x <- 99
        } # for r
 
-   tbl.out <- cbind(tbl.collapsed, length, score1, score2.median, score2.best, score3.median, score3.best)
-   colnames(tbl.out) <- c("loc", "motif.w", "samplecount.w", "length.w", "score1",
+   tbl.out <- cbind(tbl.collapsed, length, score1.median, score1.best, score2.median, score2.best,
+                    score3.median, score3.best)
+   colnames(tbl.out) <- c("loc", "motif.w", "samplecount.w", "length.w", "score1.median", "score1.best",
                           "score2.w.median",  "score2.w.best", "score3.w.median", "score3.w.best")
    tbl.out
 
@@ -138,8 +138,9 @@ test.createWellingtonTable <- function()
    start <- 44903772
    end   <- 44903790
 
-      # MA0813.1 hits on both strands, provides chance to test reduction to one hit only
+   tbl.w <- createWellingtonTable(chrom, start, end, motif="GTF2A1,2.p2")
    tbl.w <- createWellingtonTable(chrom, start, end, motif="MA0813.1", sampleID="ENCSR000EJE")
+   tbl.w <- createWellingtonTable(chrom, start, end)
    checkEquals(dim(tbl.w), c(12, 10))
    checkEquals(length(unique(tbl.w$loc)), 7)
    checkEquals(length(unique(tbl.w$motif.w)), 12)
@@ -501,7 +502,6 @@ old.toFeatureTable <- function(tbl.hits, methodName)
 #------------------------------------------------------------------------------------------------------------------------
 toFeatureTable.v1 <- function(tbl.std)
 {
-   browser()
    #motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
    column.names <- c("uLoc", motifNames)
    uLocs <- unique(tbl.hits$loc)
@@ -615,7 +615,6 @@ oldEnsembl <- function(chrom, start, end)
    x <- tbl.feature.cs$uLoc; y <- tbl.feature.hint$uLoc;
    printf("chipseq regions: %d", length(x))
    printf("   HINT regions: %d", length(y))
-   browser()
    x <- 99
     
 } # oldEnsembl
@@ -633,7 +632,6 @@ ensemble <- function(chrom, start, end)
    tbl.w <- createWellingtonTable(chrom, start, end)
    tbl.h <- createHintTable(chrom, start, end)
    tbl.merged <- merge(tbl.w, tbl.h, by=c("loc"), all=TRUE)
-   browser()
    
    tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
    stopifnot(nrow(tbl.chipseq) > 0)
