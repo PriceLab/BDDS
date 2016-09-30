@@ -1,6 +1,15 @@
 #------------------------------------------------------------------------------------------------------------------------
 printf <- function(...) print(noquote(sprintf(...)))
 #------------------------------------------------------------------------------------------------------------------------
+runTestUtils <- function()
+{
+   test.createWellingtonTable()
+   test.createHintTable()
+   test.createHintTable_ignoreStrand()
+   test.createWellingtonTable_ignoreStrand()
+   
+} # runTestUtils
+#------------------------------------------------------------------------------------------------------------------------
 getHits <- function(db, chrom, start, end)
 {
    query.p0 <- "select loc, chrom, start, endpos from regions"
@@ -12,7 +21,8 @@ getHits <- function(db, chrom, start, end)
    loc.set <- sprintf("('%s')", paste(tbl.regions$loc, collapse="','"))
    query.hits <- sprintf("select * from hits where loc in %s", loc.set)
    tbl.hits <- dbGetQuery(db, query.hits)
-   merge(tbl.regions, tbl.hits, on="loc")
+   tbl.out <- merge(tbl.regions, tbl.hits, on="loc")
+   tbl.out
 
 } # getHits
 #------------------------------------------------------------------------------------------------------------------------
@@ -25,13 +35,24 @@ getFimoHits <- function(chrom, start, end)
 } # getFimoHits
 #------------------------------------------------------------------------------------------------------------------------
 # motif != NA used only for testing, to pull out interesting edge cases
-createWellingtonTable <- function(chrom, start, end, motif=NA, sampleID=NA)
+createWellingtonTable <- function(chrom, start, end, motif=NA, sampleID=NA, collapseOnStrand=FALSE)
 {
    tbl.hitsw <- getHits(db.wellington, chrom, start, end) # 6 x 17
+
    if(!is.na(motif))
       tbl.hitsw <- subset(tbl.hitsw, name==motif)
    if(!is.na(sampleID))
       tbl.hitsw <- subset(tbl.hitsw, sample_id==sampleID)
+
+   if(collapseOnStrand){
+       strand.duplications <- which(duplicated(tbl.hitsw[, c("loc", "name", "sample_id")]))
+       if(length(strand.duplications) > 0){
+           printf("eliminating %d double-stranded hits", length(strand.duplications))
+           tbl.hitsw <- tbl.hitsw[-strand.duplications,]
+           }  # some hits for loc & motif on both strands
+       } # collapseOnStrand
+
+
    printf("found %d wellington hits in %d bases", nrow(tbl.hitsw), 1 + end - start)
    #displayBedTable(igv, tbl.hitsw[, c("chrom", "start", "endpos", "name", "score2")], "wellington")
    tbl.std <- tbl.hitsw[, c("loc",  "name", "length", "score1", "score2", "score3", "sample_id")]
@@ -71,7 +92,7 @@ createWellingtonTable <- function(chrom, start, end, motif=NA, sampleID=NA)
 
    tbl.out <- cbind(tbl.collapsed, length, score1.median, score1.best, score2.median, score2.best,
                     score3.median, score3.best)
-   colnames(tbl.out) <- c("loc", "motif.w", "samplecount.w", "length.w", "score1.median", "score1.best",
+   colnames(tbl.out) <- c("loc", "motif.w", "samplecount.w", "length.w", "score1.w.median", "score1.w.best",
                           "score2.w.median",  "score2.w.best", "score3.w.median", "score3.w.best")
    tbl.out$motif.w <- as.character(tbl.out$motif.w)
    tbl.out$loc <- as.character(tbl.out$loc)
@@ -116,11 +137,20 @@ test.createWellingtonTable <- function()
 
 }  # test.createWellingtonTable
 #------------------------------------------------------------------------------------------------------------------------
-createHintTable <- function(chrom, start, end, motif=NA, sample=NA, loc=NA)
+createHintTable <- function(chrom, start, end, motif=NA, sample=NA, loc=NA, collapseOnStrand=FALSE)
 {
    tbl.hitsh <- getHits(db.hint, chrom, start, end) # 6 x 17
+
    printf("found %d hint hits in %d bases", nrow(tbl.hitsh), 1 + end - start)
-   #browser()
+
+   if(collapseOnStrand){
+       strand.duplications <- which(duplicated(tbl.hitsh[, c("loc", "name", "sample_id")]))
+       if(length(strand.duplications) > 0){
+           printf("eliminating %d double-stranded hits", length(strand.duplications))
+           tbl.hitsh <- tbl.hitsh[-strand.duplications,]
+           }  # some hits for loc & motif on both strands
+       } # collapseOnStrand
+
    #displayBedTable(igv, tbl.hitsw[, c("chrom", "start", "endpos", "name", "score2")], "hint")
    tbl.std <- tbl.hitsh[, c("loc",  "name", "length", "sample_id", "score1", "score2", "score3")]
    tbl.collapsed <- as.data.frame(table(tbl.std$loc, tbl.std$name))
@@ -208,4 +238,38 @@ test.createHintTable <- function()
    checkEqualsNumeric(max(tbl.h$score3.h.best), 9.99e-05)
    
 }  # test.createHintTable
+#------------------------------------------------------------------------------------------------------------------------
+test.createHintTable_ignoreStrand <- function()
+{
+    printf("--- test.createHintTable_ignoreStrand")
+    x <- createHintTable("chr19", 920283, 920294)
+
+      #                   loc  motif.h samplecount.h length.h score1.h.median score1.h.best
+      # 1 chr19:920283-920294 MA0524.2            11       12              48           424
+      # 2 chr19:920283-920294 MA0810.1            11       12              48           424
+      # 3 chr19:920283-920294 MA0811.1            22       12              48           424
+
+    checkEquals(x$samplecount.h, c(11, 11, 22))
+
+    x2 <- createHintTable("chr19", 920283, 920294, collapseOnStrand=TRUE)
+    checkEquals(x2$samplecount.h, c(11, 11, 11))
+
+} # test.createHintTable_ignoreStrand
+#------------------------------------------------------------------------------------------------------------------------
+test.createWellingtonTable_ignoreStrand <- function()
+{
+   printf("--- test.createWellingtonTable_ignoreStrand, deferred")
+   loc <- "chr19:572471-572480"  #  MA0632.1   (empirically discovered)
+   chrom <- "chr19"
+   start <- 572471
+   end <- 572480
+   test.motif <- "MA0632.1"
+
+   x <- createWellingtonTable(chrom, start, end, motif=test.motif, sampleID=NA, collapseOnStrand=FALSE)
+   checkEquals(x$samplecount.w, 26)
+
+   y <- createWellingtonTable(chrom, start, end, motif=test.motif, sampleID=NA, collapseOnStrand=TRUE)
+   checkEquals(y$samplecount.w, 13)
+   
+} # test.createWellingtonTable_ignoreStrand
 #------------------------------------------------------------------------------------------------------------------------
