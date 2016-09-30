@@ -1,8 +1,23 @@
+library(RPostgreSQL)
+library(GenomicRanges)
+library(RUnit)
+#------------------------------------------------------------------------------------------------------------------------
+if(!exists("db.hint"))
+   db.hint <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="hint", host="whovian")
+
+if(!exists("db.wellington"))
+   db.wellington <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="wellington", host="whovian")
+
+if(!exists("db.trena"))
+   db.trena <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="trena", host="whovian")
+
 #------------------------------------------------------------------------------------------------------------------------
 printf <- function(...) print(noquote(sprintf(...)))
 #------------------------------------------------------------------------------------------------------------------------
-runTestUtils <- function()
+utils.runTests <- function()
 {
+   test.getFimoHits()
+   test.getHits()
    test.createWellingtonTable()
    test.createHintTable()
    test.createHintTable_ignoreStrand()
@@ -10,7 +25,7 @@ runTestUtils <- function()
    
 } # runTestUtils
 #------------------------------------------------------------------------------------------------------------------------
-getHits <- function(db, chrom, start, end)
+getHits <- function(db, chrom, start, end, locs=NA, motifs=NA)
 {
    query.p0 <- "select loc, chrom, start, endpos from regions"
    query.p1 <- sprintf("where chrom='%s' and start >= %d and endpos <= %d", chrom, start, end)
@@ -22,9 +37,49 @@ getHits <- function(db, chrom, start, end)
    query.hits <- sprintf("select * from hits where loc in %s", loc.set)
    tbl.hits <- dbGetQuery(db, query.hits)
    tbl.out <- merge(tbl.regions, tbl.hits, on="loc")
+
+   if(!any(is.na(motifs)))
+       tbl.out <- subset(tbl.out, name %in% motifs)
+
+   if(!any(is.na(locs)))
+       tbl.out <- subset(tbl.out, loc %in% locs)
+
    tbl.out
 
 } # getHits
+#------------------------------------------------------------------------------------------------------------------------
+test.getHits <- function()
+{
+   printf("--- test.getHits")
+
+   chrom <- "chr19"
+   start <- 44903772
+   end   <- 44903790
+
+   x <- getHits(db.hint, chrom, start, end)
+   checkEquals(dim(x), c(10, 17))
+
+   target.locs <- c("chr19:44903775-44903786")
+   x2 <- getHits(db.hint, chrom, start, end, locs=target.locs)
+   checkEquals(dim(x2), c(2, 17))
+   checkEquals(unique(x2$loc), target.locs)
+
+   target.motifs <- c("MA0696.1", "sci09.v1_Plagl1_0972")
+   x3 <- getHits(db.hint, chrom, start, end, motifs=target.motifs)
+   checkEquals(dim(x3), c(4, 17))
+   checkEquals(sort(unique(x3$name)), sort(target.motifs))
+
+   target.locs <- c("chr19:44890339-44890348", "chr19:44890339-44890348")
+   target.motifs <- c("MA0612.1", "MA0644.1")
+   x4 <- getHits(db.hint, chrom, start-20000, end+20000, locs=target.locs, motifs=target.motifs)
+   x5 <- getHits(db.hint, chrom, start-20000, end+20000, locs=target.locs)
+   x6 <- getHits(db.hint, chrom, start-20000, end+20000, motifs=target.motifs)
+
+   checkEquals(dim(x4), c(8,  17))
+   checkEquals(dim(x5), c(76, 17))
+   checkEquals(dim(x6), c(16, 17))
+    
+} # test.getHits
 #------------------------------------------------------------------------------------------------------------------------
 getFimoHits <- function(chrom, start, end)
 {
@@ -33,6 +88,21 @@ getFimoHits <- function(chrom, start, end)
    dbGetQuery(db.trena, query)
 
 } # getFimoHits
+#------------------------------------------------------------------------------------------------------------------------
+test.getFimoHits <- function()
+{
+   printf("--- test.getFimoHits")
+
+   chrom <- "chr19"
+   start <- 44903772
+   end   <- 44903790
+
+   x <- getFimoHits(chrom, start, end)
+   checkEquals(dim(x), c(14, 9))
+   expected <- c("motifname", "chrom", "start", "endpos", "strand", "motifscore", "pval", "sequence")
+   checkTrue(all(expected %in% colnames(x)))
+    
+} # test.getFimoHits
 #------------------------------------------------------------------------------------------------------------------------
 # motif != NA used only for testing, to pull out interesting edge cases
 createWellingtonTable <- function(chrom, start, end, motif=NA, sampleID=NA, collapseOnStrand=FALSE)
