@@ -3,8 +3,8 @@ library(GenomicRanges)
 library(RUnit)
 #library(igvR)
 #------------------------------------------------------------------------------------------------------------------------
-source("../../regionAndHitsSchemas.R")
-source("../../utils.R")
+source("regionAndHitsSchemas.R")
+source("utils.R")
 #------------------------------------------------------------------------------------------------------------------------
 if(!exists("db.chipseq"))
    db.chipseq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="chipseq", host="whovian")
@@ -50,32 +50,9 @@ runTests <- function()
    test.chipseqToFeatureTable()
    test.ensemble_hint_wellington_empty_chipseq()
    test.ensemble_hint_wellington_chipseq()
-   #test.big10M()
+   test.run50k()
   
 } # runTests
-#------------------------------------------------------------------------------------------------------------------------
-#getHits <- function(db, chrom, start, end)
-#{
-#   query.p0 <- "select loc, chrom, start, endpos from regions"
-#   query.p1 <- sprintf("where chrom='%s' and start >= %d and endpos <= %d", chrom, start, end)
-#   query.regions <- paste(query.p0, query.p1)
-#   tbl.regions <- dbGetQuery(db, query.regions)
-#   if(nrow(tbl.regions) == 0)
-#       return(data.frame())
-#   loc.set <- sprintf("('%s')", paste(tbl.regions$loc, collapse="','"))
-#   query.hits <- sprintf("select * from hits where loc in %s", loc.set)
-#   tbl.hits <- dbGetQuery(db, query.hits)
-#   merge(tbl.regions, tbl.hits, on="loc")
-#
-#} # getHits
-#------------------------------------------------------------------------------------------------------------------------
-#getFimoHits <- function(chrom, start, end)
-#{
-#   chrom <- sub("^chr", "", chrom)
-#   query <- sprintf("select * from fimo_hg38 where chrom='%s' and start > %d and endpos < %d", chrom, start, end)
-#   dbGetQuery(db.trena, query)
-#
-#} # getFimoHits
 #------------------------------------------------------------------------------------------------------------------------
 explore <- function()
 {
@@ -393,7 +370,7 @@ test.old.toFeatureTable <- function(shoulder=100)
 #------------------------------------------------------------------------------------------------------------------------
 ensemble <- function(chrom, start, end, test.motifs=NA, test.locs=NA)
 {
-   tbl.w <- createWellingtonTable(chrom, start, end)
+   tbl.w <- createWellingtonTable(chrom, start, end, collapseOnStrand=TRUE)
 
    if(!any(is.na(test.motifs)))
        tbl.w <- subset(tbl.w, motif.w %in% test.motifs)
@@ -666,61 +643,19 @@ test.locStringToBedTable <- function()
 # make missing values for score1.h.median, score1.h.best 0
 # make missing values for score1.w.median 0
 # collapse motif.w and motif.h into one 'motif' column
-cleanFeatureTable <- function(tbl)
+cleanFeatureTable <- function(tbl, totalSampleCount)
 {
    x <- tbl
 
-   #fimo.score.columns <- grep("score[23]", colnames(tbl))
-   #stopifnot(length(fimo.score.columns) == 8) # [w,h] * [2,3] * [median, best]
-   browser()
-
-   x$score1.w.median[is.na(x$score1.w.median)] <- 0
-   x$score1.w.best[is.na(x$score1.w.best)] <- 0
-   x$score1.h.median[is.na(x$score1.h.median)] <- 0
-   x$score1.h.best[is.na(x$score1.h.best)] <- 0
-
-   x$score2.w.median[is.na(x$score2.w.median)] <- -99
-   x$score2.w.best[is.na(x$score2.w.best)] <- -99
-   x$score2.h.median[is.na(x$score2.h.median)] <- -99
-   x$score2.h.best[is.na(x$score2.h.best)] <- -99
-
-   x$score3.w.median[is.na(x$score3.w.median)] <- 1.0
-   x$score3.w.best[is.na(x$score3.w.best)] <- 1.0
-   x$score3.h.median[is.na(x$score3.h.median)] <- 1.0
-   x$score3.h.best[is.na(x$score3.h.best)] <- 1.0
-
    x$samplecount.w[is.na(x$samplecount.w)] <- 0
-   x$length.w[is.na(x$length.w)] <- 0
-   
+   x$score.w[is.na(x$score.w)] <- -99
+
    x$samplecount.h[is.na(x$samplecount.h)] <- 0
-   x$length.h[is.na(x$length.h)] <- 0
-   
-   x$csmotif[is.na(x$csmotif)] <- "NA"
-   x$csTF[is.na(x$csTF)] <- "NA"
+   x$score.h[is.na(x$score.h)] <- 0
 
-      # collapse motifs from the two methods into one column
-      # some will be identical, NAs will be complementary
+   x$csscore[is.na(x$csscore)] <- 0
+   x$totalsamplecount <- totalSampleCount
 
-   motif <- as.character(x$motif.w)
-   nas <- which(is.na(motif)) 
-   motif[nas] <- as.character(x$motif.h[nas])
-   x$motif <- motif
-
-   motif.columns.to.delete <- grep("motif.", colnames(x), fixed=TRUE)
-   if(length(motif.columns.to.delete) > 0)
-      x <- x[, -motif.columns.to.delete]
-
-   motiflength <- x$length.w
-   zeros <- which(motiflength == 0)
-   motiflength[zeros] <- x$length.h[zeros]
-   x$motiflength <- motiflength
-
-   length.columns.to.delete <- grep("length.", colnames(x), fixed=TRUE)
-   if(length(length.columns.to.delete) > 0)
-      x <- x[, -length.columns.to.delete]
-
-   x$csscore[which(is.na(x$csscore))] <- 0
-   
    invisible(unique(x))
    
 } # cleanFeatureTable
@@ -789,16 +724,82 @@ test.big10M <- function()
    
 } # test.big10M
 #------------------------------------------------------------------------------------------------------------------------
+test.run50k <- function()
+{
+   printf("--- test.run50k")
+
+   chrom <- "chr19"
+   start <- 42000000
+   end   <- 42050000
+
+   system.time(ft <- ensemble(chrom, start, end))
+   totalSampleCount <- nrow(dbGetQuery(db.hint, "select distinct sample_id from hits"))
+   ft <- cleanFeatureTable(ft, totalSampleCount)
+
+   tbl.hit.all <- subset(ft, !is.na(csTF) & samplecount.w > 0  & samplecount.h > 0)
+   tbl.cs.only <- subset(ft, !is.na(csTF) & samplecount.w == 0 & samplecount.h == 0)
+   tbl.w.only  <- subset(ft, is.na(csTF)  & samplecount.w > 0  & samplecount.h == 0)
+   tbl.h.only  <- subset(ft, is.na(csTF)  & samplecount.w == 0 & samplecount.h > 0)
+   tbl.wh.only <- subset(ft, is.na(csTF)  & samplecount.w > 0  & samplecount.h > 0)
+   tbl.wc.only <- subset(ft, !is.na(csTF) & samplecount.w > 0  & samplecount.h == 0)
+   tbl.hc.only <- subset(ft, !is.na(csTF) & samplecount.w == 0  & samplecount.h > 0)
+
+   checkEquals(nrow(ft), sum(nrow(tbl.hit.all), nrow(tbl.cs.only), nrow(tbl.w.only),
+                             nrow(tbl.h.only), nrow(tbl.wh.only), nrow(tbl.wc.only), nrow(tbl.hc.only)))
+   
+      # do some positive checks
+   for(r in 1:nrow(tbl.hit.all)){
+      loc <- locStringToBedTable(tbl.hit.all$loc[r])
+      hits.raw <- with(loc, getHits(db.hint, chrom, start, end))
+      hits <- subset(hits.raw, name==tbl.hit.all$motif[r])
+      checkEquals(nrow(hits), tbl.hit.all$samplecount.h[r])
+      hits.raw <- with(loc, getHits(db.wellington, chrom, start, end))
+      hits <- subset(hits.raw, name==tbl.hit.all$motif[r])
+      checkEquals(nrow(hits), tbl.hit.all$samplecount.w[r])
+      } # for r
+
+      # now some negative checks
+   for(r in 1:nrow(tbl.w.only)){
+      loc <- locStringToBedTable(tbl.w.only$loc[r])
+      hits.raw <- with(loc, getHits(db.hint, chrom, start, end))
+      if(nrow(hits.raw) > 0) {
+         hits <- subset(hits.raw, name==tbl.w.only$motif[r])
+         checkEquals(nrow(hits), 0)
+         }
+      } # for r
+    
+   for(r in 1:nrow(tbl.h.only)){
+      loc <- locStringToBedTable(tbl.h.only$loc[r])
+      hits.raw <- with(loc, getHits(db.wellington, chrom, start, end))
+      if(nrow(hits.raw) > 0) {
+         hits <- subset(hits.raw, name==tbl.h.only$motif[r])
+         checkEquals(nrow(hits), 0)
+         }
+      } # for r
+    
+} # test.run50k
+#------------------------------------------------------------------------------------------------------------------------
 run <- function()
 {
    chrom <- "chr19"
    start <- 42000000
    end   <- 47000000
 
-   ft.0 <- ensemble(chrom, start, end)
-   ft <- cleanFeatureTable(ft.0)
+   ft <- ensemble(chrom, start, end)
+   #ft <- cleanFeatureTable(ft.0)
    filename <- sprintf("ft.%s.RData", format (Sys.time(), "%a.%b.%d.%Y-%H:%M:%S"))
    save(ft, file=filename)
+   ft.clean <- cleanFeatureTable(ft, 18)
+   save(ft.clean, file=sprintf("ftClean.%s.RData", format (Sys.time(), "%a.%b.%d.%Y-%H:%M:%S")))
+
+   printf("tbl.hit.all: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w > 0  & samplecount.h > 0)))
+   printf("tbl.cs.only: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w == 0 & samplecount.h == 0)))
+   printf("tbl.w.only: %d", nrow(subset(ft.clean, is.na(csTF)  & samplecount.w > 0  & samplecount.h == 0)))
+   printf("tbl.h.only: %d", nrow(subset(ft.clean, is.na(csTF)  & samplecount.w == 0 & samplecount.h > 0)))
+   printf("tbl.wh.only: %d", nrow(subset(ft.clean, is.na(csTF)  & samplecount.w > 0  & samplecount.h > 0)))
+   printf("tbl.wc.only: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w > 0  & samplecount.h == 0)))
+   printf("tbl.hc.only: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w == 0  & samplecount.h > 0)))
+
    
 } # run
 #------------------------------------------------------------------------------------------------------------------------
