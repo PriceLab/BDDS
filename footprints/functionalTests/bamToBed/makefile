@@ -3,8 +3,8 @@ BAMFILE=../data/ENCSR000DBY.19.chr
 default: preTest $(BAMFILE).bed postTest
 
 clean:
-	- rm ../data/$(BAMFILE).bam.bai
-	- rm ../data/$(BAMFILE).bed
+	- rm $(BAMFILE).bam.bai
+	- rm $(BAMFILE).bed
 
 preTest:
 	python3 preTest.py
