@@ -4,13 +4,13 @@
 import shutil
 #import unittest
 #import sys
-#import os
+import os
 #--------------------------------------------------------------------------------
 def executableProgramFound(programName):
 
-   print("checking for valid path to executable %s" % programName)
-   path = shutil.which(programName)
-   return(isinstance(path, str) and len(path) >= len(programName))
+    print("checking for valid path to executable %s" % programName)
+    path = shutil.which(programName)
+    return(isinstance(path, str) and len(path) >= len(programName))
 
 #--------------------------------------------------------------------------------
 assert(executableProgramFound("samtools")) 
