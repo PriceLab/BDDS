@@ -1,16 +1,17 @@
 # a test for fseq functionality
-BEDFILE=../data/ENCSR000DBY.19
+BEDFILE=../data/ENCSR000DBY.19.chr
+OUTFILE=../data/chr19
 
-default: preTest $(BEDFILE).bed postTest
+default: preTest $(OUTFILE).bed postTest
 
 clean:
-	- rm $(BEDFILE).peaks.bed
+	- rm $(OUTFILE).bed
 
 preTest:
 	python preTest.py
 
-$(BEDFILE).peaks.bed: $(BEDFILE).bed
-	fseq -f 0 -o ../data pt 2.5 -of bed $(BEDFILE).peaks.bed
+$(OUTFILE).bed: $(BEDFILE).bed
+	fseq -f 0 -o ../data -t 2.5 -of bed $(BEDFILE).bed
 
 postTest:
-	python postTest.py $(BEDFILE).peaks.bed
+	python postTest.py $(OUTFILE).bed
