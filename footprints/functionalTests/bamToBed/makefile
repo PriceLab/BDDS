@@ -1,13 +1,13 @@
-BAMFILE=../data/ENCSR000DBY.19
+BAMFILE=../data/ENCSR000DBY.19.chr
 
 default: preTest $(BAMFILE).bed postTest
 
 clean:
-	- rm $(BAMFILE).bam.bai
-	- rm $(BAMFILE).bed
+	- rm ../data/$(BAMFILE).bam.bai
+	- rm ../data/$(BAMFILE).bed
 
 preTest:
-	python preTest.py
+	python3 preTest.py
 
 $(BAMFILE).bed: $(BAMFILE).bam $(BAMFILE).bam.bai
 	bamToBed -i $(BAMFILE).bam > $(BAMFILE).bed
@@ -16,4 +16,4 @@ $(BAMFILE).bam.bai: $(BAMFILE).bam
 	samtools index $(BAMFILE).bam
 
 postTest:
-	python postTest.py $(BAMFILE).bed
+	python3 postTest.py $(BAMFILE).bed
