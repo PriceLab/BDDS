@@ -10,10 +10,13 @@ all: $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
+## bamToBed   : bamToBed test
 bamToBed: $(BAMFILE).bam
 
+## fseq       : fseq test
 fseq: bamToBed
 
+## transform  : transform test
 transform: fseq
 
 ## clean      : clean up intermediate files from testing
