@@ -8,9 +8,7 @@ default: preTest $(OUTFILE) postTest
 
 .PHONY: clean
 clean:
-	@ rm $(OUTDIR)p\ value\ cutoffs/*
-	@ rmdir $(OUTDIR)p\ value\ cutoffs/
-	@ rm $(OUTDIR)*
+	@find $(OUTDIR)* -delete
 
 .PHONY: preTest
 preTest:
@@ -18,9 +16,9 @@ preTest:
 
 $(OUTFILE): $(BEDFILE) $(BAMFILE)
 ifeq ($(PYTHON),3)
-	wellington_footprints3.py $(BEDFILE) $(BAMFILE) $(OUTDIR)
+	wellington_footprints3.py -fdrlimit=0 $(BEDFILE) $(BAMFILE) $(OUTDIR)
 else
-	wellington_footprints.py $(BEDFILE) $(BAMFILE) $(OUTDIR)
+	wellington_footprints.py -fdrlimit=0 $(BEDFILE) $(BAMFILE) $(OUTDIR)
 endif
 
 .PHONY: postTest
