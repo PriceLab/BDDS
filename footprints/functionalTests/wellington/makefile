@@ -8,7 +8,8 @@ default: preTest $(OUTFILE) postTest
 
 .PHONY: clean
 clean:
-	@find $(OUTDIR)* -delete
+	@find $(OUTDIR)*.wig -delete 
+	@find $(OUTDIR)p* -delete
 
 .PHONY: preTest
 preTest:
