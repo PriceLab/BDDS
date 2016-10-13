@@ -15,9 +15,10 @@ ALTER ROLE databasemaker CREATEROLE CREATEDB LOGIN;
 -- switch to the databasemaker role
 SET ROLE databasemaker;
 
+-- create the trena user and grant login
 CREATE USER trena password 'trena';
 CREATE DATABASE trena;
 GRANT ALL PRIVILEGES on DATABASE trena to trena;
 ALTER ROLE trena LOGIN;
 
-
+-- now the database is ready for the trena user to run the create.sql scripts
