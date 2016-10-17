@@ -18,6 +18,7 @@ preTest:
 $(OUTFILE): $(BEDFILE) $(BAMFILE)
 ifeq ($(PYTHON),3)
 	wellington_footprints3.py -fdrlimit=0 $(BEDFILE) $(BAMFILE) $(OUTDIR)
+	#wellington_footprints3.py $(BEDFILE) $(BAMFILE) $(OUTDIR)
 else
 	wellington_footprints.py -fdrlimit=0 $(BEDFILE) $(BAMFILE) $(OUTDIR)
 endif
