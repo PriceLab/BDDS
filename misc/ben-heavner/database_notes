@@ -1,0 +1,19 @@
+Staring with a fresh postgresql install, I start with
+https://github.com/PriceLab/BDDS/blob/master/trenadb/src/initDB.sql
+
+Next, either use the existing fimo database or make a fimo database (https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/create.sql)
+
+I'll use the existing one:
+
+to make new test wellington database:
+psql -U databasemaker -h whovian
+create database testWellington;
+grant all privileges on database testWellington to trenatest;
+set Role trenatest;
+
+then /connect testwellington;
+do https://github.com/PriceLab/BDDS/blob/master/trenadb/wellington/wholeBrain/createTables.sql
+
+(first, a detour to get current version of R and manage dependancies needed for that: lesson learned. there's a Makevars file in ~/.R that can mess things up)
+
+

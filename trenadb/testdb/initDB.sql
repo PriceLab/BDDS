@@ -20,5 +20,6 @@ CREATE USER trenatest password 'trenatest';
 CREATE DATABASE trenatest;
 GRANT ALL PRIVILEGES on DATABASE trenatest to trenatest;
 ALTER ROLE trenatest LOGIN;
+GRANT trenatest TO databasemaker;
 
 -- now the database is ready for the trenatest user to run the create.sql scripts
