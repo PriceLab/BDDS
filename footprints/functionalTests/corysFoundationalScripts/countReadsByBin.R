@@ -15,9 +15,6 @@ runTests <- function()
 doCount <- function(bamFile, chromosome, start, end, binSize=1e6)
 {
    stopifnot(file.exists(bamFile))
-
-   start <- 0
-   end <- 5000000
    starts <- seq(from=start, to=(end-binSize), by=binSize)
    ends   <- seq(from=(start + binSize), to=(end), by=binSize)
    gr <- GRanges(seqnames="chr19", ranges=IRanges(start=starts, end=ends))
@@ -34,7 +31,7 @@ doCount <- function(bamFile, chromosome, start, end, binSize=1e6)
 #------------------------------------------------------------------------------------------------------------------------
 test.doCount <- function()
 {
-   tbl.counts <- doCount("../data/ENCSR000DBY.19.chr.bam", 0, 5e6, 1e6)
+   tbl.counts <- doCount("../data/ENCSR000DBY.19.chr.bam", "chr19", 0, 5e6, 1e6)
    checkEquals(dim(tbl.counts), c(5, 7))
    checkEquals(colnames(tbl.counts), c("space", "start", "end", "width", "file", "records", "nucleotides"))
    checkEqualsNumeric(mean(tbl.counts$records), 18487, tol=10) # a very rough check
