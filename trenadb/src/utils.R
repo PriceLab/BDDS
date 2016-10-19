@@ -22,6 +22,7 @@ utils.runTests <- function()
    test.createHintTable_ignoreStrand()
    test.createWellingtonTable()
    test.createWellingtonTable_ignoreStrand()
+   test.createPiqTable()
    
 } # runTestUtils
 #------------------------------------------------------------------------------------------------------------------------
@@ -370,4 +371,110 @@ test.createWellingtonTable_ignoreStrand <- function()
    checkEquals(y$samplecount.w, 13)
    
 } # test.createWellingtonTable_ignoreStrand
+#------------------------------------------------------------------------------------------------------------------------
+createPiqTable <- function(chrom, start, end, motifs=NA, locs=NA, collapseOnStrand=FALSE)
+{
+   tbl.hits <- getHits(db.piq, chrom, start, end, motifs=motifs, locs=locs)
+   printf("found %d hint hits in %d bases", nrow(tbl.hits), 1 + end - start)
+
+   if(nrow(tbl.hits) == 0)
+      return(data.frame())
+
+   if(collapseOnStrand){
+         # resort tbl.hits so that all rows with equal loc/name/sample_id are sorted
+         # in descending order by score3, the fimo pval.  then, when any duplicates are eliminated
+         # they are the lower scoring rows
+       with(tbl.hits, tbl.hits <- tbl.hits[order(loc, name, sample_id,  score3, decreasing=FALSE),])
+       strand.duplications <- which(duplicated(tbl.hits[, c("loc", "name", "sample_id")]))
+       if(length(strand.duplications) > 0){
+           printf("eliminating %d double-stranded hits", length(strand.duplications))
+           tbl.hits <- tbl.hits[-strand.duplications,]
+           }  # some hits for loc & motif on both strands
+       } # collapseOnStrand
+
+   tbl.std <- tbl.hits[, c("loc",  "name", "length", "sample_id", "score1", "score2", "score3", "score4")]
+   tbl.collapsed <- as.data.frame(table(tbl.std$loc, tbl.std$name))
+   tbl.collapsed <- subset(tbl.collapsed, Freq != 0)
+   colnames(tbl.collapsed) <- c("loc", "motif.p", "sample.count.p")
+
+
+      # preallocate and zero fill the summary columns for each row
+
+   distinct.hits.count <- nrow(tbl.collapsed)  # unique loc/motif combinations
+   length <- rep(0, distinct.hits.count)
+
+   score1.median <- rep(0.0, distinct.hits.count)
+   score1.best <-   rep(0.0, distinct.hits.count)
+
+   score2.median <- rep(0.0, distinct.hits.count)
+   score2.best <-   rep(0.0, distinct.hits.count)
+
+   score3.median <- rep(0.0, distinct.hits.count)
+   score3.best <-   rep(0.0, distinct.hits.count)
+
+   score4.median <- rep(0.0, distinct.hits.count)
+   score4.best <-   rep(0.0, distinct.hits.count)
+
+   length <-        rep(0,   distinct.hits.count)
+
+    # score1: hint score, ranges from 2 to 10,160, mean of ~123, median 44
+    # score2: fimo score, -18.7 to 30.9, mean and median both about 11.5
+    # score3: fimo pval, min 5.9e-13, max 1e-4, mean 4.3e-5, median 4.01 e-5
+
+   for(r in 1:nrow(tbl.collapsed)){
+       this.loc <- tbl.collapsed$loc[r]
+       this.motif <- tbl.collapsed$motif.p[r]
+       tbl.sub <- subset(tbl.std, loc==this.loc & name==this.motif)
+       score1.median[r] <- median(tbl.sub$score1)
+       score1.best[r]   <- max(tbl.sub$score1)
+       score2.median[r] <- median(tbl.sub$score2)
+       score2.best[r]   <- max(tbl.sub$score2)
+       score3.median[r] <- median(tbl.sub$score3)
+       score3.best[r]   <- max(tbl.sub$score3)
+       score4.median[r] <- median(tbl.sub$score4)
+       score4.best[r]   <- max(tbl.sub$score4)
+       length[r] <- median(tbl.sub$length) # should all be identical, but this covers all situations
+       #printf("  found %d rows for %s %s", nrow(tbl.sub), this.loc, this.motif)
+       x <- 99
+       } # for r
+
+   tbl.out <- cbind(tbl.collapsed, length, score1.median, score1.best, score2.median, score2.best,
+                    score3.median, score3.best, score4.median, score4.best)
+   colnames(tbl.out) <- c("loc", "motif.p", "samplecount.p", "length.p", "score1.p.median",  "score1.p.best",
+                          "score2.p.median",  "score2.p.best", "score3.p.median", "score3.p.best",
+                          "score4.p.median", "score4.p.best")
+   tbl.out$motif.p <- as.character(tbl.out$motif.p)
+   tbl.out$loc <- as.character(tbl.out$loc)
+
+   tbl.out
+
+}  # createPiqTable
+#------------------------------------------------------------------------------------------------------------------------
+test.createPiqTable <- function()
+{
+   printf("--- test.createPiqTable")
+
+      # extract a very small table with confusing scores
+   chrom <- "chr19"
+   start <- 45423500
+   end   <- 45423600
+   tbl <- createPiqTable(chrom, start, end)
+   checkEquals(dim(tbl), c(19, 12))
+   checkEquals(colnames(tbl), c("loc", "motif.p", "samplecount.p", "length.p", "score1.p.median", "score1.p.best",
+                                "score2.p.median", "score2.p.best", "score3.p.median", "score3.p.best",
+                                "score4.p.median", "score4.p.best"))
+   checkEquals(length(unique(tbl$motif.p)), 12)
+   checkTrue(all(tbl$samplecount.p == 18))
+
+     # no negative or pvalue scores, so all "best" scores should be >= median scores
+     # by direct inspection, what seems plausible is true for scores2-4, that best   
+     # is > median
+     # todo: recall the nature of these scores, and see if score1.median == score1. best is plausible
+
+   checkTrue(with(tbl, all(score1.p.median <= score1.p.best)))
+   checkTrue(with(tbl, all(score2.p.median < score2.p.best)))
+   checkTrue(with(tbl, all(score3.p.median < score3.p.best)))
+   checkTrue(with(tbl, all(score4.p.median < score4.p.best)))
+   
+}  # test.createPiqTable
 #------------------------------------------------------------------------------------------------------------------------
