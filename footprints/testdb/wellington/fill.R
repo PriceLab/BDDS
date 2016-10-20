@@ -45,7 +45,7 @@ readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
    
    tbl <- read.table(full.path, sep="\t", as.is=TRUE)
    colnames(tbl) <- c("chrom", "start", "end", "name", "score", "strand")
-   tbl$chrom <- paste("chr", tbl$chrom, sep="")
+   #tbl$chrom <- paste("chr", tbl$chrom, sep="")
    if(!is.na(chromosome))
       tbl <- subset(tbl, chrom==chromosome)
 
@@ -60,17 +60,17 @@ test.readWellingtonTable <- function()
 {
    printf("--- test.readWellingtonTable")
 
-   tbl <- readWellingtonTable(wellington.path, test.sampleID, 5, "chr21")
+   tbl <- readWellingtonTable(wellington.path, test.sampleID, 5, "chr19")
    checkEquals(dim(tbl), c(5,6))
    checkEquals(colnames(tbl), c("chrom", "start", "end", "name", "score", "strand"))
-   checkEquals(unique(tbl$chrom), "chr21")
+   checkEquals(unique(tbl$chrom), "chr19")
 
      # now read without chrom or nrow constraints
    tbl <- readWellingtonTable(wellington.path, test.sampleID)
    checkEquals(ncol(tbl), 6)
-   checkTrue(nrow(tbl) > 30000)
+   checkTrue(nrow(tbl) > 300)
    checkEquals(colnames(tbl), c("chrom", "start", "end", "name", "score", "strand"))
-   checkEquals(head(sort(unique(tbl$chrom))), c("chr1", "chr10", "chr11", "chr12", "chr13", "chr14"))
+   checkEquals(head(sort(unique(tbl$chrom))), "chr19")
    
 } # test.readWellingtonTable
 #-------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID)
 test.mergeFootprintsWithFimo <- function()
 {
    printf("--- test.mergeFootprintsWithFimo")
-   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr21")
+   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
    tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID)
    checkEquals(ncol(tbl), 12)
    checkEquals(sort(colnames(tbl)),
@@ -120,11 +120,13 @@ test.mergeFootprintsWithFimo <- function()
                  "motif", "motif.end", "motif.sequence", "motif.start", "motif.strand", "sample_id",
                  "wellington.score"))
    checkTrue(nrow(tbl) >= 8)
-   duplicated.loc <- "chr21:5290098-5290107"
-   checkEquals(length(grep(duplicated.loc, tbl$loc)), 6)
+
+   duplicated.loc <- "chr19:636760-636770"
+   checkEquals(length(grep(duplicated.loc, tbl$loc)), 5)
      #  3 distinct motifs mapped to this region
    checkEquals(sort(subset(tbl, loc == duplicated.loc)$motif),
-               c("MA0156.2", "MA0474.2", "MA0475.2", "MA0624.1", "MA0625.1", "MA0764.1"))
+               c("MA0003.3", "MA0812.1", "MA0812.1", "MA0814.1", "MA0814.1"))
+   
    invisible(tbl)
 
 } # test.mergeFootprintsWithFimo
