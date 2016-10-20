@@ -169,7 +169,7 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid)
 test.splitTableIntoRegionsAndWellingtonHits <- function(tbl)
 {
    printf("--- test.splitTableIntoRegionsAndWellingtonHits")
-   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr21")
+   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
    tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID)
 
    x <- splitTableIntoRegionsAndWellingtonHits(tbl, "minid")
