@@ -1,20 +1,24 @@
 library(RPostgreSQL)
 library(GenomicRanges)
 library(RUnit)
-source("../../src/regionAndHitsSchemas.R")
+source("../DB_initialization/regionAndHitsSchemas.R")
+source("../src/getDBConnection.R")
 
 printf <- function(...) print(noquote(sprintf(...)))
 
 #-------------------------------------------------------------------------------
-wellington.path <- "/local/Ben/BDDS/footprints/functionalTests/output/wellington"
+wellington.path <- "../../functionalTests/output/wellington"
 test.sampleID <- "ENCSR000DBY"
 
 #-------------------------------------------------------------------------------
 if(!exists("db.wellington"))
-   db.wellington <- dbConnect(PostgreSQL(), user= "trenatest", password="trenatest", dbname="testwellington", host="whovian")
+   db.wellington <- getDBConnection(dbname="testwellington")
 
 if(!exists("db.fimo"))
-   db.fimo <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="fimo", host="whovian")
+   db.fimo <- getDBConnection(user= "trena", 
+                              password="trena", 
+                              dbname="fimo", 
+                              host="whovian")
 
 knownLocs <- new.env(parent=emptyenv())
 
@@ -51,7 +55,7 @@ readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
    invisible(tbl)
 
 } # readWellingtonTable
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 test.readWellingtonTable <- function()
 {
    printf("--- test.readWellingtonTable")
@@ -69,7 +73,7 @@ test.readWellingtonTable <- function()
    checkEquals(head(sort(unique(tbl$chrom))), c("chr1", "chr10", "chr11", "chr12", "chr13", "chr14"))
    
 } # test.readWellingtonTable
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 mergeFimoWithFootprints <- function(tbl.fp, sampleID)
 {
   chromosome <- unique(tbl.fp$chrom)
@@ -124,7 +128,7 @@ test.mergeFootprintsWithFimo <- function()
    invisible(tbl)
 
 } # test.mergeFootprintsWithFimo
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid)
 {
    tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
