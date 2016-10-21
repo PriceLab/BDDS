@@ -58,59 +58,6 @@ runTests <- function()
   
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
-explore <- function()
-{
-   chrom <- apoe$chrom
-   start <- apoe$start - 2000
-   end  <- apoe$start + 500
-
-   tbl.hitsw <- getHits(db.wellington, chrom, start, end) # 6 x 17
-   tbl.hitsh <- getHits(db.hint, chrom, start, end)       # 97 17
-
-   #tbl.hitsp <- getHits(db.piq, chrom, start, end)
-   #load("tbl.piq.hits.chr19.1100bases.RData")
-   load("tbl.piq.hits.chr19.2500bases.RData")
-   
-
-   tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
-   tbl.fimo <- getFimoHits(chrom, start, end)
-   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-   tbl.csWithFimoAll <- addFimoRegions(tbl.chipseq, tbl.fimo)   # 76 15
-   tbl.csWithFimoBound <- subset(tbl.csWithFimoAll, bindingSite==TRUE)
-   tbl.csWithFimoBound$fullname <- paste(tbl.csWithFimoBound$name, tbl.csWithFimoBound$motifname, sep="-") # 5 16
-
-   displayBedTable(igv, tbl.hitsw[, c("chrom", "start", "endpos", "name", "score2")], "wellington")
-   displayBedTable(igv, tbl.hitsh[, c("chrom", "start", "endpos", "name", "score2")], "hint")
-   displayBedTable(igv, tbl.csWithFimoBound[, c("chrom", "start", "endpos", "fullname", "score1")], "chipseq-fimo")
-   tbl.piqFiltered <- subset(tbl.hitsp, score4 > 0.7)
-   displayBedTable(igv, tbl.piqFiltered[, c("chrom", "start", "endpos", "name", "score4")], "piqFiltered")
-
-   tbl.wellington <- tbl.hitsw[, c("loc",  "name", "length", "score1", "score2", "score3")]
-   colnames(tbl.wellington) <- c("loc", "motif.w", "length",  "well1", "well2", "well3")
-
-   tbl.chipseq <- tbl.csWithFimoBound[, c("loc", "name", "length", "score1", "motifscore", "pval")]
-   colnames(tbl.chipseq) <- c("loc", "tf", "length",  "chip1", "chip2", "chip3")
-
-   tbl.hint <- tbl.hitsh[, c("loc",  "name", "length", "score1", "score2", "score3")]
-   colnames(tbl.hint) <-  c("loc", "motif.h", "length",  "hint1", "hint2", "hint3")
-   
-   tbl.piq <- tbl.hitsp[, c("chrom", "start", "endpos", "loc", "name", "length", "score1", "score2", "score3", "score4")]
-   colnames(tbl.piq) <- c("chrom", "start", "endpos", "loc", "motif.p", "length", "piq1", "piq2", "piq3", "piq4")
-   tbl.piq2 <- tbl.piq[order (tbl.piq$loc, tbl.piq$motif, tbl.piq$piq4, decreasing=TRUE),]
-   dups <- which(duplicated(tbl.piq2[, c("loc", "motif.p")]))
-   tbl.piq3 <- tbl.piq2[-dups,]
-   tbl.piq4 <- refimo(tbl.piq3)
-
-   #tbl.csw <- merge(tbl.chipseq, tbl.wellington, by=c("loc", "name", "length"), all=TRUE)
-   #tbl.cswh <- merge(tbl.csw, tbl.hint,  by=c("loc", "name", "length"), all=TRUE)
-   #tbl.cswhp <- merge(tbl.cswh, tbl.piq3, by=c("loc", "name", "length"), all=TRUE)
-
-   tbl.csw <- merge(tbl.chipseq, tbl.wellington, by=c("loc", "length"), all=TRUE)
-   tbl.cswh <- merge(tbl.csw, tbl.hint,  by=c("loc",  "length"), all=TRUE)
-   tbl.cswhp <- merge(tbl.cswh, tbl.piq4, by=c("loc",  "length"), all=TRUE)
-   
-} # explore
-#------------------------------------------------------------------------------------------------------------------------
 # we want wellington, hint, chipseq and piq to all use the same fimo regions
 # in contrast to the other methods, where i do the fimo intersections, piq does its own
 # and apparently does so on an obsolete motif library.  and it may eliminate second-best hits
@@ -253,54 +200,6 @@ test.annotateWithMotifs <- function()
 
 } # test.annotateWithMotifs
 #------------------------------------------------------------------------------------------------------------------------
-old.toFeatureTable <- function(tbl.hits, methodName)
-{
-   motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
-   column.names <- c("uLoc", motifNames)
-   uLocs <- unique(tbl.hits$loc)
-   tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
-   colnames(tbl) <- column.names
-   tbl$uLoc <- uLocs
-
-   for(r in 1:nrow(tbl.hits)){
-      row <- tbl.hits[r, "loc"]
-      col <- sprintf("%s_%s", methodName, tbl.hits[r, "name"])
-      #printf("[%s, %s]", row, col)
-      tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
-      }
-
-   invisible(tbl)
-
-} # old.toFeatureTable
-#------------------------------------------------------------------------------------------------------------------------
-toFeatureTable.v1 <- function(tbl.std)
-{
-   #motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
-   column.names <- c("uLoc", motifNames)
-   uLocs <- unique(tbl.hits$loc)
-   tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
-   colnames(tbl) <- column.names
-   tbl$uLoc <- uLocs
-
-   for(r in 1:nrow(tbl.hits)){
-      row <- tbl.hits[r, "loc"]
-      col <- sprintf("%s_%s", methodName, tbl.hits[r, "name"])
-      #printf("[%s, %s]", row, col)
-      tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
-      }
-
-   invisible(tbl)
-
-} # toFeatureTable.v1
-#------------------------------------------------------------------------------------------------------------------------
-test.toFeatureTable.v1 <- function()
-{
-   printf("--- test.toFeatureTable.v1")
-   load("hint.normalized.5rows.10hits.RData")
-   ft <- toFeatureTable.v1(tbl.h)
-
-} # test.toFeatureTable.v1
-#------------------------------------------------------------------------------------------------------------------------
 chipseqToFeatureTable <- function(tbl.hits, methodName)
 {
    motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
@@ -341,36 +240,6 @@ test.chipseqToFeatureTable <- function()
    checkEquals(sum(tbl.all.features[, -1]), nrow(tbl.csWithFimo))
 
 }  # test.chipseqToFeatureTable
-#------------------------------------------------------------------------------------------------------------------------
-test.old.toFeatureTable <- function(shoulder=100)
-{
-   tbl.apoe <- getHits(db.hint, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-     # chr19:44,904,793-44,904,958 includes two 151-bp chipseq hits about 800bp upstream of apoe tss
-     # chr19:44,906,493-44,906,663 includes one 151-bp chipssq hit (PBX3) just downstream of the tss
-   tbl.hhits <- getHits(db.hint, "chr19", 44906493, 44906663)
-   tbl.whits <- getHits(db.wellington, "chr19", 44906493, 44906663)
-   tbl.hft <- old.toFeatureTable(tbl.hhits, "hint")
-   tbl.wft <- old.toFeatureTable(tbl.whits, "wellington")
-   #checkEquals(nrow(tbl.hits), sum(tbl[, -1]))
-
-      # for every row, identify each column with a 1, make sure tbl.expanded[
-
-   for(r in 1:nrow(tbl)){
-      hits <- which(tbl[r,] == 1)
-      this.loc <- tbl$uLoc[r]
-      if(length(hits) > 0){
-         column.names <- sub("HINT_", "", colnames(tbl)[hits])
-         #if(length(column.names) > 10) browser()
-         #printf("loc: %s   column.names: %s", this.loc, paste(column.names, collapse=","))
-         #printf("checked out? %s (%d,%d)", 
-         #       nrow(subset(tbl.hits, name %in% column.names & loc==this.loc)) == length(hits),
-         #       nrow(subset(tbl.hits, name %in% column.names & loc==this.loc)), length(hits))
-         checkEquals(nrow(subset(tbl.hits, name %in% column.names & loc==this.loc)), length(hits))
-         } # if hits
-      } # for r
-
-
-} # test.old.toFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
 ensemble <- function(chrom, start, end, test.motifs=NA, test.locs=NA)
 {
@@ -620,41 +489,6 @@ test.ensemble_hint_wellington_empty_chipseq <- function()
    checkEquals(dim(ft2), c(540, 10))
 
 } # test.ensemble_hint_wellington_empty_chipseq
-#------------------------------------------------------------------------------------------------------------------------
-# in the current design of the feature table, every row will meet one or more of these conditions
-#   a motif associated with chipseq TF was found
-#   a wellington fooptrint was found
-#   a hint footprint was found
-# this function reduces separate fimo and wellington best&median motif scores -- which will always be
-# identical, unless reported on opposite strands -- to a single fimo score and pval
-collapse.fimo.scores <- function(tbl)
-{
-   browser()
-   x <- 99
-    
-} # collapse.fimo.scores
-#------------------------------------------------------------------------------------------------------------------------
-test.collapse.fimo.scores <- function()
-{
-   printf("--- test.collapse.fimo.scores")
-   load("featureTable.622rows.forTestCollapseFimoScores.RData")
-     # verify that all combinations of missing/present fimo scores are in this test table
-   checkEquals(nrow(subset(ft, !is.na(score2.w.best) & !(is.na(score2.h.best)))), 537)
-   checkEquals(nrow(subset(ft, !is.na(score2.w.best) & (is.na(score2.h.best)))), 7)
-   checkEquals(nrow(subset(ft, is.na(score2.w.best) & (!is.na(score2.h.best)))), 78)
-
-   checkEquals(nrow(subset(ft, !is.na(score3.w.best) & !(is.na(score3.h.best)))), 537)
-   checkEquals(nrow(subset(ft, !is.na(score3.w.best) & (is.na(score3.h.best)))), 7)
-   checkEquals(nrow(subset(ft, is.na(score3.w.best) & (!is.na(score3.h.best)))), 78)
-
-   checkEquals(nrow(subset(ft, is.na(csmotif))), 86)
-   checkEquals(nrow(subset(ft, is.na(csmotif) & is.na(score2.w.best))), 44)
-   checkEquals(nrow(subset(ft, is.na(csmotif) & is.na(score2.w.best) & !is.na(score2.h.best))), 44)
-   checkEquals(nrow(subset(ft, is.na(csmotif) & !is.na(score2.w.best) & is.na(score2.h.best))), 5)
-
-   ft2 <- collapse.fimo.scores(ft)
-
-} # test.collapse.fimo.scores
 #------------------------------------------------------------------------------------------------------------------------
 test.ensemble_hint_wellington_chipseq <- function()
 {
