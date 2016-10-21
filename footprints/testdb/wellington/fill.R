@@ -1,21 +1,28 @@
 library(RPostgreSQL)
 library(GenomicRanges)
 library(RUnit)
-source("../../src/regionAndHitsSchemas.R")
-#------------------------------------------------------------------------------------------------------------------------
-wellington.path <- "/local/Ben/BDDS/footprints/functionalTests/output/wellington"
+source("../DB_initialization/regionAndHitsSchemas.R")
+source("../src/getDBConnection.R")
+
+printf <- function(...) print(noquote(sprintf(...)))
+
+#-------------------------------------------------------------------------------
+wellington.path <- "../../functionalTests/output/wellington"
 test.sampleID <- "ENCSR000DBY"
 
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 if(!exists("db.wellington"))
-   db.wellington <- dbConnect(PostgreSQL(), user= "trenatest", password="trenatest", dbname="testwellington", host="whovian")
+   db.wellington <- getDBConnection(dbname="testwellington")
 
 if(!exists("db.fimo"))
-   db.fimo <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="fimo", host="whovian")
+   db.fimo <- getDBConnection(user= "trena", 
+                              password="trena", 
+                              dbname="fimo", 
+                              host="whovian")
 
 knownLocs <- new.env(parent=emptyenv())
 
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 runTests <- function()
 {
   test.readWellingtonTable()
@@ -27,7 +34,7 @@ runTests <- function()
   #test.combineFootprintsAndDatabasedFimo()
 
 } # runTests
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
 {
    filename <- grep(sampleID, list.files(directory), v=TRUE)
@@ -38,7 +45,7 @@ readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
    
    tbl <- read.table(full.path, sep="\t", as.is=TRUE)
    colnames(tbl) <- c("chrom", "start", "end", "name", "score", "strand")
-   tbl$chrom <- paste("chr", tbl$chrom, sep="")
+   #tbl$chrom <- paste("chr", tbl$chrom, sep="")
    if(!is.na(chromosome))
       tbl <- subset(tbl, chrom==chromosome)
 
@@ -48,25 +55,25 @@ readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
    invisible(tbl)
 
 } # readWellingtonTable
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 test.readWellingtonTable <- function()
 {
    printf("--- test.readWellingtonTable")
 
-   tbl <- readWellingtonTable(wellington.path, test.sampleID, 5, "chr21")
+   tbl <- readWellingtonTable(wellington.path, test.sampleID, 5, "chr19")
    checkEquals(dim(tbl), c(5,6))
    checkEquals(colnames(tbl), c("chrom", "start", "end", "name", "score", "strand"))
-   checkEquals(unique(tbl$chrom), "chr21")
+   checkEquals(unique(tbl$chrom), "chr19")
 
      # now read without chrom or nrow constraints
    tbl <- readWellingtonTable(wellington.path, test.sampleID)
    checkEquals(ncol(tbl), 6)
-   checkTrue(nrow(tbl) > 30000)
+   checkTrue(nrow(tbl) > 300)
    checkEquals(colnames(tbl), c("chrom", "start", "end", "name", "score", "strand"))
-   checkEquals(head(sort(unique(tbl$chrom))), c("chr1", "chr10", "chr11", "chr12", "chr13", "chr14"))
+   checkEquals(head(sort(unique(tbl$chrom))), "chr19")
    
 } # test.readWellingtonTable
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 mergeFimoWithFootprints <- function(tbl.fp, sampleID)
 {
   chromosome <- unique(tbl.fp$chrom)
@@ -101,11 +108,11 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID)
   invisible(tbl.regions)
 
 } # mergeFimoWithFootprints
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 test.mergeFootprintsWithFimo <- function()
 {
    printf("--- test.mergeFootprintsWithFimo")
-   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr21")
+   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
    tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID)
    checkEquals(ncol(tbl), 12)
    checkEquals(sort(colnames(tbl)),
@@ -113,15 +120,17 @@ test.mergeFootprintsWithFimo <- function()
                  "motif", "motif.end", "motif.sequence", "motif.start", "motif.strand", "sample_id",
                  "wellington.score"))
    checkTrue(nrow(tbl) >= 8)
-   duplicated.loc <- "chr21:5290098-5290107"
-   checkEquals(length(grep(duplicated.loc, tbl$loc)), 6)
+
+   duplicated.loc <- "chr19:636760-636770"
+   checkEquals(length(grep(duplicated.loc, tbl$loc)), 5)
      #  3 distinct motifs mapped to this region
    checkEquals(sort(subset(tbl, loc == duplicated.loc)$motif),
-               c("MA0156.2", "MA0474.2", "MA0475.2", "MA0624.1", "MA0625.1", "MA0764.1"))
+               c("MA0003.3", "MA0812.1", "MA0812.1", "MA0814.1", "MA0814.1"))
+   
    invisible(tbl)
 
 } # test.mergeFootprintsWithFimo
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid)
 {
    tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
@@ -156,11 +165,11 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid)
    invisible(list(regions=tbl.regions, hits=tbl.hits))
     
 } # splitTableIntoRegionsAndWellingtonHits    
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 test.splitTableIntoRegionsAndWellingtonHits <- function(tbl)
 {
    printf("--- test.splitTableIntoRegionsAndWellingtonHits")
-   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr21")
+   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
    tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID)
 
    x <- splitTableIntoRegionsAndWellingtonHits(tbl, "minid")
@@ -169,14 +178,14 @@ test.splitTableIntoRegionsAndWellingtonHits <- function(tbl)
    checkEquals(colnames(x$hits), hit.schema())
 
 } # test.splitTableIntoRegionsAndWellingtonHits    
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 fill.to.database <- function(tbl.regions, tbl.hits)
 {
    appendToRegionsTable(tbl.regions)
    appendToHitsTable(tbl.hits)
     
 } # fill.to.database
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 test.fill.to.database <- function()
 {
    printf("--- test.fill.to.database")
@@ -201,7 +210,7 @@ test.fill.to.database <- function()
    checkTrue(all(tbl.hits$loc %in% tbl.regions$loc))
 
 } # test.fill.to.database
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 databaseSummary <- function()
 {
     region.count <- dbGetQuery(db.wellington, "select count(*) from regions")[1,1]
@@ -209,27 +218,27 @@ databaseSummary <- function()
     printf("%d hits in %d regions", hit.count, region.count)
 
 } # databaseSummary
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 createEmptyDatabaseTables <- function()
 {
    system("/bin/psql -f createTables.sql")
     
 } # appendToRegionsTable
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 appendToRegionsTable <- function(tbl)
 {
    write.table(tbl, file="regions.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
    system("/bin/psql -f fillRegions.sql")
     
 } # appendToRegionsTable
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 appendToHitsTable <- function(tbl)
 {
    write.table(tbl, file="hits.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
    system("/bin/psql -f fillHits.sql")
 
 } # appendToHitsTable
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 fill.all.samples.by.chromosome <- function(chromosome)
 {
    knownLocs <<- new.env(parent=emptyenv())
@@ -248,7 +257,7 @@ fill.all.samples.by.chromosome <- function(chromosome)
       } # for file
 
 } # fill.all.samples.by.chromosome
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 examine.region <- function(chromosome, start, end, sampleIDs)
 {
    knownLocs <<- new.env(parent=emptyenv())
@@ -269,7 +278,7 @@ examine.region <- function(chromosome, start, end, sampleIDs)
       } # for file
 
 } # examine.region
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 test_examine.region <- function()
 {
    printf("--- test_examine.region")
@@ -280,7 +289,7 @@ test_examine.region <- function()
    examine.region(chrom, start, end, sampleIDs)
 
 } # test_examine.region
-#------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 if(!interactive()){
     chromosomes <- paste("chr", c(1:18, 20:22), sep="")
     #chromosomes <- paste("chr", c(19), sep="")
