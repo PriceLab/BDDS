@@ -179,12 +179,7 @@ test.splitTableIntoRegionsAndWellingtonHits <- function(tbl)
 
 } # test.splitTableIntoRegionsAndWellingtonHits    
 #-------------------------------------------------------------------------------
-fill.to.database <- function(tbl.regions, tbl.hits)
-{
-   appendToRegionsTable(tbl.regions)
-   appendToHitsTable(tbl.hits)
-    
-} # fill.to.database
+
 #-------------------------------------------------------------------------------
 test.fill.to.database <- function()
 {
