@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
 getDBConnection <- function(driver = dbDriver("PostgreSQL"), user= "trenatest", 
                             password="trenatest", dbname="trenatest", 
                             host="whovian") {
