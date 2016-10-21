@@ -47,65 +47,16 @@ runTests <- function()
    utils.runTests()
    test.locStringToBedTable()
    test.addFimoRegions()
-   test.chipseqToFeatureTable()
-   test.ensemble_hint_wellington_empty_chipseq()
-   test.ensemble_hint_wellington_chipseq()
-   test.run50k()
+
+   #test.chipseqToFeatureTable()
+   #test.ensemble_hint_wellington_empty_chipseq()
+   #test.ensemble_hint_wellington_chipseq()
+   test.ensemble.flex.1.loc.only()
+   test.ensemble.flex.all.locs()
+   
+   #test.run50k()
   
 } # runTests
-#------------------------------------------------------------------------------------------------------------------------
-explore <- function()
-{
-   chrom <- apoe$chrom
-   start <- apoe$start - 2000
-   end  <- apoe$start + 500
-
-   tbl.hitsw <- getHits(db.wellington, chrom, start, end) # 6 x 17
-   tbl.hitsh <- getHits(db.hint, chrom, start, end)       # 97 17
-
-   #tbl.hitsp <- getHits(db.piq, chrom, start, end)
-   #load("tbl.piq.hits.chr19.1100bases.RData")
-   load("tbl.piq.hits.chr19.2500bases.RData")
-   
-
-   tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
-   tbl.fimo <- getFimoHits(chrom, start, end)
-   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-   tbl.csWithFimoAll <- addFimoRegions(tbl.chipseq, tbl.fimo)   # 76 15
-   tbl.csWithFimoBound <- subset(tbl.csWithFimoAll, bindingSite==TRUE)
-   tbl.csWithFimoBound$fullname <- paste(tbl.csWithFimoBound$name, tbl.csWithFimoBound$motifname, sep="-") # 5 16
-
-   displayBedTable(igv, tbl.hitsw[, c("chrom", "start", "endpos", "name", "score2")], "wellington")
-   displayBedTable(igv, tbl.hitsh[, c("chrom", "start", "endpos", "name", "score2")], "hint")
-   displayBedTable(igv, tbl.csWithFimoBound[, c("chrom", "start", "endpos", "fullname", "score1")], "chipseq-fimo")
-   tbl.piqFiltered <- subset(tbl.hitsp, score4 > 0.7)
-   displayBedTable(igv, tbl.piqFiltered[, c("chrom", "start", "endpos", "name", "score4")], "piqFiltered")
-
-   tbl.wellington <- tbl.hitsw[, c("loc",  "name", "length", "score1", "score2", "score3")]
-   colnames(tbl.wellington) <- c("loc", "motif.w", "length",  "well1", "well2", "well3")
-
-   tbl.chipseq <- tbl.csWithFimoBound[, c("loc", "name", "length", "score1", "motifscore", "pval")]
-   colnames(tbl.chipseq) <- c("loc", "tf", "length",  "chip1", "chip2", "chip3")
-
-   tbl.hint <- tbl.hitsh[, c("loc",  "name", "length", "score1", "score2", "score3")]
-   colnames(tbl.hint) <-  c("loc", "motif.h", "length",  "hint1", "hint2", "hint3")
-   
-   tbl.piq <- tbl.hitsp[, c("chrom", "start", "endpos", "loc", "name", "length", "score1", "score2", "score3", "score4")]
-   colnames(tbl.piq) <- c("chrom", "start", "endpos", "loc", "motif.p", "length", "piq1", "piq2", "piq3", "piq4")
-   tbl.piq2 <- tbl.piq[order (tbl.piq$loc, tbl.piq$motif, tbl.piq$piq4, decreasing=TRUE),]
-   dups <- which(duplicated(tbl.piq2[, c("loc", "motif.p")]))
-   tbl.piq3 <- tbl.piq2[-dups,]
-   tbl.piq4 <- refimo(tbl.piq3)
-
-   #tbl.csw <- merge(tbl.chipseq, tbl.wellington, by=c("loc", "name", "length"), all=TRUE)
-   #tbl.cswh <- merge(tbl.csw, tbl.hint,  by=c("loc", "name", "length"), all=TRUE)
-   #tbl.cswhp <- merge(tbl.cswh, tbl.piq3, by=c("loc", "name", "length"), all=TRUE)
-
-   tbl.csw <- merge(tbl.chipseq, tbl.wellington, by=c("loc", "length"), all=TRUE)
-   tbl.cswh <- merge(tbl.csw, tbl.hint,  by=c("loc",  "length"), all=TRUE)
-   tbl.cswhp <- merge(tbl.cswh, tbl.piq4, by=c("loc",  "length"), all=TRUE)
-   
-} # explore
 #------------------------------------------------------------------------------------------------------------------------
 # we want wellington, hint, chipseq and piq to all use the same fimo regions
 # in contrast to the other methods, where i do the fimo intersections, piq does its own
@@ -249,54 +200,6 @@ test.annotateWithMotifs <- function()
 
 } # test.annotateWithMotifs
 #------------------------------------------------------------------------------------------------------------------------
-old.toFeatureTable <- function(tbl.hits, methodName)
-{
-   motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
-   column.names <- c("uLoc", motifNames)
-   uLocs <- unique(tbl.hits$loc)
-   tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
-   colnames(tbl) <- column.names
-   tbl$uLoc <- uLocs
-
-   for(r in 1:nrow(tbl.hits)){
-      row <- tbl.hits[r, "loc"]
-      col <- sprintf("%s_%s", methodName, tbl.hits[r, "name"])
-      #printf("[%s, %s]", row, col)
-      tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
-      }
-
-   invisible(tbl)
-
-} # old.toFeatureTable
-#------------------------------------------------------------------------------------------------------------------------
-toFeatureTable.v1 <- function(tbl.std)
-{
-   #motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
-   column.names <- c("uLoc", motifNames)
-   uLocs <- unique(tbl.hits$loc)
-   tbl <- data.frame(matrix(data=0, nrow=length(uLocs), ncol=length(column.names)), stringsAsFactors=FALSE)
-   colnames(tbl) <- column.names
-   tbl$uLoc <- uLocs
-
-   for(r in 1:nrow(tbl.hits)){
-      row <- tbl.hits[r, "loc"]
-      col <- sprintf("%s_%s", methodName, tbl.hits[r, "name"])
-      #printf("[%s, %s]", row, col)
-      tbl[grep(row, tbl$uLoc), col] <- tbl[grep(row, tbl$uLoc), col] + 1
-      }
-
-   invisible(tbl)
-
-} # toFeatureTable.v1
-#------------------------------------------------------------------------------------------------------------------------
-test.toFeatureTable.v1 <- function()
-{
-   printf("--- test.toFeatureTable.v1")
-   load("hint.normalized.5rows.10hits.RData")
-   ft <- toFeatureTable.v1(tbl.h)
-
-} # test.toFeatureTable.v1
-#------------------------------------------------------------------------------------------------------------------------
 chipseqToFeatureTable <- function(tbl.hits, methodName)
 {
    motifNames <- paste(methodName, sort(unique(tbl.hits$name)), sep="_")
@@ -338,36 +241,6 @@ test.chipseqToFeatureTable <- function()
 
 }  # test.chipseqToFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
-test.old.toFeatureTable <- function(shoulder=100)
-{
-   tbl.apoe <- getHits(db.hint, apoe$chrom, apoe$start - shoulder, apoe$start + shoulder)
-     # chr19:44,904,793-44,904,958 includes two 151-bp chipseq hits about 800bp upstream of apoe tss
-     # chr19:44,906,493-44,906,663 includes one 151-bp chipssq hit (PBX3) just downstream of the tss
-   tbl.hhits <- getHits(db.hint, "chr19", 44906493, 44906663)
-   tbl.whits <- getHits(db.wellington, "chr19", 44906493, 44906663)
-   tbl.hft <- old.toFeatureTable(tbl.hhits, "hint")
-   tbl.wft <- old.toFeatureTable(tbl.whits, "wellington")
-   #checkEquals(nrow(tbl.hits), sum(tbl[, -1]))
-
-      # for every row, identify each column with a 1, make sure tbl.expanded[
-
-   for(r in 1:nrow(tbl)){
-      hits <- which(tbl[r,] == 1)
-      this.loc <- tbl$uLoc[r]
-      if(length(hits) > 0){
-         column.names <- sub("HINT_", "", colnames(tbl)[hits])
-         #if(length(column.names) > 10) browser()
-         #printf("loc: %s   column.names: %s", this.loc, paste(column.names, collapse=","))
-         #printf("checked out? %s (%d,%d)", 
-         #       nrow(subset(tbl.hits, name %in% column.names & loc==this.loc)) == length(hits),
-         #       nrow(subset(tbl.hits, name %in% column.names & loc==this.loc)), length(hits))
-         checkEquals(nrow(subset(tbl.hits, name %in% column.names & loc==this.loc)), length(hits))
-         } # if hits
-      } # for r
-
-
-} # test.old.toFeatureTable
-#------------------------------------------------------------------------------------------------------------------------
 ensemble <- function(chrom, start, end, test.motifs=NA, test.locs=NA)
 {
    tbl.w <- createWellingtonTable(chrom, start, end, collapseOnStrand=TRUE)
@@ -383,9 +256,21 @@ ensemble <- function(chrom, start, end, test.motifs=NA, test.locs=NA)
    if(!any(is.na(test.locs)))
        tbl.h <- subset(tbl.h, loc %in% test.locs)
 
-   #tbl.merged <- merge(tbl.w, tbl.h, by=c("loc"), all=TRUE)
+   tbl.p <- createPiqTable(chrom, start, end, collapseOnStrand=TRUE)
+
+   if(!any(is.na(test.motifs)))
+       tbl.p <- subset(tbl.p, motif.p %in% test.motifs)
+   if(!any(is.na(test.locs)))
+       tbl.p <- subset(tbl.p, loc %in% test.locs)
+
+   browser()
+
+      tbl.merged <- merge(tbl.w, tbl.p, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.p"), all=TRUE)
+      tbl.merged <- merge(tbl.merged, tbl.h, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.h"), all=TRUE)
+
    tbl.merged <- merge(tbl.w, tbl.h, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.h"), all=TRUE)
    colname.pos <- grep("motif.w", colnames(tbl.merged))
+
    colnames(tbl.merged)[colname.pos] <- "motif"   # motif.h dropped in merge
    
    tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
@@ -424,6 +309,137 @@ ensemble <- function(chrom, start, end, test.motifs=NA, test.locs=NA)
    invisible(unique(tbl.wfcTrimmed))
 
 } # ensemble
+#------------------------------------------------------------------------------------------------------------------------
+ensemble.flex <- function(chrom, start, end, methods, test.motifs=NA, test.locs=NA)
+{
+   stopifnot(all(methods %in% c("wellington", "hint", "piq", "chipseq")))
+
+   tbl.out <- data.frame()
+
+   if("wellington" %in% methods){
+      tbl.w <- createWellingtonTable(chrom, start, end, collapseOnStrand=TRUE)
+      if(!any(is.na(test.motifs)))
+         tbl.w <- subset(tbl.w, motif.w %in% test.motifs)
+      if(!any(is.na(test.locs)))
+         tbl.w <- subset(tbl.w, loc %in% test.locs)
+      if(nrow(tbl.out) == 0)
+         tbl.out <- tbl.w
+      else
+         tbl.out <- merge(tbl.out, tbl.w, by.x=c("loc", "motif"), by.y=c("loc", "motif.w"), all=TRUE)
+      colnames(tbl.out)[grep("motif.w", colnames(tbl.out))] <- "motif"
+      } # wellington
+   
+   if("hint" %in% methods){
+      tbl.h <- createHintTable(chrom, start, end, collapseOnStrand=TRUE)
+      if(!any(is.na(test.motifs)))
+          tbl.h <- subset(tbl.h, motif.h %in% test.motifs)
+      if(!any(is.na(test.locs)))
+         tbl.h <- subset(tbl.h, loc %in% test.locs)
+      if(nrow(tbl.out) == 0)
+         tbl.out <- tbl.h
+      else
+         tbl.out <- merge(tbl.out, tbl.h, by.x=c("loc", "motif"), by.y=c("loc", "motif.h"), all=TRUE)
+      } # wellington
+
+   if("piq" %in% methods){
+      tbl.p <- createPiqTable(chrom, start, end, collapseOnStrand=TRUE)
+      if(!any(is.na(test.motifs)))
+          tbl.p <- subset(tbl.p, motif.p %in% test.motifs)
+      if(!any(is.na(test.locs)))
+         tbl.p <- subset(tbl.p, loc %in% test.locs)
+      if(nrow(tbl.out) == 0)
+         tbl.out <- tbl.p
+      else
+         tbl.out <- merge(tbl.out, tbl.p, by.x=c("loc", "motif"), by.y=c("loc", "motif.p"), all=TRUE)
+      } # piq
+
+    if("chipseq" %in% methods){
+       tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
+       printf ("found %d chipseq hits in %d bases", nrow(tbl.chipseq),  1 + end - start)
+       stopifnot(nrow(tbl.chipseq) > 0)
+       tbl.fimo <- getFimoHits(chrom, start, end)
+       tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+       tbl.csWithFimo <- addFimoRegions(tbl.chipseq, tbl.fimo)
+       if(!any(is.na(test.locs)))
+          tbl.csWithFimo <- subset(tbl.csWithFimo, loc %in% test.locs)
+       tbl.csWithTrueFimo <- subset(tbl.csWithFimo, bindingSite==TRUE)
+       tbl.csft <- tbl.csWithTrueFimo[, c("loc", "motifname", "name", "score1", "motifscore", "pval")]
+       colnames(tbl.csft) <- c("loc", "csmotif", "csTF", "csscore", "motifscore", "motifpval")
+       if(nrow(tbl.out) == 0)
+          tbl.out <- tbl.csft
+       else
+          tbl.out <- merge(tbl.out, tbl.csft, by.x=c("loc", "motif"), by.y=c("loc","csmotif"), all=TRUE)
+       classInfo <- sapply(tbl.out, class)
+       for(colname in names(classInfo)){
+          if(classInfo[[colname]] == "factor"){
+             printf("correctoring character class in column '%s'", colname)
+             tbl.out[[colname]] <- as.character(tbl.out[[colname]])
+             } # if factor
+          } # for colname
+      } # if chipseq
+   
+      # wellington, hint and chipseq all report motif scores, all obtained from fimo
+      # collapse these the best from each of these (max score, min pval) in the unexpected
+      # case they differ
+
+   motif.score.columns <- c()
+   motif.pval.columns <- c()
+   other.columns.to.drop <- c()
+
+   if("wellington" %in% methods){
+       motif.score.columns <- c(motif.score.columns, "score2.w.best")
+       motif.pval.columns  <- c(motif.pval.columns,  "score3.w.best")
+       other.columns.to.drop <- c(other.columns.to.drop, "score2.w.median")
+       other.columns.to.drop <- c(other.columns.to.drop, "score3.w.median")
+       }
+
+   if("hint" %in% methods){
+       motif.score.columns <- c(motif.score.columns, "score2.h.best")
+       motif.pval.columns  <- c(motif.pval.columns,  "score3.h.best")
+       other.columns.to.drop <- c(other.columns.to.drop, "score2.h.median")
+       other.columns.to.drop <- c(other.columns.to.drop, "score3.h.median")
+       }
+
+   if("chipseq" %in% methods){
+       motif.score.columns <- c(motif.score.columns, "motifscore")
+       motif.pval.columns  <- c(motif.pval.columns,  "motifpval")
+       }
+
+   if(length(motif.score.columns) > 0) {
+       motifscore <- apply(tbl.out[, motif.score.columns, drop=FALSE], 1,
+                           function(row) if (all(is.na(row))) return(0) else return(max(row, na.rm=TRUE)))
+       columns.to.delete <- match(motif.score.columns, colnames(tbl.out))
+       stopifnot(length(columns.to.delete) > 0)
+       tbl.out <- tbl.out[, -columns.to.delete]
+       tbl.out$motifscore <- motifscore
+       }
+
+   if(length(motif.pval.columns) > 0){
+       motifpval <- apply(tbl.out[, motif.pval.columns, drop=FALSE], 1,
+                           function(row) if (all(is.na(row))) return(1) else return(min(row, na.rm=TRUE)))
+       columns.to.delete <- match(motif.pval.columns, colnames(tbl.out))
+       stopifnot(length(columns.to.delete) > 0)
+       tbl.out <- tbl.out[, -columns.to.delete]
+       tbl.out$motifpval <- motifpval
+       }
+
+    if(length(other.columns.to.drop) > 0){
+       other.columns.to.drop.indices <- match(other.columns.to.drop, colnames(tbl.out))
+       stopifnot(length(other.columns.to.drop.indices) > 0)
+       tbl.out <- tbl.out[, -other.columns.to.drop.indices]
+       }                                       
+  
+ # keepers <- c("loc", "motif", "samplecount.w",   "score1.w.best", "samplecount.h", "score1.h.best", "csTF", "csscore")
+   # 
+   # tbl.wfcTrimmed <- tbl.wfc[, keepers]
+   # colnames(tbl.wfcTrimmed) <- c("loc", "motif", "samplecount.w", "score.w", "samplecount.h", "score.h", "csTF", "csscore")
+   # tbl.wfcTrimmed$motifscore <- motifscore
+   # tbl.wfcTrimmed$motifpval <- motifpval
+   # invisible(unique(tbl.wfcTrimmed))
+
+   tbl.out
+   
+} # ensemble.flex
 #------------------------------------------------------------------------------------------------------------------------
 test.ensemble_hint_wellington_empty_chipseq <- function()
 {
@@ -474,41 +490,6 @@ test.ensemble_hint_wellington_empty_chipseq <- function()
 
 } # test.ensemble_hint_wellington_empty_chipseq
 #------------------------------------------------------------------------------------------------------------------------
-# in the current design of the feature table, every row will meet one or more of these conditions
-#   a motif associated with chipseq TF was found
-#   a wellington fooptrint was found
-#   a hint footprint was found
-# this function reduces separate fimo and wellington best&median motif scores -- which will always be
-# identical, unless reported on opposite strands -- to a single fimo score and pval
-collapse.fimo.scores <- function(tbl)
-{
-   browser()
-   x <- 99
-    
-} # collapse.fimo.scores
-#------------------------------------------------------------------------------------------------------------------------
-test.collapse.fimo.scores <- function()
-{
-   printf("--- test.collapse.fimo.scores")
-   load("featureTable.622rows.forTestCollapseFimoScores.RData")
-     # verify that all combinations of missing/present fimo scores are in this test table
-   checkEquals(nrow(subset(ft, !is.na(score2.w.best) & !(is.na(score2.h.best)))), 537)
-   checkEquals(nrow(subset(ft, !is.na(score2.w.best) & (is.na(score2.h.best)))), 7)
-   checkEquals(nrow(subset(ft, is.na(score2.w.best) & (!is.na(score2.h.best)))), 78)
-
-   checkEquals(nrow(subset(ft, !is.na(score3.w.best) & !(is.na(score3.h.best)))), 537)
-   checkEquals(nrow(subset(ft, !is.na(score3.w.best) & (is.na(score3.h.best)))), 7)
-   checkEquals(nrow(subset(ft, is.na(score3.w.best) & (!is.na(score3.h.best)))), 78)
-
-   checkEquals(nrow(subset(ft, is.na(csmotif))), 86)
-   checkEquals(nrow(subset(ft, is.na(csmotif) & is.na(score2.w.best))), 44)
-   checkEquals(nrow(subset(ft, is.na(csmotif) & is.na(score2.w.best) & !is.na(score2.h.best))), 44)
-   checkEquals(nrow(subset(ft, is.na(csmotif) & !is.na(score2.w.best) & is.na(score2.h.best))), 5)
-
-   ft2 <- collapse.fimo.scores(ft)
-
-} # test.collapse.fimo.scores
-#------------------------------------------------------------------------------------------------------------------------
 test.ensemble_hint_wellington_chipseq <- function()
 {
    printf("--- test.ensemble_hint_wellington_chipseq")
@@ -539,8 +520,68 @@ test.ensemble_hint_wellington_chipseq <- function()
    test.locs <- c("chr19:45423531-45423544", "chr19:45423531-45423545")
    ft <- ensemble(chrom, start, end, test.motifs=test.motifs, test.locs=test.locs)
 
-
 } # test.ensemble_hint_wellington_chipseq
+#------------------------------------------------------------------------------------------------------------------------
+test.ensemble.flex.1.loc.only <- function()
+{
+   printf("--- test.ensemble.flex.1.loc.only")
+    
+   chrom <- "chr19"
+   start <- 45420000
+   end   <- 45430000
+
+     # cherry-piced locs which give results for piq, wellington and hint
+   test.locs <- c("chr19:45423532-45423542")
+     #, "chr19:45423532-45423543", "chr19:45423532-45423544",
+     #             "chr19:45423537-45423550", "chr19:45423560-45423577", "chr19:45423562-45423576",
+     #             "chr19:45423563-45423573")
+   test.motifs <- NA
+   ft.w <- ensemble.flex(chrom, start, end, "wellington", test.motifs=test.motifs, test.locs=test.locs[1])
+   checkEquals(dim(ft.w), c(3,8))
+
+   ft.h <- ensemble.flex(chrom, start, end, "hint", test.motifs=test.motifs, test.locs=test.locs[1])
+   checkEquals(dim(ft.h), c(3,8))
+
+   ft.p <- ensemble.flex(chrom, start, end, "piq", test.motifs=test.motifs, test.locs=test.locs[1])
+   checkEquals(dim(ft.p), c(2, 12))
+
+   ft.c <- ensemble.flex(chrom, start, end, "chipseq", test.motifs=test.motifs, test.locs=test.locs[1])
+   checkEquals(dim(ft.c), c(3, 6))
+   
+   methods <- c("wellington", "hint", "piq", "chipseq")
+   ft.all <- ensemble.flex(chrom, start, end, methods, test.motifs=test.motifs, test.locs=test.locs[1])
+   checkEquals(dim(ft.all), c(5, 24))
+
+} # test.ensemble.flex.1.loc.only
+#------------------------------------------------------------------------------------------------------------------------
+test.ensemble.flex.all.locs <- function()
+{
+   printf("--- test.ensemble.flex.all.locs")
+    
+   chrom <- "chr19"
+   start <- 45420000
+   end   <- 45430000
+
+   test.locs <- NA
+   test.motifs <- NA
+
+   ft.w <- ensemble.flex(chrom, start, end, "wellington", test.motifs=test.motifs, test.locs=test.locs)
+   checkEquals(dim(ft.w), c(246,8))
+
+   ft.h <- ensemble.flex(chrom, start, end, "hint", test.motifs=test.motifs, test.locs=test.locs)
+   checkEquals(dim(ft.h), c(407,8))
+
+   ft.p <- ensemble.flex(chrom, start, end, "piq", test.motifs=test.motifs, test.locs=test.locs)
+   checkEquals(dim(ft.p), c(414, 12))
+
+   ft.c <- ensemble.flex(chrom, start, end, "chipseq", test.motifs=test.motifs, test.locs=test.locs)
+   checkEquals(dim(ft.c), c(164, 6))
+   
+   methods <- c("wellington", "hint", "piq", "chipseq")
+   ft.all <- ensemble.flex(chrom, start, end, methods, test.motifs=test.motifs, test.locs=test.locs)
+   checkEquals(dim(ft.all), c(955, 24))
+
+} # test.ensemble.flex.1.loc.only
 #------------------------------------------------------------------------------------------------------------------------
 test.ensemble <- function()
 {
@@ -732,7 +773,7 @@ test.run50k <- function()
    start <- 42000000
    end   <- 42050000
 
-   system.time(ft <- ensemble(chrom, start, end))
+   print(system.time(ft <- ensemble(chrom, start, end)))
    totalSampleCount <- nrow(dbGetQuery(db.hint, "select distinct sample_id from hits"))
    ft <- cleanFeatureTable(ft, totalSampleCount)
 
@@ -786,7 +827,6 @@ run <- function()
    end   <- 47000000
 
    ft <- ensemble(chrom, start, end)
-   #ft <- cleanFeatureTable(ft.0)
    filename <- sprintf("ft.%s.RData", format (Sys.time(), "%a.%b.%d.%Y-%H:%M:%S"))
    save(ft, file=filename)
    ft.clean <- cleanFeatureTable(ft, 18)
