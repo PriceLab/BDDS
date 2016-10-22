@@ -47,6 +47,7 @@ runTests <- function()
    utils.runTests()
    test.locStringToBedTable()
    test.addFimoRegions()
+   test.refimoForPiq()
 
    #test.chipseqToFeatureTable()
    #test.ensemble_hint_wellington_empty_chipseq()
@@ -58,6 +59,9 @@ runTests <- function()
   
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
+# note: this seems obsolete (21 oct 2016).
+# and gets all motifs in that region.
+#
 # we want wellington, hint, chipseq and piq to all use the same fimo regions
 # in contrast to the other methods, where i do the fimo intersections, piq does its own
 # and apparently does so on an obsolete motif library.  and it may eliminate second-best hits
@@ -81,7 +85,7 @@ runTests <- function()
 # 2  MA0139.1    19 44904896 44904914      +    13.1475 8.31e-06       TGGCAGCCAGGGGGAGGTG
 # rewirte tbl with this corrected finding
 
-refimo <- function(tbl, shoulder=1)
+refimo.old <- function(tbl, shoulder=1)
 {
    for(r in 1:nrow(tbl)){
      chrom <- tbl$chrom[r]
@@ -102,21 +106,125 @@ refimo <- function(tbl, shoulder=1)
    
    tbl   
 
-} # refimo
+} # refimo.old
 #------------------------------------------------------------------------------------------------------------------------
-test.refimo <- function()
+test.refimo.old <- function()
 {
-   printf("--- test.refimo")
+   printf("--- test.refimo.old")
+
    if(!exists("tbl.piq3"))
       load("tbl.piq3.RData", envir=.GlobalEnv)
-   x <- refimo(tbl.piq3[35,,drop=FALSE])
+
+   x <- refimo.old(tbl.piq3[35,,drop=FALSE])
    checkEquals(x$loc, "chr19:44904896-44904914")
    checkEquals(x$length, 19)
-   tbl.changed <- refimo(tbl.piq3)
+   tbl.changed <- refimo.old(tbl.piq3)
    checkEquals(dim(tbl.changed), dim(tbl.piq3))
    checkEquals(length(setdiff(tbl.changed$loc, tbl.changed$piq3)), 39)
 
-} # test.refimo
+} # test.refimo.old
+#------------------------------------------------------------------------------------------------------------------------
+# refimoForPiq - for tables acquired from db.piq: takes locs at face value, queries db.fimo
+# gets all matching motifs
+# to explain by example
+# our current piq workflow produces
+#    chr19:45423532-45423542 MA0039.2
+#    chr19:45423532-45423542 MA0599.1
+#
+# wellington has
+# 1507  chr19:45423532-45423542 KLF16_DBD             7       11        -28.5045      -10.3715    16.8163  1.04e-06
+# 17131 chr19:45423532-45423542  MA0741.1             7       11        -28.5045      -10.3715    16.8621  1.04e-06
+# 17689 chr19:45423532-45423542  MA0746.1             7       11        -28.5045      -10.3715    15.6748  1.04e-06
+#
+# and fimo has
+# getFimoHits("chr19", 45423530, 45423545)
+#   motifname chrom    start   endpos strand motifscore     pval empty       sequence
+# 1  MA0039.2    19 45423532 45423541      -    15.8061 5.23e-06           GGGGCGTGGC
+# 2  MA0493.1    19 45423531 45423541      +    12.4242 3.07e-05          CGCCACGCCCC
+# 3  MA0599.1    19 45423532 45423541      +    15.2653 4.42e-06           GCCACGCCCC
+# 4  MA0740.1    19 45423531 45423544      +    18.8276 3.30e-07       CGCCACGCCCCTTT
+# 5  MA0741.1    19 45423532 45423542      +    16.8621 1.04e-06          GCCACGCCCCT
+# 6  MA0746.1    19 45423532 45423542      +    15.6748 1.04e-06          GCCACGCCCCT
+# 7  MA0747.1    19 45423532 45423543      +    16.6579 8.72e-07         GCCACGCCCCTT
+# 8 KLF16_DBD    19 45423532 45423542      +    16.8163 1.04e-06          GCCACGCCCCT
+# 
+# 
+# but fimo says
+# getFimoHits("chr19", 45423530, 45423545)
+#   motifname chrom    start   endpos strand motifscore     pval empty       sequence
+# 1  MA0039.2    19 45423532 45423541      -    15.8061 5.23e-06           GGGGCGTGGC
+# 2  MA0493.1    19 45423531 45423541      +    12.4242 3.07e-05          CGCCACGCCCC
+# 3  MA0599.1    19 45423532 45423541      +    15.2653 4.42e-06           GCCACGCCCC
+# 4  MA0740.1    19 45423531 45423544      +    18.8276 3.30e-07       CGCCACGCCCCTTT
+# 5  MA0741.1    19 45423532 45423542      +    16.8621 1.04e-06          GCCACGCCCCT
+# 6  MA0746.1    19 45423532 45423542      +    15.6748 1.04e-06          GCCACGCCCCT
+# 7  MA0747.1    19 45423532 45423543      +    16.6579 8.72e-07         GCCACGCCCCTT
+# 8 KLF16_DBD    19 45423532 45423542      +    16.8163 1.04e-06          GCCACGCCCCT
+# 
+# the function below, refimo.old, changes (shrinks) the region for the supplied motif.
+# see "refimo(" for an approach which takes the reported region, takes it at face value
+refimoForPiq <- function(tbl)
+{
+    dups <- which(duplicated(tbl[, c("loc", "samplecount.p")]))
+    if(length(dups) > 0)
+        tbl <- tbl[-dups,]
+    
+    locStrings <- unique(tbl$loc)
+    tbl.locs <-locStringToBedTable(locStrings)
+    tbl.out <- data.frame()
+
+    for(r in 1:nrow(tbl.locs)){
+        tbl.fimo <- getFimoHits(tbl.locs$chrom[r], tbl.locs$start[r], tbl.locs$end[r], exact=TRUE)
+        tbl.out <- rbind(tbl.out, tbl.fimo)
+        }
+   tbl.out$loc <- sprintf("chr%s:%d-%d", tbl.out$chrom, tbl.out$start, tbl.out$endpos)
+
+   old.cols.to.keep <- c("loc",   "samplecount.p", "length.p",
+                         "score1.p.median", "score1.p.best",
+                         "score2.p.median",  "score2.p.best",
+                         "score3.p.median", "score3.p.best",
+                         "score4.p.median", "score4.p.best")
+
+   new.cols.to.keep <- c("loc", "motifname", "motifscore", "pval")
+   merge(tbl[, old.cols.to.keep], tbl.out[, new.cols.to.keep], by="loc")
+    
+} # refimoForPiq
+#------------------------------------------------------------------------------------------------------------------------
+test.refimoForPiq <- function(tbl)
+{
+   printf("--- test.refimoForPiq")
+   chrom <- "chr19"
+       # start with a two-row piq table, duplicated loc, 2 motifs mapped
+       # we want to see 3 different motifs here, each 1 base longer than the 2 oddly reported by piz
+   start <- 45423532
+   end <- 45423542
+   tbl.p <- createPiqTable(chrom, start, end, collapseOnStrand=TRUE)
+
+      # make sure the result is as expected - and NOT what we want to see
+   checkEquals(dim(tbl.p), c(2, 12))   
+   checkTrue(all(tbl.p$loc == "chr19:45423532-45423542"))
+   checkEquals(sort(tbl.p$motif.p),  c("MA0039.2", "MA0599.1"))
+
+   tbl.pf <- refimoForPiq(tbl.p)
+   checkEquals(dim(tbl.pf), c(3, 14))
+   checkEquals(colnames(tbl.pf), c("loc", "samplecount.p", "length.p", "score1.p.median", "score1.p.best",
+                                   "score2.p.median", "score2.p.best", "score3.p.median", "score3.p.best",
+                                   "score4.p.median", "score4.p.best", "motifname", "motifscore", "pval"))
+   checkEquals(sort(tbl.pf$motifname), c("KLF16_DBD", "MA0741.1", "MA0746.1"))
+
+      # repeat with more locs
+   start <- 45423500
+   end <- 45423550
+   tbl.p <- createPiqTable(chrom, start, end, collapseOnStrand=TRUE)
+   checkEquals(dim(tbl.p), c(10, 12))
+   checkEquals(sort(unique(tbl.p$motif.p)), 
+      c("MA0039.2", "MA0056.1", "MA0599.1", "MA0657.1", "MA0685.1", "MA0740.1", "MA0741.1", "MA0742.1", "MA0746.1", "MA0747.1"))
+
+   tbl.pf <- refimoForPiq(tbl.p)
+   checkEquals(dim(tbl.pf), c(6, 14))
+   checkEquals(sort(unique(tbl.pf$motifname)), c("KLF16_DBD", "Klf12_DBD", "MA0741.1", "MA0742.1", "MA0746.1", "MA0747.1"))
+   
+} # test.refimoForPiq
 #------------------------------------------------------------------------------------------------------------------------
 # find all overlaps between the 151 base pair chipseq regions, and short motif-based fimo regions
 # then expand the tbl.cs by joining it with all the tbl.fimo regions which overlap with each chipseq region
@@ -263,7 +371,6 @@ ensemble <- function(chrom, start, end, test.motifs=NA, test.locs=NA)
    if(!any(is.na(test.locs)))
        tbl.p <- subset(tbl.p, loc %in% test.locs)
 
-   browser()
 
       tbl.merged <- merge(tbl.w, tbl.p, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.p"), all=TRUE)
       tbl.merged <- merge(tbl.merged, tbl.h, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.h"), all=TRUE)
@@ -347,10 +454,20 @@ ensemble.flex <- function(chrom, start, end, methods, test.motifs=NA, test.locs=
           tbl.p <- subset(tbl.p, motif.p %in% test.motifs)
       if(!any(is.na(test.locs)))
          tbl.p <- subset(tbl.p, loc %in% test.locs)
+      tbl.p <- refimoForPiq(tbl.p)
+         # piq does not return motifscores, nor pval
+         # refimoForPiq adds that
+         # but the code which follows, below, does not expect that from piq
+         # since it was written before the (temporary) need for refimoForPiq 
+         # was understood.  so remove those unexpected columns here
+      cols.to.remove <- match(c("motifscore", "pval"), colnames(tbl.p))
+      if(length(cols.to.remove) > 0)
+         tbl.p <- tbl.p[, -(cols.to.remove)]
       if(nrow(tbl.out) == 0)
          tbl.out <- tbl.p
-      else
-         tbl.out <- merge(tbl.out, tbl.p, by.x=c("loc", "motif"), by.y=c("loc", "motif.p"), all=TRUE)
+      else{
+         tbl.out <- merge(tbl.out, tbl.p, by.x=c("loc", "motif"), by.y=c("loc", "motifname"), all=TRUE)
+         }
       } # piq
 
     if("chipseq" %in% methods){
@@ -456,7 +573,6 @@ test.ensemble_hint_wellington_empty_chipseq <- function()
 
       # for snooping around fimo scores, repeated for different methods
    coi <- c(grep("score", colnames(ft)), grep("motif", colnames(ft)), grep("csTF", colnames(ft)))
-   #browser()
    checkEquals(nrow(ft), 4)
       # in preparation for collapsing all these fimo scores, make sure they are all equal
       # which they should be, since all are for the same motif at the same location
@@ -529,13 +645,15 @@ test.ensemble.flex.1.loc.only <- function()
    chrom <- "chr19"
    start <- 45420000
    end   <- 45430000
+   test.locs <- c("chr19:45423532-45423542")
+   test.motifs <- NA
 
      # cherry-piced locs which give results for piq, wellington and hint
-   test.locs <- c("chr19:45423532-45423542")
      #, "chr19:45423532-45423543", "chr19:45423532-45423544",
      #             "chr19:45423537-45423550", "chr19:45423560-45423577", "chr19:45423562-45423576",
      #             "chr19:45423563-45423573")
-   test.motifs <- NA
+
+   
    ft.w <- ensemble.flex(chrom, start, end, "wellington", test.motifs=test.motifs, test.locs=test.locs[1])
    checkEquals(dim(ft.w), c(3,8))
 
@@ -543,14 +661,14 @@ test.ensemble.flex.1.loc.only <- function()
    checkEquals(dim(ft.h), c(3,8))
 
    ft.p <- ensemble.flex(chrom, start, end, "piq", test.motifs=test.motifs, test.locs=test.locs[1])
-   checkEquals(dim(ft.p), c(2, 12))
+   checkEquals(dim(ft.p), c(3, 12))
 
    ft.c <- ensemble.flex(chrom, start, end, "chipseq", test.motifs=test.motifs, test.locs=test.locs[1])
    checkEquals(dim(ft.c), c(3, 6))
    
    methods <- c("wellington", "hint", "piq", "chipseq")
    ft.all <- ensemble.flex(chrom, start, end, methods, test.motifs=test.motifs, test.locs=test.locs[1])
-   checkEquals(dim(ft.all), c(5, 24))
+   checkEquals(dim(ft.all), c(3, 24))
 
 } # test.ensemble.flex.1.loc.only
 #------------------------------------------------------------------------------------------------------------------------
@@ -559,29 +677,29 @@ test.ensemble.flex.all.locs <- function()
    printf("--- test.ensemble.flex.all.locs")
     
    chrom <- "chr19"
-   start <- 45420000
-   end   <- 45430000
+   start <- 45423800
+   end   <- 45424000
 
    test.locs <- NA
    test.motifs <- NA
 
    ft.w <- ensemble.flex(chrom, start, end, "wellington", test.motifs=test.motifs, test.locs=test.locs)
-   checkEquals(dim(ft.w), c(246,8))
+   checkEquals(dim(ft.w), c(35,8))
 
    ft.h <- ensemble.flex(chrom, start, end, "hint", test.motifs=test.motifs, test.locs=test.locs)
-   checkEquals(dim(ft.h), c(407,8))
+   checkEquals(dim(ft.h), c(42,8))
 
    ft.p <- ensemble.flex(chrom, start, end, "piq", test.motifs=test.motifs, test.locs=test.locs)
-   checkEquals(dim(ft.p), c(414, 12))
+   checkEquals(dim(ft.p), c(2, 12))
 
    ft.c <- ensemble.flex(chrom, start, end, "chipseq", test.motifs=test.motifs, test.locs=test.locs)
-   checkEquals(dim(ft.c), c(164, 6))
+   checkEquals(dim(ft.c), c(47, 6))
    
    methods <- c("wellington", "hint", "piq", "chipseq")
    ft.all <- ensemble.flex(chrom, start, end, methods, test.motifs=test.motifs, test.locs=test.locs)
-   checkEquals(dim(ft.all), c(955, 24))
+   checkEquals(dim(ft.all), c(69, 24))
 
-} # test.ensemble.flex.1.loc.only
+} # test.ensemble.flex.all.locs
 #------------------------------------------------------------------------------------------------------------------------
 test.ensemble <- function()
 {
@@ -647,8 +765,6 @@ test.ensemble <- function()
      #        10       11       12       12       10       10 
 
 
-
-
 } # test.ensemble
 #------------------------------------------------------------------------------------------------------------------------
 locStringToBedTable <- function(locStrings)
@@ -687,15 +803,39 @@ test.locStringToBedTable <- function()
 cleanFeatureTable <- function(tbl, totalSampleCount)
 {
    x <- tbl
+   keepers <- c("loc", "motif", "samplecount.w", "length.w", "score1.w.best", "samplecount.h", "length.h", "score1.h.best",
+                "samplecount.p", "length.p", "score1.p.best", "score2.p.best", "score3.p.best", "score4.p.best",
+                "csTF", "csscore", "motifscore", "motifpval")
 
+   missing <- setdiff(keepers, colnames(tbl))
+   if(length(missing) > 0){
+       printf("missing columns in cleanFeatureTable: %s", paste(missing, collapse=","))
+       stop()
+      }
+   x <- x[, keepers]
    x$samplecount.w[is.na(x$samplecount.w)] <- 0
-   x$score.w[is.na(x$score.w)] <- -99
+   x$score1.w.best[is.na(x$score1.w.best)] <- -99
 
+   x$length.w[is.na(x$length.w)] <- 0
+   x$length.h[is.na(x$length.h)] <- 0
+   x$length.p[is.na(x$length.p)] <- 0
+   
    x$samplecount.h[is.na(x$samplecount.h)] <- 0
-   x$score.h[is.na(x$score.h)] <- 0
+   x$score1.h.best[is.na(x$score1.h.best)] <- 0
+
+   x$samplecount.p[is.na(x$samplecount.p)] <- 0
+   x$score1.p.best[is.na(x$score1.p.best)] <- 0
+   x$score2.p.best[is.na(x$score2.p.best)] <- 0
+   x$score3.p.best[is.na(x$score3.p.best)] <- 0
+   x$score4.p.best[is.na(x$score4.p.best)] <- 0
 
    x$csscore[is.na(x$csscore)] <- 0
    x$totalsamplecount <- totalSampleCount
+
+   colnames(x) <- c("loc", "motif", "samplecount.w", "length.w", "score.w",
+                    "samplecount.h", "length.h", "score.h",
+                    "samplecount.p", "length.p", "score1.p", "score2.p", "score3.p", "score4.p",
+                    "csTF", "csscore", "motifscore", "motifpval", "totalsamplecount")
 
    invisible(unique(x))
    
@@ -705,56 +845,32 @@ test.cleanFeatureTable <- function()
 {
    printf("--- test.cleanFeatureTable")
 
-   load ("shortRichEnsemblTestResult.RData")
-   checkEquals(dim(tbl), c(319,22))
+   load ("ft.all.Rdata")
+   checkEquals(dim(ft.all), c(69, 24))
 
-     # this contains the problematic hint data
-   tbl.sub <- subset(tbl, loc=="chr19:45423537-45423550")   
-   x <- cleanFeatureTable(tbl.sub)
-   browser()
-   
-   ft <- cleanFeatureTable(tbl)
-      #  chr19:45423537-45423550 & MA0512.2 should have only one fimo score/pval pair, and appear as just one row
-   ft.sub <-subset(ft, loc=="chr19:45423537-45423550" & motif=="MA0512.2")
-      # 4 rows, wellington can be flattened to just one motif score and pval (3.64634; 5.64e-05)
-      #         hint has sensible score1, but 4 values each for score2, 3 for score3.  just the last score3 (pval) matches wellington
-      # next up: see why all this variety in hint fimo (?) score 2 and score 3
-   browser()
+   ft.clean <- cleanFeatureTable(ft.all, 19)
+   checkEquals(dim(ft.clean), c(69, 19))
 
-   checkTrue("motif" %in% colnames(ft))
-   checkTrue(!"motif.h" %in% colnames(ft))
-   checkTrue(!"motif.w" %in% colnames(ft))
-   checkEquals(nrow(tbl), nrow(ft))
+   checkTrue("motif" %in% colnames(ft.clean))
+   checkTrue(!"motif.h" %in% colnames(ft.clean))
+   checkTrue(!"motif.w" %in% colnames(ft.clean))
+   checkTrue(!"motif.w" %in% colnames(ft.clean))
+   checkEquals(nrow(ft.all), nrow(ft.clean))
 
-   checkTrue(all(ft$score1.w.median <= 0))
-   checkTrue(all(ft$score1.w.best <= 0))
-    
-   checkTrue(all(ft$score2.w.median >= -99))
-   checkTrue(all(ft$score2.w.best >= -99))
+   checkTrue(all(ft.clean$length.w >= 0))
+   checkTrue(all(ft.clean$length.h >= 0))
+   checkTrue(all(ft.clean$length.p >= 0))
 
-   checkTrue(all(ft$score3.w.median >= 0))
-   checkTrue(all(ft$score3.w.median <= 1))
+   checkEquals(length(ft.clean$score.w), nrow(ft.clean))
+   checkTrue(all(ft.clean$score.w <= 0))
 
-   checkTrue(all(ft$score3.w.best >= 0))
-   checkTrue(all(ft$score3.w.best <= 1))
+   checkEquals(length(ft.clean$score.h), nrow(ft.clean))
+   checkTrue(all(ft.clean$score.h >= 0))
 
-   checkTrue(all(ft$score1.h.median >= 0))
-   checkTrue(all(ft$score1.h.best >= 0))
-    
-   checkTrue(all(ft$score2.h.median >= -99))
-   checkTrue(all(ft$score2.h.best >= -99))
-
-   checkTrue(all(ft$score3.h.median >= 0))
-   checkTrue(all(ft$score3.h.median <= 1))
-
-   checkTrue(all(ft$score3.h.best >= 0))
-   checkTrue(all(ft$score3.h.best <= 1))
-
-   checkTrue(all(ft$samplecount.w >= 0))
-   checkTrue(all(ft$samplecount.h >= 0))
-
-   checkTrue(all(ft$length.w >= 0))
-   checkTrue(all(ft$length.h >= 0))
+   checkTrue(all(ft.clean$motifscore >= 0))
+   checkTrue(all(ft.clean$motifpval >= 0))
+   checkTrue(all(ft.clean$motifpval <= 1))
+   checkTrue(all(ft.clean$csscore >= 0))
 
 } # test.cleanFeatureTable
 #------------------------------------------------------------------------------------------------------------------------
@@ -826,7 +942,12 @@ run <- function()
    start <- 42000000
    end   <- 47000000
 
-   ft <- ensemble(chrom, start, end)
+   test.locs <- NA
+   test.motifs <- NA
+   methods <- c("wellington", "hint", "piq", "chipseq")
+   ft  <- ensemble.flex(chrom, start, end, methods, test.motifs=test.motifs, test.locs=test.locs)
+   tbl <- cleanFeatureTable(ft, totalSampleCount=18)  # 18 lymphoblast samples from encode
+
    filename <- sprintf("ft.%s.RData", format (Sys.time(), "%a.%b.%d.%Y-%H:%M:%S"))
    save(ft, file=filename)
    ft.clean <- cleanFeatureTable(ft, 18)
