@@ -38,25 +38,6 @@ fill.all.samples.by.chromosome <- function(chromosome, minid = "temp.filler.mini
 
 } # fill.all.samples.by.chromosome
 #-------------------------------------------------------------------------------
-examine.region <- function(chromosome, start, end, sampleIDs, minid = "temp.filler.minid")
-{
-   knownLocs <<- new.env(parent=emptyenv())
-
-   all.sampleIDs <- unlist(lapply(strsplit(list.files(wellington.path, "*.bed"), ".", fixed=TRUE), "[", 1))
-   sampleIDs <- intersect(sampleIDs, all.sampleIDs)
-
-   for(sampleID in sampleIDs){
-      printf("---- %s (%s) (%d/%d)", sampleID, chromosome, grep(sampleID, all.sampleIDs), length(all.sampleIDs))
-      tbl.wellington <- readWellingtonTable(wellington.path, sampleID, NA, chromosome)
-      tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID)
-      x <- splitTableIntoRegionsAndWellingtonHits(tbl, minid)
-      printf("filling %d regions, %d hits for %s", nrow(x$regions), nrow(x$hits), sampleID)
-      #fill.to.database(x$regions, x$hits)
-      #databaseSummary()
-      } # for file
-
-} # examine.region
-#-------------------------------------------------------------------------------
 if(!interactive()){
     chromosomes <- paste("chr", c(1:18, 20:22), sep="")
     #chromosomes <- paste("chr", c(19), sep="")
