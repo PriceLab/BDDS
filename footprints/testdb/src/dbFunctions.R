@@ -1,4 +1,4 @@
-#--------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 getDBConnection <- function(driver = dbDriver("PostgreSQL"), user= "trenatest", 
                             password="trenatest", dbname="trenatest", 
                             host="whovian") {
@@ -8,7 +8,6 @@ getDBConnection <- function(driver = dbDriver("PostgreSQL"), user= "trenatest",
 region.schema <- function()
 {
   c("loc", "chrom", "start", "endpos")
-  
 } # region.schema
 #-------------------------------------------------------------------------------
 hit.schema <- function()
@@ -16,21 +15,19 @@ hit.schema <- function()
   c("loc", "type", "name", "length", 
     "strand", "sample_id", "method", "provenance",
     "score1", "score2", "score3", "score4", "score5", "score6")
-  
 } # hit.schema
 #-------------------------------------------------------------------------------
-databaseSummary <- function()
+databaseSummary <- function(dbConnection = "db.wellington.test")
 {
-  region.count <- dbGetQuery(db.wellington, "select count(*) from regions")[1,1]
-  hit.count <- dbGetQuery(db.wellington, "select count(*) from hits")[1,1]
+  region.count <- dbGetQuery(dbConnection, "select count(*) from regions")[1,1]
+  hit.count <- dbGetQuery(dbConnection, "select count(*) from hits")[1,1]
   printf("%d hits in %d regions", hit.count, region.count)
-  
 } # databaseSummary
 #-------------------------------------------------------------------------------
-## NOTE: original sql command started with \connect wholeBrain-wellington - needed?
-createEmptyDatabaseTables <- function(dbuser, dbConnection)
+createEmptyDatabaseTables <- function(dbUser, dbName, dbConnection)
 {
   sql_command <- '
+  \\connect ' + dbName + ';' + '
   drop table regions;
   drop table hits;
   
@@ -39,7 +36,7 @@ createEmptyDatabaseTables <- function(dbuser, dbConnection)
   start int,
   endpos int);
   
-  grant all on table "regions" to trena;
+  grant all on table "regions" to' + dbUser + ';' + '
   
   create table hits(loc varchar,
   type varchar,
@@ -56,32 +53,31 @@ createEmptyDatabaseTables <- function(dbuser, dbConnection)
   score5 real,
   score6 real);
   
-  grant all on table "hits" to ' + dbuser + ';'
+  grant all on table "hits" to ' + dbUser + ';'
 
   dbGetQuery(dbConnection, sql_command)
 } # createEmptyDatabaseTables
 #-------------------------------------------------------------------------------
-## NOTE: original sql command started with \connect wholeBrain-wellington - needed?
-appendToRegionsTable <- function(tbl, dbConnection)
+appendToRegionsTable <- function(tbl, dbName="testwellington", dbConnection="db.wellington.test")
 {
   write.table(tbl, file="regions.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
-  sql_command <- "
-  \copy regions from 'regions.tsv' delimiter E'\t' CSV NULL as 'NULL';"
+  sql_command <- "\\connect " + dbName + ";" + 
+    "\\copy regions from 'regions.tsv' delimiter E'\t' CSV NULL as 'NULL';"
   dbGetQuery(dbConnection, sql_command)
   
 } # appendToRegionsTable
 #-------------------------------------------------------------------------------
 ## NOTE: original sql command started with \connect wholeBrain-wellington - needed?
-appendToHitsTable <- function(tbl, dbConnection)
+appendToHitsTable <- function(tbl, dbName="testwellington", dbConnection="db.wellington.test")
 {
   write.table(tbl, file="hits.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
-  sql_command <- "
-  \copy hits from 'hits.tsv' delimiterE'\t' CSV NULL as 'NULL'"
+  sql_command <- "\\connect " + dbName + ";" +
+    "\copy hits from 'hits.tsv' delimiterE'\t' CSV NULL as 'NULL'"
   dbGetQuery(dbConnection, sql_command)
   
 } # appendToHitsTable
 #-------------------------------------------------------------------------------
-fill.to.database <- function(tbl.regions, tbl.hits, dbConnection)
+fill.to.database <- function(tbl.regions, tbl.hits, dbConnection="db.wellington.test")
 {
   appendToRegionsTable(tbl.regions, dbConnection)
   appendToHitsTable(tbl.hits, dbConnection)

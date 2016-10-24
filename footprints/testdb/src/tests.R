@@ -70,21 +70,27 @@ test.splitTableIntoRegionsAndWellingtonHits <- function(tbl)
 test.fill.to.database <- function()
 {
   printf("--- test.fill.to.database")
-  createEmptyDatabaseTables()
+  if(!exists("db.wellington.test"))
+    db.wellington.test <- 
+      getDBConnection(user="trenatest", 
+                      password="trenatest", 
+                      dbname="testwellington")
+  
+  createEmptyDatabaseTables('trenatest', 'testwellington')
   knownLocs <<- new.env(parent=emptyenv())
   
-  tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr21")
+  tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
   tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID)
   x <- splitTableIntoRegionsAndWellingtonHits(tbl, "minid")
   
-  fill.to.database(x$regions, x$hits)
-  checkEquals(sort(dbListTables(db.wellington)), c("hits", "regions"))
+  fill.to.database(x$regions, x$hits, db.wellington.test)
+  checkEquals(sort(dbListTables(db.wellington.test)), c("hits", "regions"))
   
-  tbl.regions <- dbGetQuery(db.wellington, "select * from regions")
+  tbl.regions <- dbGetQuery(db.wellington.test, "select * from regions")
   checkEquals(dim(tbl.regions), c(2, 4))
   checkTrue(all(region.schema() == colnames(tbl.regions)))
   
-  tbl.hits <- dbGetQuery(db.wellington, "select * from hits")
+  tbl.hits <- dbGetQuery(db.wellington.test, "select * from hits")
   checkTrue(all(hit.schema() == colnames(tbl.hits)))
   checkEquals(dim(tbl.hits), c(8, 14))
   checkEquals(unique(tbl.hits$type), "motif.in.footprint")
@@ -96,7 +102,12 @@ test.getDBConnection <- function()
 {
   printf("--- test.getDBConnection")
   
-  db.testConnection <- dbConnect(PostgreSQL(), user= "trenatest", password="trenatest", dbname="trenatest", host="whovian")
+  db.testConnection <- dbConnect(
+    PostgreSQL(), 
+    user= "trenatest", 
+    password="trenatest", 
+    dbname="trenatest", 
+    host="whovian")
   
   # test the class of db.testConnection
   checkEquals(class(db.testConnection)[1], "PostgreSQLConnection")
