@@ -26,9 +26,7 @@ databaseSummary <- function(dbConnection = "db.wellington.test")
 #-------------------------------------------------------------------------------
 createEmptyDatabaseTables <- function(dbUser, dbName, dbConnection)
 {
-  sql_command <- '
-  \\connect ' + dbName + ';' + '
-  drop table regions;
+  sql_command <- paste('drop table regions;
   drop table hits;
   
   create table regions(loc varchar primary key,
@@ -36,7 +34,7 @@ createEmptyDatabaseTables <- function(dbUser, dbName, dbConnection)
   start int,
   endpos int);
   
-  grant all on table "regions" to' + dbUser + ';' + '
+  grant all on table "regions" to ', dbUser, ';', '
   
   create table hits(loc varchar,
   type varchar,
@@ -53,27 +51,19 @@ createEmptyDatabaseTables <- function(dbUser, dbName, dbConnection)
   score5 real,
   score6 real);
   
-  grant all on table "hits" to ' + dbUser + ';'
+  grant all on table "hits" to ', dbUser, ';', sep="")
 
   dbGetQuery(dbConnection, sql_command)
 } # createEmptyDatabaseTables
 #-------------------------------------------------------------------------------
-appendToRegionsTable <- function(tbl, dbName="testwellington", dbConnection="db.wellington.test")
+appendToRegionsTable <- function(tbl, dbConnection="db.wellington.test")
 {
-  write.table(tbl, file="regions.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
-  sql_command <- "\\connect " + dbName + ";" + 
-    "\\copy regions from 'regions.tsv' delimiter E'\t' CSV NULL as 'NULL';"
-  dbGetQuery(dbConnection, sql_command)
-  
+  dbWriteTable(dbConnection, "regions", tbl, row.names=FALSE, append=TRUE)
 } # appendToRegionsTable
 #-------------------------------------------------------------------------------
-appendToHitsTable <- function(tbl, dbName="testwellington", dbConnection="db.wellington.test")
+appendToHitsTable <- function(tbl, dbConnection="db.wellington.test")
 {
-  write.table(tbl, file="hits.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
-  sql_command <- "\\connect " + dbName + ";" +
-    "\\copy hits from 'hits.tsv' delimiterE'\t' CSV NULL as 'NULL'"
-  dbGetQuery(dbConnection, sql_command)
-  
+  dbWriteTable(dbConnection, "hits", tbl, row.names=FALSE, append=TRUE)
 } # appendToHitsTable
 #-------------------------------------------------------------------------------
 fill.to.database <- function(tbl.regions, tbl.hits, dbConnection="db.wellington.test")
