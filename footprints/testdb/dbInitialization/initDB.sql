@@ -15,11 +15,20 @@ ALTER ROLE databasemaker CREATEROLE CREATEDB LOGIN;
 -- switch to the databasemaker role
 SET ROLE databasemaker;
 
--- create the trena user and grant login
+-- create the trenatest user and grant login
 CREATE USER trenatest password 'trenatest';
 CREATE DATABASE trenatest;
 GRANT ALL PRIVILEGES on DATABASE trenatest to trenatest;
 ALTER ROLE trenatest LOGIN;
 GRANT trenatest TO databasemaker;
 
--- now the database is ready for the trenatest user to run the create.sql scripts
+-- now the database is ready for the trenatest user to run the create.sql scripts (except for FIMO)
+
+-- create the trena user and grant login
+CREATE USER trena password 'trena';
+CREATE DATABASE trena;
+GRANT ALL PRIVILEGES on DATABASE trena to trena;
+ALTER ROLE trena LOGIN;
+GRANT trena to databasemaker;
+
+-- now the trena user can run createFimo.sql
