@@ -1,5 +1,3 @@
-
-
 #-------------------------------------------------------------------------------
 runTests <- function()
 {
@@ -7,12 +5,50 @@ runTests <- function()
   test.readWellingtonTable()
   test.mergeFootprintsWithFimo()
   test.splitTableIntoRegionsAndWellingtonHits()
-  #test.fill.to.database()
+  test.fill.to.database()
+  test_examine.region()
   
   #test.combineFootprintsAndFimo()
   #test.combineFootprintsAndDatabasedFimo()
   
 } # runTests
+#-------------------------------------------------------------------------------
+test.getDBConnection <- function()
+{
+  printf("--- test.getDBConnection")
+  
+  db.testConnection <- dbConnect(
+    PostgreSQL(), 
+    user= "trenatest", 
+    password="trenatest", 
+    dbname="trenatest", 
+    host="whovian")
+  
+  # test the class of db.testConnection
+  checkEquals(class(db.testConnection)[1], "PostgreSQLConnection")
+  
+  # test that we can read tables from db.testConnection
+  checkEquals(dbExistsTable(db.testConnection, "testtable"), TRUE)
+  
+  # test that we can write to db.testConnection
+  checkEquals(
+    dbWriteTable(conn = db.testConnection,
+                 name = "testtable",
+                 value=data.frame("teststring"), 
+                 append = TRUE, 
+                 row.names = FALSE),
+    TRUE)
+  
+  # test that we can read from db.testConnection
+  checkEquals(
+    is.data.frame(
+      dbGetQuery(db.testConnection, "select * from testtable")
+    ), TRUE)
+  
+  # clean up and disconnect
+  dbGetQuery(db.testConnection, "DELETE FROM testtable")
+  dbDisconnect(db.testConnection)
+} # test.getDBConnection
 #-------------------------------------------------------------------------------
 test.readWellingtonTable <- function()
 {
@@ -97,43 +133,6 @@ test.fill.to.database <- function()
   checkTrue(all(tbl.hits$loc %in% tbl.regions$loc))
   
 } # test.fill.to.database
-#-------------------------------------------------------------------------------
-test.getDBConnection <- function()
-{
-  printf("--- test.getDBConnection")
-  
-  db.testConnection <- dbConnect(
-    PostgreSQL(), 
-    user= "trenatest", 
-    password="trenatest", 
-    dbname="trenatest", 
-    host="whovian")
-  
-  # test the class of db.testConnection
-  checkEquals(class(db.testConnection)[1], "PostgreSQLConnection")
-  
-  # test that we can read tables from db.testConnection
-  checkEquals(dbExistsTable(db.testConnection, "testtable"), TRUE)
-  
-  # test that we can write to db.testConnection
-  checkEquals(
-    dbWriteTable(conn = db.testConnection,
-                 name = "testtable",
-                 value=data.frame("teststring"), 
-                 append = TRUE, 
-                 row.names = FALSE),
-    TRUE)
-  
-  # test that we can read from db.testConnection
-  checkEquals(
-    is.data.frame(
-      dbGetQuery(db.testConnection, "select * from testtable")
-    ), TRUE)
-  
-  # clean up and disconnect
-  dbGetQuery(db.testConnection, "DELETE FROM testtable")
-  dbDisconnect(db.testConnection)
-} # test.getDBConnection
 #-------------------------------------------------------------------------------
 test_examine.region <- function()
 {

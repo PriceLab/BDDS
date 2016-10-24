@@ -67,12 +67,11 @@ appendToRegionsTable <- function(tbl, dbName="testwellington", dbConnection="db.
   
 } # appendToRegionsTable
 #-------------------------------------------------------------------------------
-## NOTE: original sql command started with \connect wholeBrain-wellington - needed?
 appendToHitsTable <- function(tbl, dbName="testwellington", dbConnection="db.wellington.test")
 {
   write.table(tbl, file="hits.tsv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t", na="NULL")
   sql_command <- "\\connect " + dbName + ";" +
-    "\copy hits from 'hits.tsv' delimiterE'\t' CSV NULL as 'NULL'"
+    "\\copy hits from 'hits.tsv' delimiterE'\t' CSV NULL as 'NULL'"
   dbGetQuery(dbConnection, sql_command)
   
 } # appendToHitsTable
