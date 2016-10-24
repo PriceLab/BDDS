@@ -39,8 +39,8 @@ fill.all.samples.by.chromosome <- function(chromosome, minid = "temp.filler.mini
 } # fill.all.samples.by.chromosome
 #-------------------------------------------------------------------------------
 if(!interactive()){
-    chromosomes <- paste("chr", c(1:18, 20:22), sep="")
-    #chromosomes <- paste("chr", c(19), sep="")
+    #chromosomes <- paste("chr", c(1:18, 20:22), sep="")
+    chromosomes <- paste("chr", c(19), sep="")
     for(chromosome in chromosomes)
         fill.all.samples.by.chromosome(chromosome)
     }
