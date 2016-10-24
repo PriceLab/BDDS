@@ -82,10 +82,15 @@ test.getHits <- function()
     
 } # test.getHits
 #------------------------------------------------------------------------------------------------------------------------
-getFimoHits <- function(chrom, start, end)
+getFimoHits <- function(chrom, start, end, exact=FALSE)
 {
    chrom <- sub("^chr", "", chrom)
-   query <- sprintf("select * from fimo_hg38 where chrom='%s' and start > %d and endpos < %d", chrom, start, end)
+
+   if(exact)
+       query <- sprintf("select * from fimo_hg38 where chrom='%s' and start = %d and endpos = %d", chrom, start, end)
+   else
+      query <- sprintf("select * from fimo_hg38 where chrom='%s' and start >= %d and endpos <= %d", chrom, start, end)
+
    dbGetQuery(db.trena, query)
 
 } # getFimoHits
@@ -99,7 +104,7 @@ test.getFimoHits <- function()
    end   <- 44903790
 
    x <- getFimoHits(chrom, start, end)
-   checkEquals(dim(x), c(14, 9))
+   checkEquals(dim(x), c(15, 9))
    expected <- c("motifname", "chrom", "start", "endpos", "strand", "motifscore", "pval", "sequence")
    checkTrue(all(expected %in% colnames(x)))
     
@@ -375,7 +380,7 @@ test.createWellingtonTable_ignoreStrand <- function()
 createPiqTable <- function(chrom, start, end, motifs=NA, locs=NA, collapseOnStrand=FALSE)
 {
    tbl.hits <- getHits(db.piq, chrom, start, end, motifs=motifs, locs=locs)
-   printf("found %d hint hits in %d bases", nrow(tbl.hits), 1 + end - start)
+   printf("found %d piq hits in %d bases", nrow(tbl.hits), 1 + end - start)
 
    if(nrow(tbl.hits) == 0)
       return(data.frame())
