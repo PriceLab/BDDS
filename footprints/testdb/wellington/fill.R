@@ -20,7 +20,7 @@ if(!exists("db.fimo"))
 
 knownLocs <- new.env(parent=emptyenv())
 #-------------------------------------------------------------------------------
-fill.all.samples.by.chromosome <- function(chromosome, minid = "temp.filler.minid")
+fill.all.samples.by.chromosome <- function(chromosome = "chr19", minid = "temp.filler.minid")
 {
    knownLocs <<- new.env(parent=emptyenv())
 
@@ -29,10 +29,12 @@ fill.all.samples.by.chromosome <- function(chromosome, minid = "temp.filler.mini
    for(sampleID in all.sampleIDs){
       printf("---- %s (%s) (%d/%d)", sampleID, chromosome, grep(sampleID, all.sampleIDs), length(all.sampleIDs))
       tbl.wellington <- readWellingtonTable(wellington.path, sampleID, NA, chromosome)
+      print("Wellington table read. Merging with Fimo...")
       tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID)
+      print("Merged. Now splitting table to regions and hits...")
       x <- splitTableIntoRegionsAndWellingtonHits(tbl, minid)
       printf("filling %d regions, %d hits for %s", nrow(x$regions), nrow(x$hits), sampleID)
-      fill.to.database(x$regions, x$hits)
+      fill.to.database(x$regions, x$hits, db.wellington)
       databaseSummary()
       } # for file
 
