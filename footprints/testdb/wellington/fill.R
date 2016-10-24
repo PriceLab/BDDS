@@ -35,7 +35,7 @@ fill.all.samples.by.chromosome <- function(chromosome = "chr19", minid = "temp.f
       x <- splitTableIntoRegionsAndWellingtonHits(tbl, minid)
       printf("filling %d regions, %d hits for %s", nrow(x$regions), nrow(x$hits), sampleID)
       fill.to.database(x$regions, x$hits, db.wellington)
-      databaseSummary()
+      databaseSummary(db.wellington)
       } # for file
 
 } # fill.all.samples.by.chromosome

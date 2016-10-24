@@ -24,7 +24,7 @@ databaseSummary <- function(dbConnection = "db.wellington.test")
   printf("%d hits in %d regions", hit.count, region.count)
 } # databaseSummary
 #-------------------------------------------------------------------------------
-createEmptyDatabaseTables <- function(dbUser, dbName, dbConnection)
+createEmptyDatabaseTables <- function(dbUser, dbName, dbConnection= "db.wellington.test")
 {
   sql_command <- paste('drop table regions;
   drop table hits;
