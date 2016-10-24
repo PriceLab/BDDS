@@ -55,7 +55,7 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID)
   
 } # mergeFimoWithFootprints
 #-------------------------------------------------------------------------------
-splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid)
+splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.minid")
 {
   tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
   colnames(tbl.regions) <- region.schema() # 29

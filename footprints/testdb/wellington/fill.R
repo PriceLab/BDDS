@@ -1,11 +1,11 @@
 source("../src/dependencies.R")
-source("../src/DBFunctions.R")
-source("../src/TableParsing.R")
-source("../src/Tests.R")
+source("../src/dbFunctions.R")
+source("../src/tableParsing.R")
+source("../src/tests.R")
 
 #-------------------------------------------------------------------------------
 # path to output of the makefile based tests for wellington on CHR 19
-wellington.path <- "../../functionalTests/output/wellington"
+wellington.path <- "/local/Ben/BDDS/footprints/functionalTests/output/wellington"
 test.sampleID <- "ENCSR000DBY"
 
 #-------------------------------------------------------------------------------
@@ -20,13 +20,11 @@ if(!exists("db.fimo"))
 
 knownLocs <- new.env(parent=emptyenv())
 #-------------------------------------------------------------------------------
-#TODO: fix fill.to.database call
-fill.all.samples.by.chromosome <- function(chromosome)
+fill.all.samples.by.chromosome <- function(chromosome, minid = "temp.filler.minid")
 {
    knownLocs <<- new.env(parent=emptyenv())
 
    all.sampleIDs <- unlist(lapply(strsplit(list.files(wellington.path, "ENCSR.*.bed"), ".", fixed=TRUE), "[", 1))
-   minid <- "corys.wellington.minid"
 
    for(sampleID in all.sampleIDs){
       printf("---- %s (%s) (%d/%d)", sampleID, chromosome, grep(sampleID, all.sampleIDs), length(all.sampleIDs))
@@ -40,14 +38,12 @@ fill.all.samples.by.chromosome <- function(chromosome)
 
 } # fill.all.samples.by.chromosome
 #-------------------------------------------------------------------------------
-examine.region <- function(chromosome, start, end, sampleIDs)
+examine.region <- function(chromosome, start, end, sampleIDs, minid = "temp.filler.minid")
 {
    knownLocs <<- new.env(parent=emptyenv())
 
    all.sampleIDs <- unlist(lapply(strsplit(list.files(wellington.path, "*.bed"), ".", fixed=TRUE), "[", 1))
    sampleIDs <- intersect(sampleIDs, all.sampleIDs)
-
-   minid <- "corys.wellington.minid"
 
    for(sampleID in sampleIDs){
       printf("---- %s (%s) (%d/%d)", sampleID, chromosome, grep(sampleID, all.sampleIDs), length(all.sampleIDs))
