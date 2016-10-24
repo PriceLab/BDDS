@@ -20,6 +20,7 @@ if(!exists("db.fimo"))
 
 knownLocs <- new.env(parent=emptyenv())
 #-------------------------------------------------------------------------------
+#TODO: add argument for database to use - will need to clean above.
 fill.all.samples.by.chromosome <- function(chromosome = "chr19", minid = "temp.filler.minid")
 {
    knownLocs <<- new.env(parent=emptyenv())
