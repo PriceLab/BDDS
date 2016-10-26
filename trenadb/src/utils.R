@@ -2,20 +2,45 @@ library(RPostgreSQL)
 library(GenomicRanges)
 library(RUnit)
 #------------------------------------------------------------------------------------------------------------------------
+if(!exists("db.chipseq"))
+   db.chipseq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="chipseq", host="whovian")
+
+if(!exists("db.gtf"))
+   db.gtf <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="gtf", host="whovian")
+
+if(!exists("apoe")){
+   tbl.tmp <- dbGetQuery(db.gtf, "select * from hg38human where gene_name='APOE' and moleculetype='gene'")
+   apoe <- list(chrom=tbl.tmp[1, "chr"], start=tbl.tmp[1, "start"])
+   }
+
 if(!exists("db.hint"))
    db.hint <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="hint", host="whovian")
 
 if(!exists("db.wellington"))
    db.wellington <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="wellington", host="whovian")
 
+if(!exists("db.piq"))
+   db.piq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="piq", host="whovian")
+
 if(!exists("db.trena"))
    db.trena <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="trena", host="whovian")
+      
+if(!exists("tbl.genesmotifs"))
+    tbl.genesmotifs <- dbGetQuery(db.trena, "select * from tfmotifs")
+
+if(!exists("db.fimo"))
+    db.fimo <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="fimo", host="whovian")
+
+if(!exists("tbl.chipseq"))
+    db.chipseq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="chipseq", host="whovian")
+
 
 #------------------------------------------------------------------------------------------------------------------------
 printf <- function(...) print(noquote(sprintf(...)))
 #------------------------------------------------------------------------------------------------------------------------
 utils.runTests <- function()
 {
+   test.locStringToBedTable()
    test.getFimoHits()
    test.getHits()
    test.createHintTable()
@@ -483,3 +508,33 @@ test.createPiqTable <- function()
    
 }  # test.createPiqTable
 #------------------------------------------------------------------------------------------------------------------------
+locStringToBedTable <- function(locStrings)
+{
+   tokensList <- strsplit(locStrings, ":")
+   chroms     <- unlist(lapply(tokensList, "[", 1))
+   posPairStrings  <- unlist(lapply(tokensList, "[", 2))
+
+   posPairs <- lapply(strsplit(posPairStrings, "-"), as.integer)
+   tbl.startEnd <- data.frame(matrix(as.integer(unlist(posPairs)), ncol=2, byrow=TRUE))
+   
+   tbl <- cbind(chrom=chroms, tbl.startEnd, stringsAsFactors=FALSE)   
+   colnames(tbl) <- c("chrom", "start", "end")
+   tbl[order(tbl$chrom, tbl$start),]
+   
+}  # locStringToBedTable
+#------------------------------------------------------------------------------------------------------------------------
+test.locStringToBedTable <- function()
+{
+   printf("--- test.locStringToBedTable")
+
+   s <- c("chr19:44906708-44906728", "chr19:44906711-44906731", "chr19:44906550-44906559")
+   tbl <- locStringToBedTable(s)
+   checkEquals(colnames(tbl), c("chrom", "start", "end"))
+   checkEquals(as.list(tbl[1,]), list(chrom="chr19", start=44906550, end=44906559))
+   checkEquals(as.list(tbl[3,]), list(chrom="chr19", start=44906711, end=44906731))
+   checkEquals(as.list(tbl[2,]), list(chrom="chr19", start=44906708, end=44906728))
+
+}  # test.locStringToBedTable
+#------------------------------------------------------------------------------------------------------------------------
+if(!interactive())
+   utils.runTests()
