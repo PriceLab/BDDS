@@ -30,4 +30,6 @@ tbl.p <- getHits(db.piq, chrom, start, end)          # 75357          3207
 displayBedTable(igv, unique(tbl.w[, c("chrom", "start", "endpos")]), "wellington")
 displayBedTable(igv, unique(tbl.h[, c("chrom", "start", "endpos")]), "hint")
 displayBedTable(igv, unique(tbl.p[, c("chrom", "start", "endpos")]), "piq")
+   # hist(tbl.p$score3)  suggests values > 20 might be most interesting.
+displayBedTable(igv, unique(subset(tbl.p, score3 > 20)[, c("chrom", "start", "endpos")]), "piqS3")
 
