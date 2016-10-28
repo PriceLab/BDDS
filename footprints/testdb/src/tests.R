@@ -24,7 +24,7 @@ test.getDBConnection <- function()
 {
   printf("--- test.getDBConnection")
   
-  db.testConnection <- dbConnect("trenatest")
+  db.testConnection <- getDBConnection("trenatest")
   
   # test the class of db.testConnection
   checkEquals(class(db.testConnection)[1], "PostgreSQLConnection")
