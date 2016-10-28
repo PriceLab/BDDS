@@ -97,12 +97,12 @@ test.mergeFootprintsWithFimo <- function()
 #-------------------------------------------------------------------------------
 test.splitTableIntoRegionsAndWellingtonHits <- function(tbl)
 {
-  if(!exists("db.fimo"))
-    db.fimo <- getDBConnection("fimo")
-  
   printf("--- test.splitTableIntoRegionsAndWellingtonHits")
+  if(!exists("db.fimo")) {
+    db.fimo <- getDBConnection("fimo")
+  }
   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
-  tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID)
+  tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID, dbConnection = db.fimo)
   
   x <- splitTableIntoRegionsAndWellingtonHits(tbl, "minid")
   checkEquals(sort(names(x)), c("hits", "regions"))
@@ -111,9 +111,12 @@ test.splitTableIntoRegionsAndWellingtonHits <- function(tbl)
   
 } # test.splitTableIntoRegionsAndWellingtonHits    
 #-------------------------------------------------------------------------------
-test.fill.to.database <- function()
+test.fillToDatabase <- function()
 {
-  printf("--- test.fill.to.database")
+  printf("--- test.fillToDatabase")
+  if(!exists("db.fimo")) {
+    db.fimo <- getDBConnection("fimo")
+  }
   if(!exists("db.wellington.test"))
     db.wellington.test <- 
       getDBConnection("testwellington")
@@ -122,10 +125,10 @@ test.fill.to.database <- function()
   knownLocs <<- new.env(parent=emptyenv())
   
   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
-  tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID)
+  tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID, dbConnection = db.fimo)
   x <- splitTableIntoRegionsAndWellingtonHits(tbl, "minid")
   
-  fill.to.database(x$regions, x$hits, db.wellington.test)
+  fillToDatabase(x$regions, x$hits, db.wellington.test)
   checkEquals(sort(dbListTables(db.wellington.test)), c("hits", "regions"))
   
   tbl.regions <- dbGetQuery(db.wellington.test, "select distinct * from regions")
@@ -138,5 +141,5 @@ test.fill.to.database <- function()
   checkEquals(unique(tbl.hits$type), "motif.in.footprint")
   checkTrue(all(tbl.hits$loc %in% tbl.regions$loc))
   
-} # test.fill.to.database
+} # test.fillToDatabase
 #-------------------------------------------------------------------------------

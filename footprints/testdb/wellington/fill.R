@@ -34,7 +34,7 @@ fill.all.samples.by.chromosome <- function(dbConnection = "db.wellington.test",
       print("Merged. Now splitting table to regions and hits...")
       x <- splitTableIntoRegionsAndWellingtonHits(tbl, minid)
       printf("filling %d regions, %d hits for %s", nrow(x$regions), nrow(x$hits), sampleID)
-      fill.to.database(x$regions, x$hits, dbConnection)
+      fillToDatabase(x$regions, x$hits, dbConnection)
       databaseSummary(dbConnection)
       } # for file
 

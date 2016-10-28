@@ -29,7 +29,7 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection)
   max.pos <- max(tbl.fp$end)
   
   fimo.chromosome <- sub("chr", "", chromosome)
-  query <- sprintf("select * from fimo_hg38 where chr='%s' and start >= %d and endpos <= %d",
+  query <- sprintf("select * from fimo_hg38 where chrom='%s' and start >= %d and endpos <= %d",
                    fimo.chromosome, min.pos, max.pos)
   
   tbl.fimo <- dbGetQuery(dbConnection, query)
