@@ -1,9 +1,34 @@
 #-------------------------------------------------------------------------------
-getDBConnection <- function(driver = dbDriver("PostgreSQL"), user= "trenatest", 
-                            password="trenatest", dbname="trenatest", 
-                            host="whovian") {
-  dbConnect(driver, user=user, password=password, dbname=dbname, host=host)
+getDBConnection <- function(database) {
+  port = "5432"
+  driver = dbDriver("PostgreSQL")
+
+  if (database == "trenatest") {
+    user= "trenatest"
+    password="trenatest"
+    dbname="trenatest" 
+    host="whovian"
+  } else if (database == "fimo_whovian") {
+    user= "trena" 
+    password="trena" 
+    dbname="fimo"
+    host="whovian"
+  } else if (database == "fimo") {
+    user= "ben"
+    password="ben_PASS"
+    dbname="fimo"
+    host="bdds-rds.globusgenomics.org"
+  } else if (database == "testwellington") {
+    user = "trenatest"
+    password = "trenatest"
+    dbname = "testwellington"
+    host = "whovian"
+  }
+  
+  dbConnect(drv=driver, user=user, password=password, dbname=dbname, host=host, 
+            port=port)
 } # getDBConnection
+
 #-------------------------------------------------------------------------------
 region.schema <- function()
 {

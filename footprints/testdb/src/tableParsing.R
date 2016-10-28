@@ -87,6 +87,5 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.min
   tbl.hits <- tbl.hits[, coi]
   colnames(tbl.hits) <- hit.schema()
   invisible(list(regions=tbl.regions, hits=tbl.hits))
-  
 } # splitTableIntoRegionsAndWellingtonHits    
 #-------------------------------------------------------------------------------

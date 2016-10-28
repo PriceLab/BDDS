@@ -10,18 +10,17 @@ test.sampleID <- "ENCSR000DBY"
 
 #-------------------------------------------------------------------------------
 if(!exists("db.wellington"))
-   db.wellington <- getDBConnection(dbname="testwellington")
+   db.wellington <- getDBConnection("testwellington")
 
 if(!exists("db.fimo"))
-   db.fimo <- getDBConnection(user= "trena", 
-                              password="trena", 
-                              dbname="fimo", 
-                              host="whovian")
+   db.fimo <- getDBConnection("fimo")
 
 knownLocs <- new.env(parent=emptyenv())
 #-------------------------------------------------------------------------------
 #TODO: add argument for database to use - will need to clean above.
-fill.all.samples.by.chromosome <- function(chromosome = "chr19", minid = "temp.filler.minid")
+fill.all.samples.by.chromosome <- function(dbConnection = "db.wellington.test",
+                                           chromosome = "chr19", 
+                                           minid = "temp.filler.minid")
 {
    knownLocs <<- new.env(parent=emptyenv())
 
@@ -35,8 +34,8 @@ fill.all.samples.by.chromosome <- function(chromosome = "chr19", minid = "temp.f
       print("Merged. Now splitting table to regions and hits...")
       x <- splitTableIntoRegionsAndWellingtonHits(tbl, minid)
       printf("filling %d regions, %d hits for %s", nrow(x$regions), nrow(x$hits), sampleID)
-      fill.to.database(x$regions, x$hits, db.wellington)
-      databaseSummary(db.wellington)
+      fill.to.database(x$regions, x$hits, dbConnection)
+      databaseSummary(dbConnection)
       } # for file
 
 } # fill.all.samples.by.chromosome
