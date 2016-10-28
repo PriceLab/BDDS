@@ -24,12 +24,7 @@ test.getDBConnection <- function()
 {
   printf("--- test.getDBConnection")
   
-  db.testConnection <- dbConnect(
-    PostgreSQL(), 
-    user= "trenatest", 
-    password="trenatest", 
-    dbname="trenatest", 
-    host="whovian")
+  db.testConnection <- dbConnect("trenatest")
   
   # test the class of db.testConnection
   checkEquals(class(db.testConnection)[1], "PostgreSQLConnection")
@@ -100,10 +95,7 @@ test.mergeFootprintsWithFimo <- function()
 test.splitTableIntoRegionsAndWellingtonHits <- function(tbl)
 {
   if(!exists("db.fimo"))
-    db.fimo <- getDBConnection(user= "trena", 
-                               password="trena", 
-                               dbname="fimo", 
-                               host="whovian")
+    db.fimo <- getDBConnection("fimo")
   
   printf("--- test.splitTableIntoRegionsAndWellingtonHits")
   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
@@ -121,9 +113,7 @@ test.fill.to.database <- function()
   printf("--- test.fill.to.database")
   if(!exists("db.wellington.test"))
     db.wellington.test <- 
-      getDBConnection(user="trenatest", 
-                      password="trenatest", 
-                      dbname="testwellington")
+      getDBConnection("testwellington")
   
   createEmptyDatabaseTables('trenatest', 'testwellington', db.wellington.test)
   knownLocs <<- new.env(parent=emptyenv())
