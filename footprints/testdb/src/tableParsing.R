@@ -67,7 +67,8 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.min
   # enter these new.locs into the hash
   lapply(new.locs, function(loc) knownLocs[[loc]] <- 0)   
   printf("novel locs: %d new/%d possible (%d now known, %d dups)",
-         length(new.locs), nrow(tbl.regions), length(names(knownLocs)), nrow(tbl.regions) - length(new.locs))
+         length(new.locs), nrow(tbl.regions), length(names(knownLocs)), 
+         nrow(tbl.regions) - length(new.locs))
   
   if(length(new.locs) > 0){
     keepers <- match(new.locs, tbl.regions$loc)
@@ -76,8 +77,8 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.min
     tbl.regions <- data.frame()
   }
   
-  tbl.hits <- tbl[, c("loc", "motif", "motif.strand", "sample_id", "method", "wellington.score",
-                      "fimo.score", "fimo.pvalue")]
+  tbl.hits <- tbl[, c("loc", "motif", "motif.strand", "sample_id", "method", 
+                      "wellington.score", "fimo.score", "fimo.pvalue")]
   tbl.hits$length <- with(tbl, 1 + motif.end - motif.start)
   tbl.hits$provenance <- minid
   tbl.hits$score4 <- NA

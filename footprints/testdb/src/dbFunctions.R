@@ -8,17 +8,32 @@ getDBConnection <- function(database) {
     password="trenatest"
     dbname="trenatest" 
     host="whovian"
-  } else if (database == "fimo_whovian") {
-    user= "trena" 
-    password="trena" 
-    dbname="fimo"
-    host="whovian"
   } else if (database == "fimo") {
     user= "ben"
     password="ben_PASS"
     dbname="fimo"
     host="bdds-rds.globusgenomics.org"
+  } else if (database == "wellington") {
+    user= "ben"
+    password="ben_PASS"
+    dbname="wellington" 
+    host="bdds-rds.globusgenomics.org"
+  } else if (database == "trenatest_whovian") {
+    user= "trenatest"
+    password="trenatest"
+    dbname="trenatest" 
+    host="whovian"
+  } else if (database == "fimo_whovian") {
+    user= "trena" 
+    password="trena" 
+    dbname="fimo"
+    host="whovian"
   } else if (database == "testwellington") {
+    user = "trenatest"
+    password = "trenatest"
+    dbname = "testwellington"
+    host = "whovian"
+  } else if (database == "testwellington_whovian") {
     user = "trenatest"
     password = "trenatest"
     dbname = "testwellington"

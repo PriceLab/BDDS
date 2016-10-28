@@ -14,7 +14,7 @@ runTests <- function()
   test.splitTableIntoRegionsAndWellingtonHits()
   test.fillToDatabase()
 
-    #test.combineFootprintsAndFimo()
+  #test.combineFootprintsAndFimo()
   #test.combineFootprintsAndDatabasedFimo()
   
 } # runTests
