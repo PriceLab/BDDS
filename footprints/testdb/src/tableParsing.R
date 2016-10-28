@@ -20,7 +20,7 @@ readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
   
 } # readWellingtonTable
 #-------------------------------------------------------------------------------
-mergeFimoWithFootprints <- function(tbl.fp, sampleID)
+mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection)
 {
   chromosome <- unique(tbl.fp$chrom)
   # enforce treatment of just one chromosome at a time
@@ -32,7 +32,7 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID)
   query <- sprintf("select * from fimo_hg38 where chr='%s' and start >= %d and endpos <= %d",
                    fimo.chromosome, min.pos, max.pos)
   
-  tbl.fimo <- dbGetQuery(db.fimo, query)
+  tbl.fimo <- dbGetQuery(dbConnection, query)
   colnames(tbl.fimo) <- c("motif", "chrom", "motif.start", "motif.end", "motif.strand", "fimo.score",
                           "fimo.pvalue", "empty", "motif.sequence")
   tbl.fimo <- tbl.fimo[, -grep("empty", colnames(tbl.fimo))]

@@ -77,7 +77,7 @@ test.mergeFootprintsWithFimo <- function()
     db.fimo <- getDBConnection("fimo")
   }
   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
-  tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID)
+  tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID, dbConnection = db.fimo)
   checkEquals(ncol(tbl), 12)
   checkEquals(sort(colnames(tbl)),
               c("chrom", "fimo.pvalue", "fimo.score", "loc", "method",
