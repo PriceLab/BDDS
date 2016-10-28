@@ -12,10 +12,9 @@ runTests <- function()
   test.readWellingtonTable()
   test.mergeFootprintsWithFimo()
   test.splitTableIntoRegionsAndWellingtonHits()
-  test.fill.to.database()
-  test_examine.region()
-  
-  #test.combineFootprintsAndFimo()
+  test.fillToDatabase()
+
+    #test.combineFootprintsAndFimo()
   #test.combineFootprintsAndDatabasedFimo()
   
 } # runTests
