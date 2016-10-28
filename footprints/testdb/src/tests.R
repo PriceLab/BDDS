@@ -73,6 +73,9 @@ test.readWellingtonTable <- function()
 test.mergeFootprintsWithFimo <- function()
 {
   printf("--- test.mergeFootprintsWithFimo")
+  if(!exists("db.fimo")) {
+    db.fimo <- getDBConnection("fimo")
+  }
   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")
   tbl <- mergeFimoWithFootprints(tbl.fp, test.sampleID)
   checkEquals(ncol(tbl), 12)
