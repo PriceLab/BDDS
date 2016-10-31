@@ -7,7 +7,7 @@ getDBConnection <- function(database) {
     user= "ben"
     password="ben_PASS"
     dbname="trenatest" 
-    host="bdds-rds-globusgenomics.org"
+    host="bdds-rds.globusgenomics.org"
     
   } else if (database == "fimo") {
     user= "ben"

@@ -6,7 +6,7 @@ runTests <- function()
   # https://github.com/PriceLab/BDDS/tree/master/footprints/functionalTests
   wellington.path <- "/local/Ben/BDDS/footprints/functionalTests/output/wellington"
   test.sampleID <- "ENCSR000DBY"
-  knownLocs <- new.env(parent=emptyenv())
+  # knownLocs <- new.env(parent=emptyenv())
   
   test.getDBConnection()
   test.readWellingtonTable()
