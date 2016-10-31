@@ -7,7 +7,7 @@ fillAllSamplesByChromosome <- function(dbConnection = "db.wellington",
   knownLocs <<- new.env(parent=emptyenv())
   
   all.sampleIDs <- unlist(lapply(strsplit(list.files(wellington.path, 
-                                                     "ENCSR.*.bed"), 
+                                                     "ENCSR.*.bed$"), 
                                           ".", fixed=TRUE), "[", 1))
   
   for(sampleID in all.sampleIDs){
