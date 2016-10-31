@@ -67,7 +67,6 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.min
   colnames(tbl.regions) <- region.schema() # 29
   # c("loc", "chrom", "motif_start", "motif_end")
   
-  browser()
   new.locs <- setdiff(tbl.regions$loc, names(knownLocs))
   # enter these new.locs into the hash
   lapply(new.locs, function(loc) knownLocs[[loc]] <- 0)   

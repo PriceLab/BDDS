@@ -7,6 +7,7 @@ test.sampleID <- "ENCSR000DBY"
 #-------------------------------------------------------------------------------
 runTests <- function()
 {
+  knownLocs <<- new.env(parent=emptyenv())
   test.getDBConnection()
   test.readWellingtonTable()
   test.mergeFootprintsWithFimo()
@@ -134,7 +135,7 @@ test.fillToDatabase <- function()
   
   tbl.hits <- dbGetQuery(db.wellington.test, "select distinct * from hits")
   checkTrue(all(hit.schema() == colnames(tbl.hits)))
-  checkEquals(dim(tbl.hits), c(11, 14))
+  checkEquals(dim(tbl.hits), c(4, 14))
   checkEquals(unique(tbl.hits$type), "motif.in.footprint")
   checkTrue(all(tbl.hits$loc %in% tbl.regions$loc))
   
