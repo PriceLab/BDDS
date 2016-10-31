@@ -1,7 +1,10 @@
 #-------------------------------------------------------------------------------
 readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
 {
-  filename <- grep(sampleID, list.files(directory), v=TRUE)
+  # regular expression to match filename starting with sampleID and ending with 
+  # .bed
+  pattern = paste(sampleID, ".*bed$", sep='')
+  filename <- grep(pattern, list.files(directory), v=TRUE)
   full.path <- file.path(directory, filename)
   
   if(!file.exists(full.path))

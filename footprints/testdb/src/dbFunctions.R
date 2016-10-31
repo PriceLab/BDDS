@@ -4,39 +4,51 @@ getDBConnection <- function(database) {
   driver = dbDriver("PostgreSQL")
 
   if (database == "trenatest") {
-    user= "trenatest"
-    password="trenatest"
+    user= "ben"
+    password="ben_PASS"
     dbname="trenatest" 
-    host="whovian"
+    host="bdds-rds-globusgenomics.org"
+    
   } else if (database == "fimo") {
     user= "ben"
     password="ben_PASS"
     dbname="fimo"
     host="bdds-rds.globusgenomics.org"
-  } else if (database == "wellington") {
-    user= "ben"
-    password="ben_PASS"
-    dbname="wellington" 
-    host="bdds-rds.globusgenomics.org"
-  } else if (database == "trenatest_whovian") {
-    user= "trenatest"
-    password="trenatest"
-    dbname="trenatest" 
-    host="whovian"
-  } else if (database == "fimo_whovian") {
-    user= "trena" 
-    password="trena" 
-    dbname="fimo"
-    host="whovian"
+    
   } else if (database == "testwellington") {
     user = "trenatest"
     password = "trenatest"
     dbname = "testwellington"
     host = "whovian"
+    
+  } else if (database == "wellington") {
+    user= "ben"
+    password="ben_PASS"
+    dbname="wellington" 
+    host="bdds-rds.globusgenomics.org"
+    
+  } else if (database == "trenatest_whovian") {
+    user= "trenatest"
+    password="trenatest"
+    dbname="trenatest" 
+    host="whovian"
+    
+  } else if (database == "fimo_whovian") {
+    user= "trena" 
+    password="trena" 
+    dbname="fimo"
+    host="whovian"
+    
   } else if (database == "testwellington_whovian") {
     user = "trenatest"
     password = "trenatest"
     dbname = "testwellington"
+    host = "whovian"
+    
+  } else if (database == "wellington_whovian") {
+    user = "trena"
+    password = "trena"
+    dbname = "wholeBrain-wellington"
     host = "whovian"
   }
   
