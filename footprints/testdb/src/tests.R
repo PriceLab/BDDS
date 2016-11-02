@@ -124,7 +124,7 @@ test.fillToDatabase <- function()
     db.wellington.test <- 
       getDBConnection("testwellington")
   
-  createEmptyDatabaseTables('trenatest', 'testwellington', db.wellington.test)
+  createEmptyDatabaseTables('ben', 'testwellington', db.wellington.test)
   knownLocs <<- new.env(parent=emptyenv())
   
   tbl.fp <- readWellingtonTable(wellington.path, test.sampleID, nrow=3, "chr19")

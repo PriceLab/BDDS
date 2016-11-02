@@ -16,10 +16,10 @@ getDBConnection <- function(database) {
     host="bdds-rds.globusgenomics.org"
     
   } else if (database == "testwellington") {
-    user = "trenatest"
-    password = "trenatest"
+    user = "ben"
+    password = "ben_PASS"
     dbname = "testwellington"
-    host = "whovian"
+    host = "bdds-rds.globusgenomics.org"
     
   } else if (database == "wellington") {
     user= "ben"
