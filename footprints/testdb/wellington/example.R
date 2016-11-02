@@ -42,5 +42,5 @@ if(!interactive()){
     #chromosomes <- paste("chr", c(1:18, 20:22), sep="")
     chromosomes <- paste("chr", c(19), sep="")
     for(chromosome in chromosomes)
-        fillAllSamplesByChromosome(chromosome)
+        fillAllSamplesByChromosome(chromosome = chromosome)
     }
