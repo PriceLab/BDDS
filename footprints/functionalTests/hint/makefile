@@ -1,34 +1,36 @@
 # a test for hint functionality
 HOST=$(shell hostname)
-ifeq(${HOST},whovian.systemsbiology.net)
+ifeq (${HOST},whovian.systemsbiology.net)
 	export PYTHONPATH := $(PYTHONPATH):/local/tools/HINT-1.1.1/lib/python2.7/site-packages/
 
 endif
-
+SAMPLE=ENCSR000DBY
 BAMFILE=../data/ENCSR000DBY.19.chr.bam
+INDEX=../data/ENCSR000DBY.19.chr.bam.bai
 BEDFILE=../data/chr19.peaks.400.bed
-OUTFILE=../output/wellington/ENCSR000DBY.19.chr.bam.chr19.peaks.400.bed.WellingtonFootprints.FDR.0.01.bed
-OUTDIR=../output/wellington/
+INPUTMATRIX=./inputmatrix.txt
+OUTDIR=../output/hint/
+#OUTFILE=FOO
 
-default: preTest $(OUTFILE) postTest
+default: preTest $(INPUTMATRIX) $(OUTFILE) postTest
 
 .PHONY: clean
 clean:
-	@find $(OUTDIR)*.wig -delete 
-	@find $(OUTDIR)p* -delete
+	@rm $(INPUTMATRIX)
+	@rm $(OUTDIR)*
 
 .PHONY: preTest
 preTest:
 	python preTest.py
 
-$(OUTFILE): $(BEDFILE) $(BAMFILE)
-	@find $(OUTDIR)* -delete
-ifeq ($(PYTHON),3)
-	wellington_footprints3.py -fdrlimit=0 $(BEDFILE) $(BAMFILE) $(OUTDIR)
-else
-	wellington_footprints.py -fdrlimit=0 $(BEDFILE) $(BAMFILE) $(OUTDIR)
-endif
+$(INPUTMATRIX): $(BAMFILE)
+	@touch $(INPUTMATRIX)
+	@echo -e "name\ttype\tfile\tdata\tgroup" >> $(INPUTMATRIX)
+	@echo -e "HS2\tregions\t$(BEDFILE)\tHS\t$(SAMPLE)" >> $(INPUTMATRIX)
+	@echo -e "DNase\treads\t$(BAMFILE)\tDNASE\t$(SAMPLE)" >> $(INPUTMATRIX)
 
-.PHONY: postTest
-postTest:
-	python postTest.py $(OUTFILE)
+#$(OUTFILE): $(BEDFILE) $(BAMFILE) $(INDEX) $(INPUTMATRIX)
+    
+#.PHONY: postTest
+#postTest:
+#	python postTest.py $(OUTFILE)
