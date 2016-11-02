@@ -32,6 +32,6 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
            nrow(x$hits), sampleID)
     fillToDatabase(x$regions, x$hits, dbConnection, dbUser, dbTable)
     databaseSummary(dbConnection)
-  } # for file
+  } # for sampleID
 } # fill.all.samples.by.chromosome
 #-------------------------------------------------------------------------------
