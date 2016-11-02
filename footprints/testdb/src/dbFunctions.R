@@ -118,8 +118,12 @@ appendToHitsTable <- function(tbl, dbConnection=db.wellington.test)
   dbWriteTable(dbConnection, "hits", tbl, row.names=FALSE, append=TRUE)
 } # appendToHitsTable
 #-------------------------------------------------------------------------------
-fillToDatabase <- function(tbl.regions, tbl.hits, dbConnection=db.wellington.test)
+fillToDatabase <- function(tbl.regions, tbl.hits, 
+                           dbConnection=db.wellington.test,
+                           dbUser = "ben",
+                           dbName = "testwellington")
 {
+  createEmptyDatabaseTables(dbUser, dbName, dbConnection)
   appendToRegionsTable(tbl.regions, dbConnection)
   appendToHitsTable(tbl.hits, dbConnection)
 }
