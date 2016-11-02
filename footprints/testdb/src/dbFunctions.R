@@ -69,14 +69,14 @@ hit.schema <- function()
     "score1", "score2", "score3", "score4", "score5", "score6")
 } # hit.schema
 #-------------------------------------------------------------------------------
-databaseSummary <- function(dbConnection = "db.wellington.test")
+databaseSummary <- function(dbConnection = db.wellington.test)
 {
   region.count <- dbGetQuery(dbConnection, "select count(*) from regions")[1,1]
   hit.count <- dbGetQuery(dbConnection, "select count(*) from hits")[1,1]
   printf("%d hits in %d regions", hit.count, region.count)
 } # databaseSummary
 #-------------------------------------------------------------------------------
-createEmptyDatabaseTables <- function(dbUser, dbName, dbConnection= "db.wellington.test")
+createEmptyDatabaseTables <- function(dbUser, dbName, dbConnection= db.wellington.test)
 {
   sql_command <- paste('drop table regions;
   drop table hits;
@@ -108,17 +108,17 @@ createEmptyDatabaseTables <- function(dbUser, dbName, dbConnection= "db.wellingt
   dbGetQuery(dbConnection, sql_command)
 } # createEmptyDatabaseTables
 #-------------------------------------------------------------------------------
-appendToRegionsTable <- function(tbl, dbConnection="db.wellington.test")
+appendToRegionsTable <- function(tbl, dbConnection=db.wellington.test)
 {
   dbWriteTable(dbConnection, "regions", tbl, row.names=FALSE, append=TRUE)
 } # appendToRegionsTable
 #-------------------------------------------------------------------------------
-appendToHitsTable <- function(tbl, dbConnection="db.wellington.test")
+appendToHitsTable <- function(tbl, dbConnection=db.wellington.test)
 {
   dbWriteTable(dbConnection, "hits", tbl, row.names=FALSE, append=TRUE)
 } # appendToHitsTable
 #-------------------------------------------------------------------------------
-fillToDatabase <- function(tbl.regions, tbl.hits, dbConnection="db.wellington.test")
+fillToDatabase <- function(tbl.regions, tbl.hits, dbConnection=db.wellington.test)
 {
   appendToRegionsTable(tbl.regions, dbConnection)
   appendToHitsTable(tbl.hits, dbConnection)

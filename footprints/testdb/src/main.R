@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
-fillAllSamplesByChromosome <- function(dbConnection = "db.wellington",
-                                       fimo = "db.fimo",
+fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
+                                       fimo = db.fimo,
                                        chromosome = "chr19",
                                        minid = "temp.filler.minid")
 {
@@ -17,7 +17,7 @@ fillAllSamplesByChromosome <- function(dbConnection = "db.wellington",
                                           chromosome)
     print("Wellington table read. Merging with Fimo...")
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
-                                   dbConnection = db.fimo)
+                                   dbConnection = fimo)
     print("Merged. Now splitting table to regions and hits...")
     x <- splitTableIntoRegionsAndWellingtonHits(tbl, minid)
     printf("filling %d regions, %d hits for %s", nrow(x$regions), 
@@ -25,6 +25,5 @@ fillAllSamplesByChromosome <- function(dbConnection = "db.wellington",
     fillToDatabase(x$regions, x$hits, dbConnection)
     databaseSummary(dbConnection)
   } # for file
-  
 } # fill.all.samples.by.chromosome
 #-------------------------------------------------------------------------------

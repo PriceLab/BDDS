@@ -23,7 +23,7 @@ readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
   
 } # readWellingtonTable
 #-------------------------------------------------------------------------------
-mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection)
+mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo)
 {
   chromosome <- unique(tbl.fp$chrom)
   # enforce treatment of just one chromosome at a time
