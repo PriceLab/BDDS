@@ -23,7 +23,7 @@ clean:
 preTest:
 	python preTest.py
 
-$(INPUTMATRIX): $(BAMFILE)
+inputMatrix: $(BAMFILE)
 	@touch $(INPUTMATRIX)
 	@echo -e "name\ttype\tfile\tdata\tgroup" >> $(INPUTMATRIX)
 	@echo -e "HS2\tregions\t$(BEDFILE)\tHS\t$(SAMPLE)" >> $(INPUTMATRIX)
