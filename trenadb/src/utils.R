@@ -536,5 +536,5 @@ test.locStringToBedTable <- function()
 
 }  # test.locStringToBedTable
 #------------------------------------------------------------------------------------------------------------------------
-if(!interactive())
-   utils.runTests()
+#if(!interactive())
+#   utils.runTests()
