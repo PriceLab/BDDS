@@ -1,7 +1,10 @@
 #-------------------------------------------------------------------------------
 readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
 {
-  filename <- grep(sampleID, list.files(directory), v=TRUE)
+  # regular expression to match filename starting with sampleID and ending with 
+  # .bed
+  pattern = paste(sampleID, ".*bed$", sep='')
+  filename <- grep(pattern, list.files(directory), v=TRUE)
   full.path <- file.path(directory, filename)
   
   if(!file.exists(full.path))
@@ -20,7 +23,7 @@ readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
   
 } # readWellingtonTable
 #-------------------------------------------------------------------------------
-mergeFimoWithFootprints <- function(tbl.fp, sampleID)
+mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo)
 {
   chromosome <- unique(tbl.fp$chrom)
   # enforce treatment of just one chromosome at a time
@@ -29,10 +32,13 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID)
   max.pos <- max(tbl.fp$end)
   
   fimo.chromosome <- sub("chr", "", chromosome)
-  query <- sprintf("select * from hg38 where chr='%s' and start >= %d and endpos <= %d",
+  query <- sprintf("select * from fimo_hg38 where chrom='%s' and start >= %d and endpos <= %d",
                    fimo.chromosome, min.pos, max.pos)
   
-  tbl.fimo <- dbGetQuery(db.fimo, query)
+  # troubleshooting print statement
+  # printf("Query: %s", query)
+  
+  tbl.fimo <- dbGetQuery(dbConnection, query)
   colnames(tbl.fimo) <- c("motif", "chrom", "motif.start", "motif.end", "motif.strand", "fimo.score",
                           "fimo.pvalue", "empty", "motif.sequence")
   tbl.fimo <- tbl.fimo[, -grep("empty", colnames(tbl.fimo))]
@@ -65,7 +71,8 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.min
   # enter these new.locs into the hash
   lapply(new.locs, function(loc) knownLocs[[loc]] <- 0)   
   printf("novel locs: %d new/%d possible (%d now known, %d dups)",
-         length(new.locs), nrow(tbl.regions), length(names(knownLocs)), nrow(tbl.regions) - length(new.locs))
+         length(new.locs), nrow(tbl.regions), length(names(knownLocs)), 
+         nrow(tbl.regions) - length(new.locs))
   
   if(length(new.locs) > 0){
     keepers <- match(new.locs, tbl.regions$loc)
@@ -74,8 +81,8 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.min
     tbl.regions <- data.frame()
   }
   
-  tbl.hits <- tbl[, c("loc", "motif", "motif.strand", "sample_id", "method", "wellington.score",
-                      "fimo.score", "fimo.pvalue")]
+  tbl.hits <- tbl[, c("loc", "motif", "motif.strand", "sample_id", "method", 
+                      "wellington.score", "fimo.score", "fimo.pvalue")]
   tbl.hits$length <- with(tbl, 1 + motif.end - motif.start)
   tbl.hits$provenance <- minid
   tbl.hits$score4 <- NA
@@ -87,6 +94,5 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.min
   tbl.hits <- tbl.hits[, coi]
   colnames(tbl.hits) <- hit.schema()
   invisible(list(regions=tbl.regions, hits=tbl.hits))
-  
 } # splitTableIntoRegionsAndWellingtonHits    
 #-------------------------------------------------------------------------------

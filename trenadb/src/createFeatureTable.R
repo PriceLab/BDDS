@@ -3,9 +3,45 @@ library(GenomicRanges)
 library(RUnit)
 #library(igvR)
 #------------------------------------------------------------------------------------------------------------------------
-source("regionAndHitsSchemas.R")
-source("utils.R")
+source("~/github/BDDS/trenadb/src/regionAndHitsSchemas.R")
+source("~/github/BDDS/trenadb/src/utils.R")
 #------------------------------------------------------------------------------------------------------------------------
+# ensure that alphabetic sort order is constant across, for instance, macos and ubuntu
+Sys.setlocale("LC_ALL", "C")
+#------------------------------------------------------------------------------------------------------------------------
+
+if(!exists("db.chipseq"))
+   db.chipseq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="chipseq", host="whovian")
+
+if(!exists("db.gtf"))
+   db.gtf <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="gtf", host="whovian")
+
+if(!exists("apoe")){
+   tbl.tmp <- dbGetQuery(db.gtf, "select * from hg38human where gene_name='APOE' and moleculetype='gene'")
+   apoe <- list(chrom=tbl.tmp[1, "chr"], start=tbl.tmp[1, "start"])
+   }
+
+if(!exists("db.hint"))
+   db.hint <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="hint", host="whovian")
+
+if(!exists("db.wellington"))
+   db.wellington <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="wellington", host="whovian")
+
+if(!exists("db.piq"))
+   db.piq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="piq", host="whovian")
+
+if(!exists("db.trena"))
+   db.trena <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="trena", host="whovian")
+      
+if(!exists("tbl.genesmotifs"))
+    tbl.genesmotifs <- dbGetQuery(db.trena, "select * from tfmotifs")
+
+if(!exists("db.fimo"))
+    db.fimo <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="fimo", host="whovian")
+
+if(!exists("tbl.chipseq"))
+    db.chipseq <- dbConnect(PostgreSQL(), user="trena", password="trena", dbname="chipseq", host="whovian")
+
 #if(!exists("igv"))
 #    igv <- igvR()
 
@@ -13,6 +49,7 @@ source("utils.R")
 runTests <- function()
 {
    utils.runTests()
+   test.locStringToBedTable()
    test.addFimoRegions()
    test.refimoForPiq()
 
@@ -21,6 +58,7 @@ runTests <- function()
    #test.ensemble_hint_wellington_chipseq()
    test.ensemble.flex.1.loc.only()
    test.ensemble.flex.all.locs()
+   test.ensemble.flex.smallRegion()  # highlights difficulties with (not) merging empty tables
    
    #test.run50k()
   
@@ -185,11 +223,13 @@ test.refimoForPiq <- function(tbl)
    tbl.p <- createPiqTable(chrom, start, end, collapseOnStrand=TRUE)
    checkEquals(dim(tbl.p), c(10, 12))
    checkEquals(sort(unique(tbl.p$motif.p)), 
-      c("MA0039.2", "MA0056.1", "MA0599.1", "MA0657.1", "MA0685.1", "MA0740.1", "MA0741.1", "MA0742.1", "MA0746.1", "MA0747.1"))
+               c("MA0039.2", "MA0056.1", "MA0599.1", "MA0657.1", "MA0685.1", "MA0740.1", "MA0741.1", "MA0742.1",
+                 "MA0746.1", "MA0747.1"))
 
    tbl.pf <- refimoForPiq(tbl.p)
    checkEquals(dim(tbl.pf), c(6, 14))
-   checkEquals(sort(unique(tbl.pf$motifname)), c("KLF16_DBD", "Klf12_DBD", "MA0741.1", "MA0742.1", "MA0746.1", "MA0747.1"))
+   checkEquals(sort(unique(tbl.pf$motifname)), c("KLF16_DBD", "Klf12_DBD", "MA0741.1", 
+                                                 "MA0742.1", "MA0746.1", "MA0747.1"))
    
 } # test.refimoForPiq
 #------------------------------------------------------------------------------------------------------------------------
@@ -339,8 +379,8 @@ ensemble <- function(chrom, start, end, test.motifs=NA, test.locs=NA)
        tbl.p <- subset(tbl.p, loc %in% test.locs)
 
 
-      tbl.merged <- merge(tbl.w, tbl.p, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.p"), all=TRUE)
-      tbl.merged <- merge(tbl.merged, tbl.h, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.h"), all=TRUE)
+   tbl.merged <- merge(tbl.w, tbl.p, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.p"), all=TRUE)
+   tbl.merged <- merge(tbl.merged, tbl.h, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.h"), all=TRUE)
 
    tbl.merged <- merge(tbl.w, tbl.h, by.x=c("loc", "motif.w"), by.y=c("loc", "motif.h"), all=TRUE)
    colname.pos <- grep("motif.w", colnames(tbl.merged))
@@ -350,7 +390,10 @@ ensemble <- function(chrom, start, end, test.motifs=NA, test.locs=NA)
    tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
 
    printf ("found %d chipseq hits in %d bases", nrow(tbl.chipseq),  1 + end - start)
-   stopifnot(nrow(tbl.chipseq) > 0)
+   if(nrow(tbl.chipseq) == 0){
+      return(data.frame())
+      } # no chipseq results
+
    tbl.fimo <- getFimoHits(chrom, start, end)
    tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
    tbl.csWithFimo <- addFimoRegions(tbl.chipseq, tbl.fimo)
@@ -409,8 +452,10 @@ ensemble.flex <- function(chrom, start, end, methods, test.motifs=NA, test.locs=
           tbl.h <- subset(tbl.h, motif.h %in% test.motifs)
       if(!any(is.na(test.locs)))
          tbl.h <- subset(tbl.h, loc %in% test.locs)
-      if(nrow(tbl.out) == 0)
-         tbl.out <- tbl.h
+      if(nrow(tbl.out) == 0){
+          tbl.out <- tbl.h
+          colnames(tbl.out)[grep("motif.h", colnames(tbl.out))] <- "motif"
+          }
       else
          tbl.out <- merge(tbl.out, tbl.h, by.x=c("loc", "motif"), by.y=c("loc", "motif.h"), all=TRUE)
       } # wellington
@@ -430,37 +475,44 @@ ensemble.flex <- function(chrom, start, end, methods, test.motifs=NA, test.locs=
       cols.to.remove <- match(c("motifscore", "pval"), colnames(tbl.p))
       if(length(cols.to.remove) > 0)
          tbl.p <- tbl.p[, -(cols.to.remove)]
-      if(nrow(tbl.out) == 0)
-         tbl.out <- tbl.p
+      if(nrow(tbl.out) == 0){
+          tbl.out <- tbl.p
+          colnames(tbl.out)[grep("motifname", colnames(tbl.out))] <- "motif"
+          }
       else{
          tbl.out <- merge(tbl.out, tbl.p, by.x=c("loc", "motif"), by.y=c("loc", "motifname"), all=TRUE)
          }
       } # piq
 
-    if("chipseq" %in% methods){
-       tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
-       printf ("found %d chipseq hits in %d bases", nrow(tbl.chipseq),  1 + end - start)
-       stopifnot(nrow(tbl.chipseq) > 0)
-       tbl.fimo <- getFimoHits(chrom, start, end)
-       tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
-       tbl.csWithFimo <- addFimoRegions(tbl.chipseq, tbl.fimo)
-       if(!any(is.na(test.locs)))
-          tbl.csWithFimo <- subset(tbl.csWithFimo, loc %in% test.locs)
-       tbl.csWithTrueFimo <- subset(tbl.csWithFimo, bindingSite==TRUE)
-       tbl.csft <- tbl.csWithTrueFimo[, c("loc", "motifname", "name", "score1", "motifscore", "pval")]
-       colnames(tbl.csft) <- c("loc", "csmotif", "csTF", "csscore", "motifscore", "motifpval")
-       if(nrow(tbl.out) == 0)
-          tbl.out <- tbl.csft
-       else
-          tbl.out <- merge(tbl.out, tbl.csft, by.x=c("loc", "motif"), by.y=c("loc","csmotif"), all=TRUE)
-       classInfo <- sapply(tbl.out, class)
-       for(colname in names(classInfo)){
-          if(classInfo[[colname]] == "factor"){
-             printf("correctoring character class in column '%s'", colname)
-             tbl.out[[colname]] <- as.character(tbl.out[[colname]])
-             } # if factor
-          } # for colname
-      } # if chipseq
+   if("chipseq" %in% methods){
+      tbl.chipseq <- getHits(db.chipseq, chrom, start, end)
+      printf ("found %d chipseq hits in %d bases", nrow(tbl.chipseq),  1 + end - start)
+      if(nrow(tbl.chipseq) == 0)
+        tbl.csft <- data.frame()
+      else{
+         tbl.fimo <- getFimoHits(chrom, start, end)
+         tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
+         tbl.csWithFimo <- addFimoRegions(tbl.chipseq, tbl.fimo)
+         if(!any(is.na(test.locs)))
+            tbl.csWithFimo <- subset(tbl.csWithFimo, loc %in% test.locs)
+         tbl.csWithTrueFimo <- subset(tbl.csWithFimo, bindingSite==TRUE)
+         tbl.csft <- tbl.csWithTrueFimo[, c("loc", "motifname", "name", "score1", "motifscore", "pval")]
+         colnames(tbl.csft) <- c("loc", "csmotif", "csTF", "csscore", "motifscore", "motifpval")
+         }
+      if(nrow(tbl.out) == 0)
+         tbl.out <- tbl.csft
+      else {
+          if(nrow(tbl.csft) > 0)
+             tbl.out <- merge(tbl.out, tbl.csft, by.x=c("loc", "motif"), by.y=c("loc","csmotif"), all=TRUE)
+          }
+      classInfo <- sapply(tbl.out, class)
+      for(colname in names(classInfo)){
+         if(classInfo[[colname]] == "factor"){
+            printf("correctoring character class in column '%s'", colname)
+            tbl.out[[colname]] <- as.character(tbl.out[[colname]])
+            } # if factor
+         } # for colname
+     } # if chipseq
    
       # wellington, hint and chipseq all report motif scores, all obtained from fimo
       # collapse these the best from each of these (max score, min pval) in the unexpected
@@ -471,23 +523,29 @@ ensemble.flex <- function(chrom, start, end, methods, test.motifs=NA, test.locs=
    other.columns.to.drop <- c()
 
    if("wellington" %in% methods){
-       motif.score.columns <- c(motif.score.columns, "score2.w.best")
-       motif.pval.columns  <- c(motif.pval.columns,  "score3.w.best")
-       other.columns.to.drop <- c(other.columns.to.drop, "score2.w.median")
-       other.columns.to.drop <- c(other.columns.to.drop, "score3.w.median")
-       }
+       if(exists("tbl.w") & nrow (tbl.w) > 0){
+          motif.score.columns <- c(motif.score.columns, "score2.w.best")
+          motif.pval.columns  <- c(motif.pval.columns,  "score3.w.best")
+          other.columns.to.drop <- c(other.columns.to.drop, "score2.w.median")
+          other.columns.to.drop <- c(other.columns.to.drop, "score3.w.median")
+          }
+       } # wellington
 
    if("hint" %in% methods){
-       motif.score.columns <- c(motif.score.columns, "score2.h.best")
-       motif.pval.columns  <- c(motif.pval.columns,  "score3.h.best")
-       other.columns.to.drop <- c(other.columns.to.drop, "score2.h.median")
-       other.columns.to.drop <- c(other.columns.to.drop, "score3.h.median")
-       }
+       if(exists("tbl.h") & nrow (tbl.h) > 0){
+          motif.score.columns <- c(motif.score.columns, "score2.h.best")
+          motif.pval.columns  <- c(motif.pval.columns,  "score3.h.best")
+          other.columns.to.drop <- c(other.columns.to.drop, "score2.h.median")
+          other.columns.to.drop <- c(other.columns.to.drop, "score3.h.median")
+          }
+       } # hint
 
-   if("chipseq" %in% methods){
-       motif.score.columns <- c(motif.score.columns, "motifscore")
-       motif.pval.columns  <- c(motif.pval.columns,  "motifpval")
-       }
+   if("chipseq" %in% methods) {
+       if(exists("tbl.chipseq") & nrow(tbl.chipseq) > 0){
+          motif.score.columns <- c(motif.score.columns, "motifscore")
+          motif.pval.columns  <- c(motif.pval.columns,  "motifpval")
+          }
+       } # chipseq
 
    if(length(motif.score.columns) > 0) {
        motifscore <- apply(tbl.out[, motif.score.columns, drop=FALSE], 1,
@@ -668,6 +726,35 @@ test.ensemble.flex.all.locs <- function()
 
 } # test.ensemble.flex.all.locs
 #------------------------------------------------------------------------------------------------------------------------
+# highlights difficulties with (not) merging empty tables
+test.ensemble.flex.smallRegion <- function()
+{
+   printf("--- test.ensemble.flex.smallRegion")
+    
+   test.locs <- NA
+   test.motifs <- NA
+   methods <- c("wellington", "hint", "piq", "chipseq")
+
+   chrom <- "chr19"
+   start <- 24500000
+   end   <- 24505000
+
+     # found 0 wellington hits in 5001 bases
+     # found 0 hint hits in 5001 bases
+     # found 1908 piq hits in 5001 bases
+     # eliminating 90 double-stranded hits
+     # found 0 chipseq hits in 5001 bases
+     # this is not yet handled!  (pshannon) (1 nov 2016)
+
+   ft  <- ensemble.flex(chrom, start, end, methods, test.motifs=test.motifs, test.locs=test.locs)
+   checkEquals(dim(ft), c(5, 12))
+   checkEquals(sort(colnames(ft)), c("length.p",        "loc",             "motif",           "samplecount.p",
+                                     "score1.p.best",   "score1.p.median", "score2.p.best",   "score2.p.median",
+                                     "score3.p.best",   "score3.p.median", "score4.p.best",   "score4.p.median"))
+
+    
+} # test.ensemble.flex.smallRegion
+#------------------------------------------------------------------------------------------------------------------------
 test.ensemble <- function()
 {
    printf("--- test.ensemble")
@@ -734,6 +821,34 @@ test.ensemble <- function()
 
 } # test.ensemble
 #------------------------------------------------------------------------------------------------------------------------
+locStringToBedTable <- function(locStrings)
+{
+   tokensList <- strsplit(locStrings, ":")
+   chroms     <- unlist(lapply(tokensList, "[", 1))
+   posPairStrings  <- unlist(lapply(tokensList, "[", 2))
+
+   posPairs <- lapply(strsplit(posPairStrings, "-"), as.integer)
+   tbl.startEnd <- data.frame(matrix(as.integer(unlist(posPairs)), ncol=2, byrow=TRUE))
+   
+   tbl <- cbind(chrom=chroms, tbl.startEnd, stringsAsFactors=FALSE)   
+   colnames(tbl) <- c("chrom", "start", "end")
+   tbl[order(tbl$chrom, tbl$start),]
+   
+}  # locStringToBedTable
+#------------------------------------------------------------------------------------------------------------------------
+test.locStringToBedTable <- function()
+{
+   printf("--- test.locStringToBedTable")
+
+   s <- c("chr19:44906708-44906728", "chr19:44906711-44906731", "chr19:44906550-44906559")
+   tbl <- locStringToBedTable(s)
+   checkEquals(colnames(tbl), c("chrom", "start", "end"))
+   checkEquals(as.list(tbl[1,]), list(chrom="chr19", start=44906550, end=44906559))
+   checkEquals(as.list(tbl[3,]), list(chrom="chr19", start=44906711, end=44906731))
+   checkEquals(as.list(tbl[2,]), list(chrom="chr19", start=44906708, end=44906728))
+
+}  # test.locStringToBedTable
+#------------------------------------------------------------------------------------------------------------------------
 # fivenum(scores.hint)                 2          8         12         20     17836
 # fivenum(scores.wellington)  -1000.0000   -36.8523   -18.9043   -12.9359   -10.0000
 # make missing values for score1.h.median, score1.h.best 0
@@ -741,16 +856,21 @@ test.ensemble <- function()
 # collapse motif.w and motif.h into one 'motif' column
 cleanFeatureTable <- function(tbl, totalSampleCount)
 {
-   x <- tbl
    keepers <- c("loc", "motif", "samplecount.w", "length.w", "score1.w.best", "samplecount.h", "length.h", "score1.h.best",
                 "samplecount.p", "length.p", "score1.p.best", "score2.p.best", "score3.p.best", "score4.p.best",
                 "csTF", "csscore", "motifscore", "motifpval")
 
+     # some regions have no wellington, hint or chipseq.
+     # almost all regions have piq :}
+     # fill out empty required columns here.
+
    missing <- setdiff(keepers, colnames(tbl))
    if(length(missing) > 0){
-       printf("missing columns in cleanFeatureTable: %s", paste(missing, collapse=","))
-       stop()
+      for (newCol in missing){
+         tbl[, newCol] <- rep(NA, nrow(tbl))
+         }
       }
+   x <- tbl
    x <- x[, keepers]
    x$samplecount.w[is.na(x$samplecount.w)] <- 0
    x$score1.w.best[is.na(x$score1.w.best)] <- -99
@@ -877,31 +997,35 @@ test.run50k <- function()
 #------------------------------------------------------------------------------------------------------------------------
 run <- function()
 {
-   chrom <- "chr19"
-   start <- 42000000
-   end   <- 47000000
-
    test.locs <- NA
    test.motifs <- NA
    methods <- c("wellington", "hint", "piq", "chipseq")
-   ft  <- ensemble.flex(chrom, start, end, methods, test.motifs=test.motifs, test.locs=test.locs)
-   tbl <- cleanFeatureTable(ft, totalSampleCount=18)  # 18 lymphoblast samples from encode
 
-   filename <- sprintf("ft.%s.RData", format (Sys.time(), "%a.%b.%d.%Y-%H:%M:%S"))
-   save(ft, file=filename)
-   ft.clean <- cleanFeatureTable(ft, 18)
-   save(ft.clean, file=sprintf("ftClean.%s.RData", format (Sys.time(), "%a.%b.%d.%Y-%H:%M:%S")))
+   chrom <- "chr19"
+   start <- 1
+   end   <-  59000000
+   interval <- 500000
+   current.start <- start
+   current.end <- start + interval
 
-   printf("tbl.hit.all: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w > 0  & samplecount.h > 0)))
-   printf("tbl.cs.only: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w == 0 & samplecount.h == 0)))
-   printf("tbl.w.only: %d", nrow(subset(ft.clean, is.na(csTF)  & samplecount.w > 0  & samplecount.h == 0)))
-   printf("tbl.h.only: %d", nrow(subset(ft.clean, is.na(csTF)  & samplecount.w == 0 & samplecount.h > 0)))
-   printf("tbl.wh.only: %d", nrow(subset(ft.clean, is.na(csTF)  & samplecount.w > 0  & samplecount.h > 0)))
-   printf("tbl.wc.only: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w > 0  & samplecount.h == 0)))
-   printf("tbl.hc.only: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w == 0  & samplecount.h > 0)))
-
+   while(current.end < end){
+      ft  <- ensemble.flex(chrom, current.start, current.end, methods, test.motifs=test.motifs, test.locs=test.locs)
+      filename <- sprintf("ft.%s.RData", format (Sys.time(), "%a.%b.%d.%Y-%H:%M:%S"))
+      printf("writing ensemble.flex table (%d, %d) to %s", nrow(ft), ncol(ft), filename)
+      save(ft, file=filename)
+      ft.clean <- cleanFeatureTable(ft, 18)
+      printf("writing clean ensemble.flex table (%d, %d) to %s", nrow(ft.clean), ncol(ft.clean), filename)
+      save(ft.clean, file=sprintf("ftClean.%s.RData", format (Sys.time(), "%a.%b.%d.%Y-%H:%M:%S")))
+      printf("tbl.hit.all: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w > 0  & samplecount.h > 0)))
+      printf("tbl.cs.only: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w == 0 & samplecount.h == 0)))
+      printf("tbl.w.only: %d", nrow(subset(ft.clean, is.na(csTF)  & samplecount.w > 0  & samplecount.h == 0)))
+      printf("tbl.h.only: %d", nrow(subset(ft.clean, is.na(csTF)  & samplecount.w == 0 & samplecount.h > 0)))
+      printf("tbl.wh.only: %d", nrow(subset(ft.clean, is.na(csTF)  & samplecount.w > 0  & samplecount.h > 0)))
+      printf("tbl.wc.only: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w > 0  & samplecount.h == 0)))
+      printf("tbl.hc.only: %d", nrow(subset(ft.clean, !is.na(csTF) & samplecount.w == 0  & samplecount.h > 0)))
+      current.start <- current.start + interval
+      current.end <- current.end + interval
+      } # while
    
 } # run
 #------------------------------------------------------------------------------------------------------------------------
-if(!interactive())
-    run()
