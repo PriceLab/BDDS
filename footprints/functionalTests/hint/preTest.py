@@ -4,7 +4,7 @@
 import shutil
 #import unittest
 #import sys
-#import os
+import os
 #--------------------------------------------------------------------------------
 def executableProgramFound(programName):
 
