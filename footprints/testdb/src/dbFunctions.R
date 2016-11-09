@@ -21,6 +21,12 @@ getDBConnection <- function(database) {
     dbname = "testwellington"
     host = "bdds-rds.globusgenomics.org"
     
+  } else if (database == "testhint") {
+    user = "ben"
+    password = "ben_PASS"
+    dbname = "testhint"
+    host = "bdds-rds.globusgenomics.org"
+    
   } else if (database == "wellington") {
     user= "ben"
     password="ben_PASS"
@@ -43,6 +49,12 @@ getDBConnection <- function(database) {
     user = "trenatest"
     password = "trenatest"
     dbname = "testwellington"
+    host = "whovian"
+    
+  } else if (database == "testhint_whovian") {
+    user = "trenatest"
+    password = "trenatest"
+    dbname = "testhint"
     host = "whovian"
     
   } else if (database == "wellington_whovian") {

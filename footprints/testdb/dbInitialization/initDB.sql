@@ -22,7 +22,7 @@ GRANT ALL PRIVILEGES on DATABASE trenatest to trenatest;
 ALTER ROLE trenatest LOGIN;
 GRANT trenatest TO databasemaker;
 
--- now the database is ready for the trenatest user to run the create.sql scripts (except for FIMO)
+-- now the database is ready for the trenatest user to create databases and run the create.sql scripts (except for FIMO)
 
 -- create the trena user and grant login
 CREATE USER trena password 'trena';
