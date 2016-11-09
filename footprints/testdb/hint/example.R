@@ -29,18 +29,18 @@ test.sampleID <- "ENCSR000DBY"
 # establish database connections:
 # for whovian, use this:
 
-# if(!exists("db.hint"))
-#    db.hint <- getDBConnection("testhint_whovian")
-# 
-# if(!exists("db.fimo"))
-#    db.fimo <- getDBConnection("fimo_whovian")
- 
-# for bdds-rds-globusgenomics.org, use:
 if(!exists("db.hint"))
-  db.hint <- getDBConnection("testhint")
+   db.hint <- getDBConnection("testhint_whovian")
 
 if(!exists("db.fimo"))
-  db.fimo <- getDBConnection("fimo")
+   db.fimo <- getDBConnection("fimo_whovian")
+ 
+# for bdds-rds-globusgenomics.org, use:
+# if(!exists("db.hint"))
+#   db.hint <- getDBConnection("testhint")
+# 
+# if(!exists("db.fimo"))
+#   db.fimo <- getDBConnection("fimo")
 #-------------------------------------------------------------------------------
 
 if(!interactive()){
@@ -54,5 +54,6 @@ if(!interactive()){
                                    #dbUser = "ben",
                                    dbUser = "trenatest",
                                    dbTable = "testhint",
-                                   sourcePath = hint.path)
+                                   sourcePath = hint.path
+                                   isTest = FALSE)
     }

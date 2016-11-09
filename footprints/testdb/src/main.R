@@ -5,7 +5,8 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
                                        minid = "temp.filler.minid",
                                        dbUser = "ben",
                                        dbTable = "testwellington",
-                                       sourcePath = wellington.path)
+                                       sourcePath = wellington.path,
+                                       isTest = True)
 {
   knownLocs <<- new.env(parent=emptyenv())
   
@@ -17,13 +18,14 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
     printf("---- %s (%s) (%d/%d)", sampleID, chromosome, 
            grep(sampleID, all.sampleIDs), length(all.sampleIDs))
 
-    ##################### # nrow set for testing # ##########
-    tbl.wellington <- readWellingtonTable(sourcePath, sampleID, nrow = 10, 
+    if (isTest) {
+      # nrow set for testing
+      tbl.wellington <- readWellingtonTable(sourcePath, sampleID, nrow = 10, 
                                           chromosome)
-    ##########################################
-    
-    #tbl.wellington <- readWellingtonTable(sourcePath, sampleID, NA, 
-    #                                      chromosome)    
+    } else {
+      tbl.wellington <- readWellingtonTable(sourcePath, sampleID, NA, 
+                                          chromosome)
+    }
     print("Wellington table read. Merging with Fimo...")
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
                                    dbConnection = fimo)
