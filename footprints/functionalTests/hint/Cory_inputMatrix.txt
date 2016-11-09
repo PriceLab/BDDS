@@ -1,5 +1,0 @@
-name	type	file	data	group
-
-HS2	regions	/scratch/lympho/fout/ENCSR000DBY-fseq/HINT_test.bed	HS	ENCSR0000DBY-fseq
-
-DNase	reads	/scratch/test2.bam	DNASE	ENCSR000DBY

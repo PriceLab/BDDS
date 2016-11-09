@@ -1,3 +1,0 @@
-name	type	file	data	group
-HS2	regions	../data/chr19.peaks.400.bed	HS	ENCSR000DBY
-DNase	reads	../data/ENCSR000DBY.19.chr.bam	DNASE	ENCSR000DBY
