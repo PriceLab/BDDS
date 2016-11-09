@@ -20,7 +20,7 @@ default: preTest $(INPUTMATRIX) $(OUTFILE)
 .PHONY: clean
 clean:
 	@rm $(INPUTMATRIX)
-	@rm $(OUTDIR)*
+	@find $(OUTDIR)*.bed -delete
 
 .PHONY: preTest
 preTest:
