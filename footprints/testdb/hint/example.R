@@ -55,5 +55,6 @@ if(!interactive()){
                                    dbUser = "trenatest",
                                    dbTable = "testhint",
                                    sourcePath = hint.path,
-                                   isTest = FALSE)
+                                   isTest = FALSE,
+                                   method = "HINT")
     }
