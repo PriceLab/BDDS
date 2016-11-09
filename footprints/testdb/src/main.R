@@ -6,7 +6,8 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
                                        dbUser = "ben",
                                        dbTable = "testwellington",
                                        sourcePath = wellington.path,
-                                       isTest = True)
+                                       isTest = True,
+                                       method = "DEFAULT")
 {
   knownLocs <<- new.env(parent=emptyenv())
   
@@ -20,17 +21,18 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
 
     if (isTest) {
       # nrow set for testing
-      tbl.wellington <- readWellingtonTable(sourcePath, sampleID, nrow = 10, 
+      tbl.wellington <- readDataTable(sourcePath, sampleID, nrow = 10, 
                                           chromosome)
     } else {
-      tbl.wellington <- readWellingtonTable(sourcePath, sampleID, NA, 
+      tbl.wellington <- readDataTable(sourcePath, sampleID, NA, 
                                           chromosome)
     }
-    print("Wellington table read. Merging with Fimo...")
+    print("Data table read. Merging with Fimo...")
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
-                                   dbConnection = fimo)
+                                   dbConnection = fimo,
+                                   method)
     print("Merged. Now splitting table to regions and hits...")
-    x <- splitTableIntoRegionsAndWellingtonHits(tbl, minid)
+    x <- splitTableIntoRegionsAndHits(tbl, minid)
     printf("filling %d regions, %d hits for %s", nrow(x$regions), 
            nrow(x$hits), sampleID)
     fillToDatabase(x$regions, x$hits, dbConnection, dbUser, dbTable)

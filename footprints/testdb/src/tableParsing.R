@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
+readDataTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
 {
   # regular expression to match filename starting with sampleID and ending with 
   # .bed
@@ -58,7 +58,7 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, me
   
 } # mergeFimoWithFootprints
 #-------------------------------------------------------------------------------
-splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.minid")
+splitTableIntoRegionsAndHits <- function(tbl, minid = "temp.filler.minid")
 {
   tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
   colnames(tbl.regions) <- region.schema() # 29
@@ -91,5 +91,5 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.min
   tbl.hits <- tbl.hits[, coi]
   colnames(tbl.hits) <- hit.schema()
   invisible(list(regions=tbl.regions, hits=tbl.hits))
-} # splitTableIntoRegionsAndWellingtonHits    
+} # splitTableIntoRegionsAndHits    
 #-------------------------------------------------------------------------------
