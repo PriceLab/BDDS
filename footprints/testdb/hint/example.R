@@ -54,6 +54,6 @@ if(!interactive()){
                                    #dbUser = "ben",
                                    dbUser = "trenatest",
                                    dbTable = "testhint",
-                                   sourcePath = hint.path
+                                   sourcePath = hint.path,
                                    isTest = FALSE)
     }
