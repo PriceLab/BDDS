@@ -35,9 +35,6 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo)
   query <- sprintf("select * from fimo_hg38 where chrom='%s' and start >= %d and endpos <= %d",
                    fimo.chromosome, min.pos, max.pos)
   
-  # troubleshooting print statement
-  # printf("Query: %s", query)
-  
   tbl.fimo <- dbGetQuery(dbConnection, query)
   colnames(tbl.fimo) <- c("motif", "chrom", "motif.start", "motif.end", "motif.strand", "fimo.score",
                           "fimo.pvalue", "empty", "motif.sequence")

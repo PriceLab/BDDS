@@ -4,11 +4,12 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
                                        chromosome = "chr19",
                                        minid = "temp.filler.minid",
                                        dbUser = "ben",
-                                       dbTable = "testwellington")
+                                       dbTable = "testwellington",
+                                       sourcePath = wellington.path)
 {
   knownLocs <<- new.env(parent=emptyenv())
   
-  all.sampleIDs <- unlist(lapply(strsplit(list.files(wellington.path, 
+  all.sampleIDs <- unlist(lapply(strsplit(list.files(sourcePath, 
                                                      "ENCSR.*.bed$"), 
                                           ".", fixed=TRUE), "[", 1))
   
@@ -17,11 +18,11 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
            grep(sampleID, all.sampleIDs), length(all.sampleIDs))
 
     ##################### # nrow set for testing # ##########
-    tbl.wellington <- readWellingtonTable(wellington.path, sampleID, nrow = 10, 
+    tbl.wellington <- readWellingtonTable(sourcePath, sampleID, nrow = 10, 
                                           chromosome)
     ##########################################
     
-    #tbl.wellington <- readWellingtonTable(wellington.path, sampleID, NA, 
+    #tbl.wellington <- readWellingtonTable(sourcePath, sampleID, NA, 
     #                                      chromosome)    
     print("Wellington table read. Merging with Fimo...")
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 

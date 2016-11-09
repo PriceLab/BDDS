@@ -3,7 +3,8 @@
 
 # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
 # database is in ../dbInitialization/createHintTest.sql
-# 
+
+# THIS EXAMPLE USES THE HINT OUTPUT MADE BY RUNNING make hint at /BDDS/footprints/functionalTests/ 
 
 #-------------------------------------------------------------------------------
 # load functions and dependencies
@@ -21,7 +22,7 @@ hint.path <- "/local/Ben/BDDS/footprints/functionalTests/output/hint"
 test.sampleID <- "ENCSR000DBY"
 
 # on globus genomics machines, use this:
-# wellington.path <- "/local/Ben/BDDS/footprints/functionalTests/output/hint"
+# hint.path <- "/local/Ben/BDDS/footprints/functionalTests/output/hint"
 # test.sampleID <- "ENCSR000DBY"
 
 #-------------------------------------------------------------------------------
@@ -29,7 +30,7 @@ test.sampleID <- "ENCSR000DBY"
 # for whovian, use this:
 
 # if(!exists("db.hint"))
-#    db.wellington <- getDBConnection("testhint_whovian")
+#    db.hint <- getDBConnection("testhint_whovian")
 # 
 # if(!exists("db.fimo"))
 #    db.fimo <- getDBConnection("fimo_whovian")
@@ -49,8 +50,9 @@ if(!interactive()){
         fillAllSamplesByChromosome(chromosome = chromosome,
                                    dbConnection = db.hint,
                                    fimo = db.fimo,
-                                   chromosome = "chr19",
                                    minid = "temp.filler.minid",
-                                   dbUser = "ben",
-                                   dbTable = "testhint")
+                                   #dbUser = "ben",
+                                   dbUser = "trenatest",
+                                   dbTable = "testhint",
+                                   sourcePath = hint.path)
     }
