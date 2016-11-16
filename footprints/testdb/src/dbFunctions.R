@@ -135,7 +135,8 @@ fillToDatabase <- function(tbl.regions, tbl.hits,
                            dbUser = "ben",
                            dbName = "testwellington")
 {
-  createEmptyDatabaseTables(dbUser, dbName, dbConnection)
+  # I bet I don't want to empty the tables every time I attempt to append to them...
+  #createEmptyDatabaseTables(dbUser, dbName, dbConnection)
   appendToRegionsTable(tbl.regions, dbConnection)
   appendToHitsTable(tbl.hits, dbConnection)
 }
