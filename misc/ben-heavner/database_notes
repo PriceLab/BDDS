@@ -17,3 +17,12 @@ do https://github.com/PriceLab/BDDS/blob/master/trenadb/wellington/wholeBrain/cr
 (first, a detour to get current version of R and manage dependancies needed for that: lesson learned. there's a Makevars file in ~/.R that can mess things up)
 
 
+other misc notes:
+to make read only:
+\connect database
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE on fimo_hg38 FROM public;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE on fimo_hg38 FROM ben;
+
+to delete subset of data:
+DELETE from hits where loc LIKE 'chr2:%';
+delete from regions where loc LIKE 'chr2:%';
