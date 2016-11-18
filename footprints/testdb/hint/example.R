@@ -1,11 +1,10 @@
 # users can either step through this file, or call this file with 
 # r -f example.R
 
-# THIS ASSUMES THAT THE TESTWELLINGTON DATABASE EXISTS. The recipe for building that
-# database is in ../dbInitialization/createWellingtonTest.sql
+# THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+# database is in ../dbInitialization/createHintTest.sql
 
-# THIS EXAMPLE USES THE WELLINGTON OUTPUT MADE BY RUNNING make hint at /BDDS/footprints/functionalTests/ 
-
+# THIS EXAMPLE USES THE HINT OUTPUT MADE BY RUNNING make hint at /BDDS/footprints/functionalTests/ 
 
 #-------------------------------------------------------------------------------
 # load functions and dependencies
@@ -16,29 +15,29 @@ source("../src/tests.R")
 source("../src/main.R")
 
 #-------------------------------------------------------------------------------
-# set path to wellington output 
+# set path to hint output 
 
-# for makefile based tests for wellington on CHR 19 on whovian, use this:
-wellington.path <- "/local/Ben/BDDS/footprints/functionalTests/output/wellington"
+# for makefile based tests for hint on CHR 19 on whovian, use this:
+hint.path <- "/local/Ben/BDDS/footprints/functionalTests/output/hint"
 test.sampleID <- "ENCSR000DBY"
 
 # on globus genomics machines, use this:
-# wellington.path <- "/local/Ben/BDDS/footprints/functionalTests/output/wellington"
+# hint.path <- "/local/Ben/BDDS/footprints/functionalTests/output/hint"
 # test.sampleID <- "ENCSR000DBY"
 
 #-------------------------------------------------------------------------------
 # establish database connections:
 # for whovian, use this:
 
-if(!exists("db.wellington"))
-   db.wellington <- getDBConnection("testwellington_whovian")
+if(!exists("db.hint"))
+   db.hint <- getDBConnection("testhint_whovian")
 
 if(!exists("db.fimo"))
    db.fimo <- getDBConnection("fimo_whovian")
  
 # for bdds-rds-globusgenomics.org, use:
-# if(!exists("db.wellington"))
-#   db.wellington <- getDBConnection("testwellington")
+# if(!exists("db.hint"))
+#   db.hint <- getDBConnection("testhint")
 # 
 # if(!exists("db.fimo"))
 #   db.fimo <- getDBConnection("fimo")
@@ -49,13 +48,13 @@ if(!interactive()){
     chromosomes <- paste("chr", c(19), sep="")
     for(chromosome in chromosomes)
         fillAllSamplesByChromosome(chromosome = chromosome,
-                                   dbConnection = db.wellington,
+                                   dbConnection = db.hint,
                                    fimo = db.fimo,
                                    minid = "temp.filler.minid",
                                    #dbUser = "ben",
                                    dbUser = "trenatest",
-                                   dbTable = "testwellington",
-                                   sourcePath = wellington.path,
+                                   dbTable = "testhint",
+                                   sourcePath = hint.path,
                                    isTest = FALSE,
-                                   method = "WELLINGTON")
+                                   method = "HINT")
     }

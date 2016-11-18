@@ -9,6 +9,12 @@ getDBConnection <- function(database) {
     dbname="trenatest" 
     host="bdds-rds.globusgenomics.org"
     
+  } else if (database == "lymphoblast_hint_whovian") {
+    user= "trena"
+    password="trena"
+    dbname="lymphoblast_hint"
+    host="whovian"
+    
   } else if (database == "fimo") {
     user= "ben"
     password="ben_PASS"
@@ -19,6 +25,12 @@ getDBConnection <- function(database) {
     user = "ben"
     password = "ben_PASS"
     dbname = "testwellington"
+    host = "bdds-rds.globusgenomics.org"
+    
+  } else if (database == "testhint") {
+    user = "ben"
+    password = "ben_PASS"
+    dbname = "testhint"
     host = "bdds-rds.globusgenomics.org"
     
   } else if (database == "wellington") {
@@ -43,6 +55,12 @@ getDBConnection <- function(database) {
     user = "trenatest"
     password = "trenatest"
     dbname = "testwellington"
+    host = "whovian"
+    
+  } else if (database == "testhint_whovian") {
+    user = "trenatest"
+    password = "trenatest"
+    dbname = "testhint"
     host = "whovian"
     
   } else if (database == "wellington_whovian") {
@@ -123,7 +141,8 @@ fillToDatabase <- function(tbl.regions, tbl.hits,
                            dbUser = "ben",
                            dbName = "testwellington")
 {
-  createEmptyDatabaseTables(dbUser, dbName, dbConnection)
+  # I bet I don't want to empty the tables every time I attempt to append to them...
+  #createEmptyDatabaseTables(dbUser, dbName, dbConnection)
   appendToRegionsTable(tbl.regions, dbConnection)
   appendToHitsTable(tbl.hits, dbConnection)
 }

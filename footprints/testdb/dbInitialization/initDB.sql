@@ -22,7 +22,7 @@ GRANT ALL PRIVILEGES on DATABASE trenatest to trenatest;
 ALTER ROLE trenatest LOGIN;
 GRANT trenatest TO databasemaker;
 
--- now the database is ready for the trenatest user to run the create.sql scripts (except for FIMO)
+-- now the database is ready for the trenatest user to create databases and run the create.sql scripts (except for FIMO)
 
 -- create the trena user and grant login
 CREATE USER trena password 'trena';
@@ -31,4 +31,16 @@ GRANT ALL PRIVILEGES on DATABASE trena to trena;
 ALTER ROLE trena LOGIN;
 GRANT trena to databasemaker;
 
+
+-- to make new test fimo database, for example:
+psql -U databasemaker -h whovian
+create database fimo;
+grant all privileges on database fimo to trenatest;
+set Role trenatest;
+
 -- now the trena user can run createFimo.sql
+
+-- to make fimo read-only:
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE on fimo FROM public;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE on fimo FROM trenatest;
+

@@ -56,23 +56,23 @@ test.getDBConnection <- function()
   dbDisconnect(db.testConnection)
 } # test.getDBConnection
 #-------------------------------------------------------------------------------
-test.readWellingtonTable <- function()
+test.readDataTable <- function()
 {
-  printf("--- test.readWellingtonTable")
+  printf("--- test.readDataTable")
   
-  tbl <- readWellingtonTable(wellington.path, test.sampleID, 5, "chr19")
+  tbl <- readDataTable(wellington.path, test.sampleID, 5, "chr19")
   checkEquals(dim(tbl), c(5,6))
   checkEquals(colnames(tbl), c("chrom", "start", "end", "name", "score", "strand"))
   checkEquals(unique(tbl$chrom), "chr19")
   
   # now read without chrom or nrow constraints
-  tbl <- readWellingtonTable(wellington.path, test.sampleID)
+  tbl <- readDataTable(wellington.path, test.sampleID)
   checkEquals(ncol(tbl), 6)
   checkTrue(nrow(tbl) > 300)
   checkEquals(colnames(tbl), c("chrom", "start", "end", "name", "score", "strand"))
   checkEquals(head(sort(unique(tbl$chrom))), "chr19")
   
-} # test.readWellingtonTable
+} # test.readDataTable
 #-------------------------------------------------------------------------------
 test.mergeFootprintsWithFimo <- function()
 {

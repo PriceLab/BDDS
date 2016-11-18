@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
+readDataTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
 {
   # regular expression to match filename starting with sampleID and ending with 
   # .bed
@@ -23,7 +23,7 @@ readWellingtonTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
   
 } # readWellingtonTable
 #-------------------------------------------------------------------------------
-mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo)
+mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, method = "DEFAULT")
 {
   chromosome <- unique(tbl.fp$chrom)
   # enforce treatment of just one chromosome at a time
@@ -34,9 +34,6 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo)
   fimo.chromosome <- sub("chr", "", chromosome)
   query <- sprintf("select * from fimo_hg38 where chrom='%s' and start >= %d and endpos <= %d",
                    fimo.chromosome, min.pos, max.pos)
-  
-  # troubleshooting print statement
-  # printf("Query: %s", query)
   
   tbl.fimo <- dbGetQuery(dbConnection, query)
   colnames(tbl.fimo) <- c("motif", "chrom", "motif.start", "motif.end", "motif.strand", "fimo.score",
@@ -52,7 +49,7 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo)
   tbl.overlaps <- as.data.frame(findOverlaps(gr.fimo, gr.wellington, type="within"))
   
   tbl.fimo$loc <- with(tbl.fimo, sprintf("%s:%d-%d", chrom, motif.start, motif.end))
-  tbl.fimo$method <- "WELLINGTON"
+  tbl.fimo$method <- method
   tbl.fimo$sample_id <- sampleID
   tbl.regions <- tbl.fimo[tbl.overlaps$queryHits,]
   
@@ -61,7 +58,7 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo)
   
 } # mergeFimoWithFootprints
 #-------------------------------------------------------------------------------
-splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.minid")
+splitTableIntoRegionsAndHits <- function(tbl, minid = "temp.filler.minid")
 {
   tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
   colnames(tbl.regions) <- region.schema() # 29
@@ -94,5 +91,5 @@ splitTableIntoRegionsAndWellingtonHits <- function(tbl, minid = "temp.filler.min
   tbl.hits <- tbl.hits[, coi]
   colnames(tbl.hits) <- hit.schema()
   invisible(list(regions=tbl.regions, hits=tbl.hits))
-} # splitTableIntoRegionsAndWellingtonHits    
+} # splitTableIntoRegionsAndHits    
 #-------------------------------------------------------------------------------
