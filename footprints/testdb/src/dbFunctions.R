@@ -9,6 +9,12 @@ getDBConnection <- function(database) {
     dbname="trenatest" 
     host="bdds-rds.globusgenomics.org"
     
+  } else if (database == "lymphoblast_wellington_whovian") {
+    user= "trena"
+    password="trena"
+    dbname="lymphoblast_wellington"
+    host="whovian"
+
   } else if (database == "lymphoblast_hint_whovian") {
     user= "trena"
     password="trena"
