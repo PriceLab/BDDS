@@ -21,6 +21,12 @@ getDBConnection <- function(database) {
     dbname="lymphoblast_hint"
     host="whovian"
     
+  } else if (database == "brain_1_hint_whovian") {
+    user= "trena"
+    password="trena"
+    dbname="brain_1_hint"
+    host="whovian"
+
   } else if (database == "fimo") {
     user= "ben"
     password="ben_PASS"
