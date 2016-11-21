@@ -8,17 +8,17 @@
 
 #-------------------------------------------------------------------------------
 # load functions and dependencies
-source("../src/dependencies.R")
-source("../src/dbFunctions.R")
-source("../src/tableParsing.R")
-source("../src/tests.R")
-source("../src/main.R")
+source("../../src/dependencies.R")
+source("../../src/dbFunctions.R")
+source("../../src/tableParsing.R")
+source("../../src/tests.R")
+source("../../src/main.R")
 
 #-------------------------------------------------------------------------------
 # set path to hint output 
 
 # for makefile based tests for hint on CHR 19 on whovian, use this:
-data.path <- "/local/lymphoblast/wellington"
+data.path <- "/local/brain/batch_2/wellington"
 #test.sampleID <- "ENCSR000DBY"
 
 # on globus genomics machines, use this:
@@ -30,7 +30,7 @@ data.path <- "/local/lymphoblast/wellington"
 # for whovian, use this:
 
 if(!exists("db.wellington"))
-   db.wellington <- getDBConnection("lymphoblast_wellington_whovian")
+   db.wellington <- getDBConnection("brain_2_wellington_whovian")
 
 if(!exists("db.fimo"))
    db.fimo <- getDBConnection("fimo_whovian")
@@ -50,10 +50,10 @@ if(!interactive()){
         fillAllSamplesByChromosome(chromosome = chromosome,
                                    dbConnection = db.wellington,
                                    fimo = db.fimo,
-                                   minid = "lymphoblast.filler.minid",
+                                   minid = "brain.filler.minid",
                                    #dbUser = "ben",
                                    dbUser = "trena",
-                                   dbTable = "lymphoblast_wellington",
+                                   dbTable = "brain_2_wellington",
                                    sourcePath = data.path,
                                    isTest = FALSE,
                                    method = "WELLINGTON")

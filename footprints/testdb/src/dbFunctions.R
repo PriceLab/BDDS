@@ -27,6 +27,36 @@ getDBConnection <- function(database) {
     dbname="brain_1_hint"
     host="whovian"
 
+  } else if (database == "brain_1_wellington_whovian") {
+    user= "trena"
+    password="trena"
+    dbname="brain_1_wellington"
+    host="whovian"
+
+  } else if (database == "brain_2_hint_whovian") {
+    user= "trena"
+    password="trena"
+    dbname="brain_2_hint"
+    host="whovian"
+
+  } else if (database == "brain_2_wellington_whovian") {
+    user= "trena"
+    password="trena"
+    dbname="brain_2_wellington"
+    host="whovian"
+
+  } else if (database == "brain_3_hint_whovian") {
+    user= "trena"
+    password="trena"
+    dbname="brain_3_hint"
+    host="whovian"
+
+  } else if (database == "brain_3_wellington_whovian") {
+    user= "trena"
+    password="trena"
+    dbname="brain_3_wellington"
+    host="whovian"
+
   } else if (database == "fimo") {
     user= "ben"
     password="ben_PASS"

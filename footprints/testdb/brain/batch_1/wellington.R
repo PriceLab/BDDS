@@ -8,11 +8,11 @@
 
 #-------------------------------------------------------------------------------
 # load functions and dependencies
-source("../src/dependencies.R")
-source("../src/dbFunctions.R")
-source("../src/tableParsing.R")
-source("../src/tests.R")
-source("../src/main.R")
+source("../../src/dependencies.R")
+source("../../src/dbFunctions.R")
+source("../../src/tableParsing.R")
+source("../../src/tests.R")
+source("../../src/main.R")
 
 #-------------------------------------------------------------------------------
 # set path to hint output 
@@ -30,7 +30,7 @@ data.path <- "/local/brain/batch_1/wellington"
 # for whovian, use this:
 
 if(!exists("db.wellington"))
-   db.wellington <- getDBConnection("brain_wellington_whovian")
+   db.wellington <- getDBConnection("brain_1_wellington_whovian")
 
 if(!exists("db.fimo"))
    db.fimo <- getDBConnection("fimo_whovian")
@@ -45,7 +45,7 @@ if(!exists("db.fimo"))
 
 if(!interactive()){
 #    chromosomes <- paste("chr", c(1:22), sep="")
-    chromosomes <- paste("chr", c(1), sep="")
+    chromosomes <- paste("chr", c(2:22), sep="")
     for(chromosome in chromosomes)
         fillAllSamplesByChromosome(chromosome = chromosome,
                                    dbConnection = db.wellington,

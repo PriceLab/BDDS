@@ -8,17 +8,17 @@
 
 #-------------------------------------------------------------------------------
 # load functions and dependencies
-source("../src/dependencies.R")
-source("../src/dbFunctions.R")
-source("../src/tableParsing.R")
-source("../src/tests.R")
-source("../src/main.R")
+source("../../src/dependencies.R")
+source("../../src/dbFunctions.R")
+source("../../src/tableParsing.R")
+source("../../src/tests.R")
+source("../../src/main.R")
 
 #-------------------------------------------------------------------------------
 # set path to hint output 
 
 # for makefile based tests for hint on CHR 19 on whovian, use this:
-data.path <- "/local/lymphoblast/wellington"
+data.path <- "/local/brain/batch_2/hint"
 #test.sampleID <- "ENCSR000DBY"
 
 # on globus genomics machines, use this:
@@ -29,8 +29,8 @@ data.path <- "/local/lymphoblast/wellington"
 # establish database connections:
 # for whovian, use this:
 
-if(!exists("db.wellington"))
-   db.wellington <- getDBConnection("lymphoblast_wellington_whovian")
+if(!exists("db.hint"))
+   db.hint <- getDBConnection("brain_2_hint_whovian")
 
 if(!exists("db.fimo"))
    db.fimo <- getDBConnection("fimo_whovian")
@@ -44,17 +44,17 @@ if(!exists("db.fimo"))
 #-------------------------------------------------------------------------------
 
 if(!interactive()){
-#    chromosomes <- paste("chr", c(1:22), sep="")
+    #chromosomes <- paste("chr", c(1:18, 20:22), sep="")
     chromosomes <- paste("chr", c(13:22), sep="")
     for(chromosome in chromosomes)
         fillAllSamplesByChromosome(chromosome = chromosome,
-                                   dbConnection = db.wellington,
+                                   dbConnection = db.hint,
                                    fimo = db.fimo,
-                                   minid = "lymphoblast.filler.minid",
+                                   minid = "brain.filler.minid",
                                    #dbUser = "ben",
                                    dbUser = "trena",
-                                   dbTable = "lymphoblast_wellington",
+                                   dbTable = "brain_2_hint",
                                    sourcePath = data.path,
                                    isTest = FALSE,
-                                   method = "WELLINGTON")
+                                   method = "HINT")
     }

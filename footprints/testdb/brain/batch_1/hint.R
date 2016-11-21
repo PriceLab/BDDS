@@ -45,7 +45,7 @@ if(!exists("db.fimo"))
 
 if(!interactive()){
     #chromosomes <- paste("chr", c(1:18, 20:22), sep="")
-    chromosomes <- paste("chr", c(1), sep="")
+    chromosomes <- paste("chr", c(13:22), sep="")
     for(chromosome in chromosomes)
         fillAllSamplesByChromosome(chromosome = chromosome,
                                    dbConnection = db.hint,
