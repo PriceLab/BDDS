@@ -6,8 +6,9 @@ library(RUnit)
 genome.db.uri    <- "postgres://whovian/hg38"             # has gtf and motifsgenes tables
 footprint.db.uri <- "postgres://whovian/wholeBrain"       # has hits and regions tables
 if(!exists("mtx.rosmap")){
-     #load("~/s/work/priceLab/cory/module-109/rosmap_rnaseq_fpkm_geneSymbols_24593x638.RData")
+   #load("~/s/work/priceLab/cory/module-109/rosmap_rnaseq_fpkm_geneSymbols_24593x638.RData")
      # copy whovian file to your laptop, needed to render network into your locally running web browser
+     # here is a tempoary load command for testing on whovian.  todo: this is brittle - fix!
    load("/users/pshannon/tmp/rosmap_rnaseq_fpkm_geneSymbols_24593x638.RData")
    mtx.rosmap <- mtx  # 24593   638
    }
@@ -103,6 +104,15 @@ test.createModel <- function()
    checkEquals(colnames(tbl), c("gene.cor", "beta", "IncNodePurity", "distance"))
    checkTrue(nrow(tbl) >= 4)
    checkTrue(all(c("ELF4", "FLI1", "CEBPA", "ELK3") %in% head(rownames(tbl))))
+
+     # eliminate thresholds, ensure that more tfs are returned
+   tbl.2 <- createModel("TREM2", promoter.shoulder=100,
+                      mtx.expression=mtx.rosmap,
+                      absolute.lasso.beta.min=0.0,
+                      randomForest.purity.min=0,
+                      absolute.expression.correlation.min=0.)
+   checkEquals(ncol(tbl.2), 4)
+   checkTrue(nrow(tbl.2) > 25)
     
 } # test.createModel
 #------------------------------------------------------------------------------------------------------------------------
