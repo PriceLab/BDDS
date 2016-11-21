@@ -26,3 +26,59 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE on fimo_hg38 FROM ben;
 to delete subset of data:
 DELETE from hits where loc LIKE 'chr2:%';
 delete from regions where loc LIKE 'chr2:%';
+
+Merging 3 separate brain databases:
+First, make two new brain databases: brain_hint and brain_wellington
+Next, rename hits and regions tables to: hits_1, regions_1, hits_2, regions_2, etc.
+
+psql brain_1_hint -U postgres -h whovian 
+alter table hits rename to hits_1;
+alter table regions rename to regions_1;
+\q
+
+(etc for wellington and other batches)
+
+Next, make new tables in the brain_hint and brain_wellington databases for each hits and regions table from the other databases (TURNS OT NOT NEEDED)
+psql brain_hint -U trena -h whovian
+(recipe at https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/dbInitialization/createTestWellington.sql for example)
+
+
+Next, merge existing databases to that new one:
+see
+https://bytes.com/topic/postgresql/answers/421382-how-move-data-1-database-another
+
+pg_dump -U trena -h whovian -d brain_1_hint -t hits_1 > hint_1_hits_1.sql
+psql -U trena -h whovian -d brain_hint -f hint_1_hits_1.sql
+
+(ERROR:  relation "hits_1" already exists -- likely because I made that)
+
+similarly for regions...
+BUT - 
+psql:hint_1_regions_1.sql:4592604: ERROR:  multiple primary keys for table "regions_1" are not allowed
+
+... seems okay - regions_1 table has 4592559 entries in each of the databases
+
+and for wellington
+
+Now that I've got the tables all in the same database, I can merge tables:
+psql brain_hint -U trena -h whovian
+insert into hits (select * from hits_1);
+insert into hits (select * from hits_2);
+insert into hits (select * from hits_3);
+select count (*) from hits;
+insert into regions (select * from regions_1);
+insert into regions (select * from regions_2);
+insert into regions (select * from regions_3);
+select count (*) from regions;
+
+drop table hits_1;
+drop table hits_2;
+drop table hits_3;
+drop table regions_1;
+drop table regions_2;
+drop table regions_3;
+\q
+
+and the same for brain_wellington
+
+then, make them read only.
