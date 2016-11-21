@@ -6,10 +6,10 @@ library(RUnit)
 genome.db.uri    <- "postgres://whovian/hg38"             # has gtf and motifsgenes tables
 footprint.db.uri <- "postgres://whovian/wholeBrain"       # has hits and regions tables
 if(!exists("mtx.rosmap")){
-   #load("~/s/work/priceLab/cory/module-109/rosmap_rnaseq_fpkm_geneSymbols_24593x638.RData")
+   load("~/s/work/priceLab/cory/module-109/rosmap_rnaseq_fpkm_geneSymbols_24593x638.RData")
      # copy whovian file to your laptop, needed to render network into your locally running web browser
      # here is a tempoary load command for testing on whovian.  todo: this is brittle - fix!
-   load("/users/pshannon/tmp/rosmap_rnaseq_fpkm_geneSymbols_24593x638.RData")
+   #load("/users/pshannon/tmp/rosmap_rnaseq_fpkm_geneSymbols_24593x638.RData")
    mtx.rosmap <- mtx  # 24593   638
    }
 #------------------------------------------------------------------------------------------------------------------------
@@ -32,8 +32,8 @@ runTests <- function()
 #------------------------------------------------------------------------------------------------------------------------
 createModel <- function(target.gene, promoter.shoulder, 
                         mtx.expression=NA, mtx.classification=NA,
-                        absolute.lasso.beta.min=0.01,
-                        randomForest.purity.min=5,
+                        absolute.lasso.beta.min=0.0,
+                        randomForest.purity.min=1,
                         absolute.expression.correlation.min=0.1)
 {
    stopifnot(target.gene %in% rownames(mtx.expression))
@@ -71,21 +71,26 @@ createModel <- function(target.gene, promoter.shoulder,
    tbl.02 <- subset(tbl.02, IncNodePurity >= randomForest.purity.min  &
                             abs(gene.cor) >= absolute.expression.correlation.min)
 
-   tbl.03 <- merge(tbl.01, tbl.02)
-   rownames(tbl.03) <- tbl.03$gene
-   tbl.03 <- tbl.03[, -(grep("^gene$", colnames(tbl.03)))]    
-   tbl.04 <- tbl.03[order(abs(tbl.03$gene.cor), decreasing=TRUE),]
+   tbl.03 <- merge(tbl.01, tbl.02, all.y=TRUE)
+   #rownames(tbl.03) <- tbl.03$gene
+   tbl.03$beta[is.na(tbl.03$beta)] <- 0
+   tbl.03$IncNodePurity[is.na(tbl.03$IncNodePurity)] <- 0
+
+   fpStarts.list <- lapply(tbl.02$gene, function(gene) subset(tbl.fp, tf_name==gene)[, c("tf_name", "mfpstart")])
+   tbl.fpStarts <-  unique(do.call('rbind', fpStarts.list))
+
+   tbl.04 <- merge(tbl.03, tbl.fpStarts, by.x="gene", by.y="tf_name")
+   tbl.04 <- tbl.04[order(abs(tbl.04$gene.cor), decreasing=TRUE),]
    
-   footprint.start <- unlist(lapply(rownames(tbl.04), function(gene) subset(tbl.fp, tf_name==gene)$mfpstart[1]))
+   # footprint.start <- unlist(lapply(rownames(tbl.04), function(gene) subset(tbl.fp, tf_name==gene)$mfpstart[1]))
    gene.info <- subset(tbl.tss, gene_name==target.gene)[1,]
-   if(gene.info$strand  == "+")
+   if(gene.info$strand  == "+"){
       gene.start <- gene.info$start
-   else
+      tbl.04$distance <- gene.start - tbl.04$mfpstart
+   }else{
       gene.start <- gene.info$end
-   distance <- gene.start - footprint.start
-   tbl.04$distance <- distance
-   tbl.04$beta[which(is.na(tbl.04$beta))] <- 0
-   tbl.04$IncNodePurity[which(is.na(tbl.04$IncNodePurity))] <- 0
+      tbl.04$distance <-  tbl.04$mfpstart - gene.start
+      }
 
    tbl.04
 
@@ -96,8 +101,8 @@ test.createModel <- function()
    printf("--- test.createModel")
    tbl <- createModel("TREM2", promoter.shoulder=100,
                       mtx.expression=mtx.rosmap,
-                      absolute.lasso.beta.min=0.01,
-                      randomForest.purity.min=5,
+                      absolute.lasso.beta.min=0.0,
+                      randomForest.purity.min=1,
                       absolute.expression.correlation.min=0.1)
 
    checkEquals(ncol(tbl), 4)
@@ -118,7 +123,8 @@ test.createModel <- function()
 #------------------------------------------------------------------------------------------------------------------------
 renderAsNetwork <- function(tbl, target.gene)
 {
-   tfs <- rownames(tbl)
+   tfs <- tbl$gene
+
    footprints <- unlist(lapply(tbl$distance, function(x)
        if(x < 0)
          sprintf("fp.downstream.%05d", abs(x))
@@ -152,8 +158,8 @@ renderAsNetwork <- function(tbl, target.gene)
    nodeData(g, tfs, "beta") <- tbl$gene.cor
    nodeData(g, tfs, "purity") <- tbl$IncNodePurity
 
-   g <- graph::addEdge(rownames(tbl), tbl$footprint, g)
-   edgeData(g, rownames(tbl), tbl$footprint, "edgeType") <- "bindsTo"
+   g <- graph::addEdge(tbl$gene, tbl$footprint, g)
+   edgeData(g, tbl$gene, tbl$footprint, "edgeType") <- "bindsTo"
    
    g <- graph::addEdge(tbl$footprint, target.gene, g)
    edgeData(g, tbl$footprint, target.gene, "edgeType") <- "regulatorySiteFor"
@@ -215,15 +221,16 @@ layoutByFootprintPosition <- function(rcy)
 #------------------------------------------------------------------------------------------------------------------------
 demo <- function()
 {
-   target.gene <- "TREM2"
    target.gene <- "APOE"
    target.gene <- "MBP"
    target.gene <- "MOBP"
+   target.gene <- "TREM2"
+   target.gene <- "TYROBP"
 
-   tbl <- createModel(target.gene, promoter.shoulder=2000,
+   tbl <- createModel(target.gene, promoter.shoulder=5000,
                       mtx.expression=mtx.rosmap,
                       absolute.lasso.beta.min=0.1,
-                      randomForest.purity.min=3,
+                      randomForest.purity.min=1,
                       absolute.expression.correlation.min=0.05)
 
    rcy <- renderAsNetwork(tbl, target.gene)
