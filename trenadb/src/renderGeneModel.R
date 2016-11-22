@@ -5,6 +5,10 @@ library(RUnit)
 #------------------------------------------------------------------------------------------------------------------------
 genome.db.uri    <- "postgres://whovian/hg38"             # has gtf and motifsgenes tables
 footprint.db.uri <- "postgres://whovian/wholeBrain"       # has hits and regions tables
+if(!exists("fpf"))
+   fpf <- FootprintFinder(genome.db.uri, footprint.db.uri, quiet=TRUE)
+
+#------------------------------------------------------------------------------------------------------------------------
 if(!exists("mtx.rosmap")){
    load("~/s/work/priceLab/cory/module-109/rosmap_rnaseq_fpkm_geneSymbols_24593x638.RData")
      # copy whovian file to your laptop, needed to render network into your locally running web browser
@@ -42,7 +46,6 @@ createModel <- function(target.gene, promoter.shoulder,
    #tbl.tmp <- dbGetQuery(db.gtf, query)
    #gene.info <- list(chrom=tbl.tmp[1, "chr"], start=tbl.tmp[1, "start"])
 
-   fpf <- FootprintFinder(genome.db.uri, footprint.db.uri, quiet=TRUE)
    tbl.fp <- getFootprintsForGene(fpf, target.gene, size.upstream=promoter.shoulder,
                                   size.downstream=promoter.shoulder)
    candidate.tfs <- sort(unique(tbl.fp$tf_name))
@@ -105,10 +108,10 @@ test.createModel <- function()
                       randomForest.purity.min=1,
                       absolute.expression.correlation.min=0.1)
 
-   checkEquals(ncol(tbl), 4)
-   checkEquals(colnames(tbl), c("gene.cor", "beta", "IncNodePurity", "distance"))
-   checkTrue(nrow(tbl) >= 4)
-   checkTrue(all(c("ELF4", "FLI1", "CEBPA", "ELK3") %in% head(rownames(tbl))))
+   checkEquals(ncol(tbl), 6)
+   checkEquals(colnames(tbl), c("gene", "gene.cor", "beta", "IncNodePurity", "mfpstart", "distance"))
+   checkTrue(nrow(tbl) >= 40)
+   checkTrue(all(c("ELF4", "FLI1", "CEBPA", "ELK3") %in% tbl$gene))
 
      # eliminate thresholds, ensure that more tfs are returned
    tbl.2 <- createModel("TREM2", promoter.shoulder=100,
@@ -116,8 +119,8 @@ test.createModel <- function()
                       absolute.lasso.beta.min=0.0,
                       randomForest.purity.min=0,
                       absolute.expression.correlation.min=0.)
-   checkEquals(ncol(tbl.2), 4)
-   checkTrue(nrow(tbl.2) > 25)
+   checkEquals(ncol(tbl.2), 6)
+   checkTrue(nrow(tbl.2) > 100)
     
 } # test.createModel
 #------------------------------------------------------------------------------------------------------------------------
@@ -226,6 +229,7 @@ demo <- function()
    target.gene <- "MOBP"
    target.gene <- "TREM2"
    target.gene <- "TYROBP"
+   target.gene <- "SCN2A"
 
    tbl <- createModel(target.gene, promoter.shoulder=5000,
                       mtx.expression=mtx.rosmap,
