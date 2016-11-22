@@ -26,3 +26,146 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE on fimo_hg38 FROM ben;
 to delete subset of data:
 DELETE from hits where loc LIKE 'chr2:%';
 delete from regions where loc LIKE 'chr2:%';
+
+Merging 3 separate brain databases:
+First, make two new brain databases: brain_hint and brain_wellington
+Next, rename hits and regions tables to: hits_1, regions_1, hits_2, regions_2, etc.
+
+psql brain_1_hint -U postgres -h whovian 
+alter table hits rename to hits_1;
+alter table regions rename to regions_1;
+\q
+
+(etc for wellington and other batches)
+
+Next, make new tables in the brain_hint and brain_wellington databases for each hits and regions table from the other databases (TURNS OT NOT NEEDED)
+psql brain_hint -U trena -h whovian
+(recipe at https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/dbInitialization/createTestWellington.sql for example)
+
+
+Next, merge existing databases to that new one:
+see
+https://bytes.com/topic/postgresql/answers/421382-how-move-data-1-database-another
+
+pg_dump -U trena -h whovian -d brain_1_hint -t hits_1 > hint_1_hits_1.sql
+psql -U trena -h whovian -d brain_hint -f hint_1_hits_1.sql
+
+(ERROR:  relation "hits_1" already exists -- likely because I made that)
+
+similarly for regions...
+BUT - 
+psql:hint_1_regions_1.sql:4592604: ERROR:  multiple primary keys for table "regions_1" are not allowed
+
+... seems okay - regions_1 table has 4592559 entries in each of the databases
+
+and for wellington
+
+Now that I've got the tables all in the same database, I can merge tables:
+psql brain_hint -U trena -h whovian
+insert into hits (select * from hits_1);
+insert into hits (select * from hits_2);
+insert into hits (select * from hits_3);
+select count (*) from hits;
+insert into regions (select * from regions_1);
+insert into regions (select * from regions_2);
+insert into regions (select * from regions_3);
+select count (*) from regions;
+
+drop table hits_1;
+drop table hits_2;
+drop table hits_3;
+drop table regions_1;
+drop table regions_2;
+drop table regions_3;
+\q
+
+and the same for brain_wellington
+
+then, make them read only.
+
+HRM - get many less hits than expected (chr5 has ~100,000, but brain_1_hint table alone has 250,000)
+
+suspect import issue....
+
+so drop the hits and regions tables, reimport, and fix primary key collision error:
+
+psql -U trena -h whovian -d brain_hint -f hint_1_hits_1.sql
+psql -U trena -h whovian -d brain_hint -f hint_1_regions_1.sql
+psql -U trena -h whovian -d brain_hint -f hint_2_hits_2.sql
+psql -U trena -h whovian -d brain_hint -f hint_2_regions_2.sql
+psql -U trena -h whovian -d brain_hint -f hint_3_hits_3.sql
+psql -U trena -h whovian -d brain_hint -f hint_3_regions_3.sql
+
+psql -U trena -h whovian -d brain_wellington -f wellington_1_hits_1.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_1_regions_1.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_2_hits_2.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_2_regions_2.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_3_hits_3.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_3_regions_3.sql
+
+psql -U trena -h whovian -d brain_hint
+select count(*) from regions_1 where chrom='chr5'; 250645
+select count(*) from regions_2 where chrom='chr5'; 701313
+select count(*) from regions_3 where chrom='chr5'; 797155
+
+\connect brain_wellington
+select count(*) from regions_1 where chrom='chr5'; 101782
+select count(*) from regions_2 where chrom='chr5'; 244803
+select count(*) from regions_3 where chrom='chr5'; 407582
+
+then attempt to reimport wellington:
+drop table hits;
+drop table regions;
+remake per 
+https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/dbInitialization/createWellington.sql
+insert into regions (select * from regions_1);
+select count(*) from regions where chrom='chr5'; 101782
+
+ERROR:  duplicate key value violates unique constraint "regions_pkey"
+DETAIL:  Key (loc)=(chr1:124849266-124849276) already exists.
+
+select count(*) from regions where chrom='chr5'; 101782
+
+So yes, I need to insert if key doesn't already exist.
+
+insert into regions
+select * from regions_2
+  where not exists(
+      select loc from regions
+            where loc=regions_2.loc);
+
+select count(*) from regions where chrom='chr5'; 308974 -- that's better
+
+
+insert into regions
+   select * from regions_3
+      where not exists(
+          select loc from regions
+        where loc=regions_3.loc);
+
+then index regions:
+create index regions_index on regions (loc, start, endpos);
+
+then build hits:
+
+insert into hits (select * from hits_1);
+
+insert into hits
+select * from hits_2
+  where not exists(
+      select loc from regions
+            where loc=hits_2.loc);
+
+insert into hits
+    select * from hits_3
+      where not exists(
+          select loc from regions
+        where loc=hits_3.loc);
+
+then index hits:
+create index hits_index on hits (loc);
+
+
+
+Then, do the same for the brain_hint database.
+
