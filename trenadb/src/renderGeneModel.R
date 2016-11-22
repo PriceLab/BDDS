@@ -113,7 +113,7 @@ test.createModel <- function()
    checkTrue(nrow(tbl) >= 40)
    checkTrue(all(c("ELF4", "FLI1", "CEBPA", "ELK3") %in% tbl$gene))
 
-     # eliminate thresholds, ensure that more tfs are returned
+     # eliminate thresholds, ensure that more tfs are returned, should be more than 100
    tbl.2 <- createModel("TREM2", promoter.shoulder=100,
                       mtx.expression=mtx.rosmap,
                       absolute.lasso.beta.min=0.0,
