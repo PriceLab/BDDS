@@ -82,3 +82,90 @@ drop table regions_3;
 and the same for brain_wellington
 
 then, make them read only.
+
+HRM - get many less hits than expected (chr5 has ~100,000, but brain_1_hint table alone has 250,000)
+
+suspect import issue....
+
+so drop the hits and regions tables, reimport, and fix primary key collision error:
+
+psql -U trena -h whovian -d brain_hint -f hint_1_hits_1.sql
+psql -U trena -h whovian -d brain_hint -f hint_1_regions_1.sql
+psql -U trena -h whovian -d brain_hint -f hint_2_hits_2.sql
+psql -U trena -h whovian -d brain_hint -f hint_2_regions_2.sql
+psql -U trena -h whovian -d brain_hint -f hint_3_hits_3.sql
+psql -U trena -h whovian -d brain_hint -f hint_3_regions_3.sql
+
+psql -U trena -h whovian -d brain_wellington -f wellington_1_hits_1.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_1_regions_1.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_2_hits_2.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_2_regions_2.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_3_hits_3.sql
+psql -U trena -h whovian -d brain_wellington -f wellington_3_regions_3.sql
+
+psql -U trena -h whovian -d brain_hint
+select count(*) from regions_1 where chrom='chr5'; 250645
+select count(*) from regions_2 where chrom='chr5'; 701313
+select count(*) from regions_3 where chrom='chr5'; 797155
+
+\connect brain_wellington
+select count(*) from regions_1 where chrom='chr5'; 101782
+select count(*) from regions_2 where chrom='chr5'; 244803
+select count(*) from regions_3 where chrom='chr5'; 407582
+
+then attempt to reimport wellington:
+drop table hits;
+drop table regions;
+remake per 
+https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/dbInitialization/createWellington.sql
+insert into regions (select * from regions_1);
+select count(*) from regions where chrom='chr5'; 101782
+
+ERROR:  duplicate key value violates unique constraint "regions_pkey"
+DETAIL:  Key (loc)=(chr1:124849266-124849276) already exists.
+
+select count(*) from regions where chrom='chr5'; 101782
+
+So yes, I need to insert if key doesn't already exist.
+
+insert into regions
+select * from regions_2
+  where not exists(
+      select loc from regions
+            where loc=regions_2.loc);
+
+select count(*) from regions where chrom='chr5'; 308974 -- that's better
+
+
+insert into regions
+   select * from regions_3
+      where not exists(
+          select loc from regions
+        where loc=regions_3.loc);
+
+then index regions:
+create index regions_index on regions (loc, start, endpos);
+
+then build hits:
+
+insert into hits (select * from hits_1);
+
+insert into hits
+select * from hits_2
+  where not exists(
+      select loc from regions
+            where loc=hits_2.loc);
+
+insert into hits
+    select * from hits_3
+      where not exists(
+          select loc from regions
+        where loc=hits_3.loc);
+
+then index hits:
+create index hits_index on hits (loc);
+
+
+
+Then, do the same for the brain_hint database.
+
