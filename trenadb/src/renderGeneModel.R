@@ -31,7 +31,7 @@ if(!exists("tbl.tss"))
 runTests <- function()
 {
    test.createModel()
-   test.tableToGraph()
+   test.tableToFullGraph()
     
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -125,24 +125,9 @@ test.createModel <- function()
     
 } # test.createModel
 #------------------------------------------------------------------------------------------------------------------------
-tableToGraph <- function(tbl.list)
+tableToFullGraph <- function(tbl.list)
 {
-   target.gene <- names(tbl.list)
-   tbl <- tbl.list[[1]]
- 
-   tfs <- tbl$gene
-
-   footprints <- unlist(lapply(tbl$distance, function(x)
-       if(x < 0)
-         sprintf("fp.downstream.%05d", abs(x))
-       else
-           sprintf("fp.upstream.%05d", x)))
-   
-   tbl$footprint <- footprints
-
-   all.nodes <- unique(c(target.gene, tfs, footprints))
-   
-   g <- graphNEL(nodes=all.nodes, edgemode = "directed")
+   g <- graphNEL(edgemode = "directed")
    nodeDataDefaults(g, attr = "type") <- "undefined"
    nodeDataDefaults(g, attr = "label") <- "default node label"
    nodeDataDefaults(g, attr = "distance") <- 0
@@ -154,30 +139,45 @@ tableToGraph <- function(tbl.list)
    edgeDataDefaults(g, attr = "beta") <- 0
    edgeDataDefaults(g, attr = "purity") <- 0
 
-   nodeData(g, target.gene, "type") <- "targetGene"
-   nodeData(g, tfs, "type")         <- "TF"
-   nodeData(g, footprints, "type")  <- "footprint"
-   nodeData(g, all.nodes, "label")  <- all.nodes
-   nodeData(g, footprints, "label") <- tbl$distance
-   nodeData(g, footprints, "distance") <- tbl$distance
-
-   nodeData(g, tfs, "gene.cor") <- tbl$gene.cor
-   nodeData(g, tfs, "beta") <- tbl$gene.cor
-   nodeData(g, tfs, "purity") <- tbl$IncNodePurity
-
-   g <- graph::addEdge(tbl$gene, tbl$footprint, g)
-   edgeData(g, tbl$gene, tbl$footprint, "edgeType") <- "bindsTo"
+   for(target.gene in names(tbl.list)){
+      tbl <- tbl.list[[target.gene]]
+      tfs <- tbl$gene
+      footprints <- unlist(lapply(tbl$distance, function(x)
+         if(x < 0)
+            sprintf("%s.fp.downstream.%05d", target.gene, abs(x))
+         else
+            sprintf("%s.fp.upstream.%05d", target.gene, x)))
    
-   g <- graph::addEdge(tbl$footprint, target.gene, g)
-   edgeData(g, tbl$footprint, target.gene, "edgeType") <- "regulatorySiteFor"
+      tbl$footprint <- footprints
+      all.nodes <- unique(c(target.gene, tfs, footprints))
+      new.nodes <- setdiff(all.nodes, nodes(g))
+      g <- addNode(new.nodes, g)
+   
+      nodeData(g, target.gene, "type") <- "targetGene"
+      nodeData(g, tfs, "type")         <- "TF"
+      nodeData(g, footprints, "type")  <- "footprint"
+      nodeData(g, all.nodes, "label")  <- all.nodes
+      nodeData(g, footprints, "label") <- tbl$distance
+      nodeData(g, footprints, "distance") <- tbl$distance
+   
+      nodeData(g, tfs, "gene.cor") <- tbl$gene.cor
+      nodeData(g, tfs, "beta") <- tbl$gene.cor
+      nodeData(g, tfs, "purity") <- tbl$IncNodePurity
+   
+      g <- graph::addEdge(tbl$gene, tbl$footprint, g)
+      edgeData(g, tbl$gene, tbl$footprint, "edgeType") <- "bindsTo"
+      
+      g <- graph::addEdge(tbl$footprint, target.gene, g)
+      edgeData(g, tbl$footprint, target.gene, "edgeType") <- "regulatorySiteFor"
+      } # for target.gene
    
    g
 
-} # tableToGraph
+} # tableToFullGraph
 #------------------------------------------------------------------------------------------------------------------------
-test.tableToGraph <- function()
+test.tableToFullGraph <- function()
 {
-   printf("--- test.tableToGraph")
+   printf("--- test.tableToFullGraph")
 
        #---- first, just one target.gene, one tbl
    genes <- c("STAT4", "STAT4", "STAT4", "STAT4", "TBR1", "HLF")
@@ -193,7 +193,7 @@ test.tableToGraph <- function()
    target.gene.1 <- "EPB41L3"
    tbl.list <- list(tbl.1)
    names(tbl.list) <- target.gene.1
-   g1 <- tableToGraph(tbl.list)
+   g1 <- tableToFullGraph(tbl.list)
 
    checkTrue(all(c(genes, target.gene.1) %in% nodes(g1)))
 
@@ -224,7 +224,7 @@ test.tableToGraph <- function()
    tbl.list <- list(tbl.2)
    names(tbl.list) <- target.gene.2
 
-   g2 <- tableToGraph(tbl.list)
+   g2 <- tableToFullGraph(tbl.list)
 
    checkTrue(all(c(genes, target.gene.2) %in% nodes(g2)))
 
@@ -242,15 +242,17 @@ test.tableToGraph <- function()
 
      # now try both tables and target genes together
    
-   #g3 <- tableToGraph(list(target.gene.1=tbl.1, target.gene.2=tbl.2))
+   tbl.list <- list(tbl.1, tbl.2)
+   names(tbl.list) <- c(target.gene.1, target.gene.2)
+   g3 <- tableToFullGraph(tbl.list)
 
-} # test.tableToGraph
+} # test.tableToFullGraph
 #------------------------------------------------------------------------------------------------------------------------
 renderAsNetwork <- function(tbl, target.gene)
 {
    tbl.list <- list(tbl)
    names(tbl.list) <- target.gene
-   g <- tableToGraph(tbl.list)
+   g <- tableToFullGraph(tbl.list)
    rcy <- RCyjs(10000:10100, title=target.gene, graph=g)
    httpSetStyle(rcy, "style.js")
    rcy
@@ -303,6 +305,33 @@ layoutByFootprintPosition <- function(rcy)
    fit(rcy, 100)
 
 } # layoutByFootprintPosition
+#------------------------------------------------------------------------------------------------------------------------
+hAlign <- function(rcy)
+{
+  selected.node.ids <- getSelectedNodes(rcy)$id
+  if(length(selected.node.ids) == 0){
+      printf("no nodes selected, nothing to hAlign")
+      return()
+      }
+  tbl.pos <- getPosition(rcy, selected.node.ids)
+  tbl.pos$y <- mean(tbl.pos$y)
+  setPosition(rcy, tbl.pos)
+
+} # hAlign
+#------------------------------------------------------------------------------------------------------------------------
+vAlign <- function(rcy)
+{
+  selected.node.ids <- getSelectedNodes(rcy)$id
+  if(length(selected.node.ids) == 0){
+     printf("no nodes selected, nothing to vAlign")
+     return();
+     }
+
+  tbl.pos <- getPosition(rcy, selected.node.ids)
+  tbl.pos$x <- mean(tbl.pos$x)
+  setPosition(rcy, tbl.pos)
+
+} # vAlign
 #------------------------------------------------------------------------------------------------------------------------
 demo <- function()
 {
