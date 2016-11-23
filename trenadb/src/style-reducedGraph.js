@@ -68,6 +68,9 @@ vizmap = [
    {selector: 'node[score=3]', css: {
        "background-color": "#FF2222"
        }},
+   {selector: 'edge', css: {
+       'curve-style': 'bezier'
+       }}, 
 
    {selector: 'edge[geneCor < 0]', css: {
       "line-color": "mapData(geneCor, -1.0, 0, green, lightgray)",
@@ -75,6 +78,7 @@ vizmap = [
       "target-arrow-color": "rgb(0, 0, 0)",
       width: "mapData(fpCount, 0.0, 50.0, 1.0, 50.0)"
       }},
+
 
    {selector: 'edge[geneCor >= 0]', css: {
       "line-color": "mapData(geneCor, 0, 1.0, lightgray, red)",

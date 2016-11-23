@@ -451,7 +451,7 @@ demo.reducedGraph <- function()
    g <- tableToReducedGraph(tbl.list)
 
    rcy <- RCyjs(10000:10100, graph=g)
-   httpSetStyle(rcy, "reducedGraphStyle.js")
+   httpSetStyle(rcy, "tyle-reducedGraph.js")
    selectNodes(rcy, names(which(nodeData(g, attr="degree") == 1)))
    hideSelectedNodes(rcy)
    layout(rcy, "cose")
