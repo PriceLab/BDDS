@@ -31,6 +31,7 @@ if(!exists("tbl.tss"))
 runTests <- function()
 {
    test.createModel()
+   test.tableToGraph()
     
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -124,8 +125,11 @@ test.createModel <- function()
     
 } # test.createModel
 #------------------------------------------------------------------------------------------------------------------------
-renderAsNetwork <- function(tbl, target.gene)
+tableToGraph <- function(tbl.list)
 {
+   target.gene <- names(tbl.list)
+   tbl <- tbl.list[[1]]
+ 
    tfs <- tbl$gene
 
    footprints <- unlist(lapply(tbl$distance, function(x)
@@ -167,10 +171,87 @@ renderAsNetwork <- function(tbl, target.gene)
    g <- graph::addEdge(tbl$footprint, target.gene, g)
    edgeData(g, tbl$footprint, target.gene, "edgeType") <- "regulatorySiteFor"
    
-   #edgeData(g, tfs, target.gene, "beta") <- tbl$beta
-   #edgeData(g, tfs, target.gene, "purity") <- tbl$IncNodePurity
+   g
 
-   rcy <- RCyjs(10000:10100, title="TReNA", graph=g)
+} # tableToGraph
+#------------------------------------------------------------------------------------------------------------------------
+test.tableToGraph <- function()
+{
+   printf("--- test.tableToGraph")
+
+       #---- first, just one target.gene, one tbl
+   genes <- c("STAT4", "STAT4", "STAT4", "STAT4", "TBR1", "HLF")
+   gene.cors <- c(0.9101553, 0.9101553, 0.9101553, 0.9101553, 0.8947867, 0.8872238)
+   betas <- c(0.1255503, 0.1255503, 0.1255503, 0.1255503, 0.1448829, 0.0000000)
+   IncNodePurities <- c(35.77897, 35.77897, 35.77897, 35.77897, 23.16562, 19.59660)
+   mfpstarts <- c(5627705, 5628679, 5629563, 5629581, 5629563, 5629100)
+   distances <- c(-2995, -2021, -1137, -1119, -1137, -1600)
+
+   tbl.1 <- data.frame(gene=genes, gene.cor=gene.cors, beta=betas, IncNodePurity=IncNodePurities, 
+                       mfpstart=mfpstarts, distance=distances, stringsAsFactors=FALSE)
+   
+   target.gene.1 <- "EPB41L3"
+   tbl.list <- list(tbl.1)
+   names(tbl.list) <- target.gene.1
+   g1 <- tableToGraph(tbl.list)
+
+   checkTrue(all(c(genes, target.gene.1) %in% nodes(g1)))
+
+   fp.nodes <- sort(grep("^fp", nodes(g1), v=TRUE))
+   fp.nodes <- sub("fp.downstream.", "", fp.nodes, fixed=TRUE)
+   fp.nodes <- as.integer(sub("fp.upstream.", "", fp.nodes, fixed=TRUE))
+   checkTrue(all(fp.nodes %in% abs(distances)))
+
+     # one edge from footprint to TF for every footprint
+     # one edge from every unique footprint to the target.gene
+   expectedEdgeCount <- length(tbl.1$distance) + length(unique(tbl.1$distance))
+   checkEquals(length(edgeNames(g1)), expectedEdgeCount)
+   checkEquals(length(nodes(g1)),
+               1 + length(unique(tbl.1$gene)) + length(unique(tbl.1$distance)))
+
+       #---- now, try a second target.gene and its tbl
+   genes <- c("STAT4", "STAT4", "HLF", "TFEB", "HMG20B", "HMG20B")
+   gene.cors <- c(0.9162040, 0.9162040, 0.9028613, -0.8256594, -0.8226802, -0.8226802)
+   betas <- c(0.1988552, 0.1988552, 0.1492857, 0.0000000, 0.0000000, 0.0000000)
+   IncNodePurities <- c(43.37913, 43.37913, 36.93302, 11.27543, 10.17957, 10.17957)
+   mfpstarts <- c(4451334, 4451640, 4452647, 4453748, 4453489, 4453491)
+   distances <- c(-4001, -3695, -2688, -1587, -1846, -1844)
+
+   tbl.2 <- data.frame(gene=genes, gene.cor=gene.cors, beta=betas, IncNodePurity=IncNodePurities, 
+                       mfpstart=mfpstarts, distance=distances, stringsAsFactors=FALSE)
+   target.gene.2 <- "DLGAP1"
+   
+   tbl.list <- list(tbl.2)
+   names(tbl.list) <- target.gene.2
+
+   g2 <- tableToGraph(tbl.list)
+
+   checkTrue(all(c(genes, target.gene.2) %in% nodes(g2)))
+
+   fp.nodes <- sort(grep("^fp", nodes(g2), v=TRUE))
+   fp.nodes <- sub("fp.downstream.", "", fp.nodes, fixed=TRUE)
+   fp.nodes <- as.integer(sub("fp.upstream.", "", fp.nodes, fixed=TRUE))
+   checkTrue(all(fp.nodes %in% abs(distances)))
+
+     # one edge from footprint to TF for every footprint
+     # one edge from every unique footprint to the target.gene
+   expectedEdgeCount <- length(tbl.2$distance) + length(unique(tbl.2$distance))
+   checkEquals(length(edgeNames(g2)), expectedEdgeCount)
+   checkEquals(length(nodes(g2)),
+               1 + length(unique(tbl.2$gene)) + length(unique(tbl.2$distance)))
+
+     # now try both tables and target genes together
+   
+   #g3 <- tableToGraph(list(target.gene.1=tbl.1, target.gene.2=tbl.2))
+
+} # test.tableToGraph
+#------------------------------------------------------------------------------------------------------------------------
+renderAsNetwork <- function(tbl, target.gene)
+{
+   tbl.list <- list(tbl)
+   names(tbl.list) <- target.gene
+   g <- tableToGraph(tbl.list)
+   rcy <- RCyjs(10000:10100, title=target.gene, graph=g)
    httpSetStyle(rcy, "style.js")
    rcy
 
@@ -201,7 +282,8 @@ layoutByFootprintPosition <- function(rcy)
 
    fp.nodes <- nodes(g)[which(unlist(nodeData(g, attr="type"), use.names=FALSE) == "footprint")]
    xPos <- nodeData(g, fp.nodes, attr="distance")
-   setPosition(rcy, data.frame(id=names(xPos), x=as.integer(xPos), y=0, stringsAsFactors=FALSE))
+   fpXcoords <- -1 * as.integer(xPos)    # negative positions are downstream of TSS, traditionally to the right
+   setPosition(rcy, data.frame(id=names(xPos), x=fpXcoords, y=0, stringsAsFactors=FALSE))
    target.gene <- names(which(nodeData(g, attr="type") == "targetGene"))
    setPosition(rcy, data.frame(id=target.gene, x=0, y=-200, stringsAsFactors=FALSE))
 
@@ -209,7 +291,7 @@ layoutByFootprintPosition <- function(rcy)
 
    for(fp in names(fpTFedges)){
      tfs <- fpTFedges[[fp]]
-     xpos.base <- as.integer(nodeData(g, fp, "distance"))
+     xpos.base <- -1 * as.integer(nodeData(g, fp, "distance"))
      for(tfi in 1:length(tfs)){
        tf <- tfs[tfi]
        ypos <- tfs.y + ((tfi-1) * 200)
@@ -231,7 +313,7 @@ demo <- function()
    target.gene <- "TYROBP"
    target.gene <- "SCN2A"
 
-   tbl <- createModel(target.gene, promoter.shoulder=5000,
+   tbl <- createModel(target.gene, promoter.shoulder=10000,
                       mtx.expression=mtx.rosmap,
                       absolute.lasso.beta.min=0.1,
                       randomForest.purity.min=1,
