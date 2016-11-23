@@ -32,6 +32,7 @@ runTests <- function()
 {
    test.createModel()
    test.tableToFullGraph()
+   test.tableToReducedGraph()
     
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -248,6 +249,82 @@ test.tableToFullGraph <- function()
 
 } # test.tableToFullGraph
 #------------------------------------------------------------------------------------------------------------------------
+tableToReducedGraph <- function(tbl.list)
+{
+   g <- graphNEL(edgemode = "directed")
+   nodeDataDefaults(g, attr = "type") <- "undefined"
+   nodeDataDefaults(g, attr = "label") <- "default node label"
+   nodeDataDefaults(g, attr = "degree") <- 0
+
+   edgeDataDefaults(g, attr = "edgeType") <- "undefined"
+   edgeDataDefaults(g, attr = "geneCor") <- 0
+   edgeDataDefaults(g, attr = "beta") <- 0
+   edgeDataDefaults(g, attr = "purity") <- 0
+   edgeDataDefaults(g, attr = "fpCount") <- 0
+
+   for(target.gene in names(tbl.list)){
+      tbl <- tbl.list[[target.gene]]
+      tbl.fpCounts <- as.data.frame(table(tbl$gene))
+      tbl <- merge(tbl, tbl.fpCounts, by.x="gene", by.y="Var1")
+      colnames(tbl)[grep("Freq", colnames(tbl))] <- "fpCount"
+      dups <- which(duplicated(tbl$gene))
+      if(length(dups) > 0)
+         tbl <- tbl[-dups,]
+
+      tfs <- unique(tbl$gene)
+      all.nodes <- unique(c(target.gene, tfs))
+      new.nodes <- setdiff(all.nodes, nodes(g))
+      g <- addNode(new.nodes, g)
+   
+      nodeData(g, target.gene, "type") <- "targetGene"
+      nodeData(g, tfs, "type")         <- "TF"
+      nodeData(g, all.nodes, "label")  <- all.nodes
+   
+      g <- graph::addEdge(tbl$gene, target.gene, g)
+      edgeData(g, tbl$gene, target.gene, "edgeType") <- "regulatorySiteFor"
+      edgeData(g, tbl$gene, target.gene, "fpCount") <- tbl$fpCount
+      edgeData(g, tbl$gene, target.gene, "geneCor") <- tbl$gene.cor
+      edgeData(g, tbl$gene, target.gene, "purity") <- tbl$IncNodePurity
+      edgeData(g, tbl$gene, target.gene, "beta") <- tbl$beta
+      } # for target.gene
+   
+   node.degrees <- degree(g)
+   degree <- node.degrees$inDegree + node.degrees$outDegree
+   nodeData(g, names(degree), attr="degree") <- as.integer(degree)
+   g
+
+} # tableToReducedGraph
+#------------------------------------------------------------------------------------------------------------------------
+test.tableToReducedGraph <- function()
+{
+   genes <- c("STAT4", "STAT4", "STAT4", "STAT4", "TBR1", "HLF")
+   gene.cors <- c(0.9101553, 0.9101553, 0.9101553, 0.9101553, 0.8947867, 0.8872238)
+   betas <- c(0.1255503, 0.1255503, 0.1255503, 0.1255503, 0.1448829, 0.0000000)
+   IncNodePurities <- c(35.77897, 35.77897, 35.77897, 35.77897, 23.16562, 19.59660)
+   mfpstarts <- c(5627705, 5628679, 5629563, 5629581, 5629563, 5629100)
+   distances <- c(-2995, -2021, -1137, -1119, -1137, -1600)
+
+   tbl.1 <- data.frame(gene=genes, gene.cor=gene.cors, beta=betas, IncNodePurity=IncNodePurities, 
+                       mfpstart=mfpstarts, distance=distances, stringsAsFactors=FALSE)
+   
+   target.gene.1 <- "EPB41L3"
+   tbl.list <- list(tbl.1)
+   names(tbl.list) <- target.gene.1
+   g1 <- tableToReducedGraph(tbl.list)
+
+   checkTrue(all(c(genes, target.gene.1) %in% nodes(g1)))
+   checkEquals(sort(edgeNames(g1)), c("HLF~EPB41L3", "STAT4~EPB41L3", "TBR1~EPB41L3"))
+
+   checkEquals(as.integer(edgeData(g1, from="STAT4", to="EPB41L3", attr="fpCount")), 4)
+   checkEquals(as.integer(edgeData(g1, from="HLF", to="EPB41L3", attr="fpCount")), 1)
+   checkEquals(as.integer(edgeData(g1, from="TBR1", to="EPB41L3", attr="fpCount")), 1)
+
+   checkEqualsNumeric(unlist(edgeData(g1, attr="purity"), use.names=FALSE), c(19.59660, 35.77897, 23.16562))
+   checkEqualsNumeric(unlist(edgeData(g1, attr="geneCor"), use.names=FALSE), c(0.8872238, 0.9101553, 0.8947867))
+   checkEqualsNumeric(unlist(edgeData(g1, attr="beta"), use.names=FALSE), c(0.0000000, 0.1255503, 0.1448829))
+
+} # test.tableToReducedGraph
+#------------------------------------------------------------------------------------------------------------------------
 renderAsNetwork <- function(tbl, target.gene)
 {
    tbl.list <- list(tbl)
@@ -339,8 +416,8 @@ demo <- function()
    target.gene <- "MBP"
    target.gene <- "MOBP"
    target.gene <- "TREM2"
-   target.gene <- "TYROBP"
    target.gene <- "SCN2A"
+   target.gene <- "TYROBP"
 
    tbl <- createModel(target.gene, promoter.shoulder=10000,
                       mtx.expression=mtx.rosmap,
@@ -352,6 +429,36 @@ demo <- function()
    layoutByFootprintPosition(rcy)
 
 } # demo
+#------------------------------------------------------------------------------------------------------------------------
+demo.reducedGraph <- function()
+{
+   target.genes <- c("DLGAP1", "EPB41L3")
+
+   tbl.1 <- createModel(target.genes[1], promoter.shoulder=5000,
+                        mtx.expression=mtx.rosmap,
+                        absolute.lasso.beta.min=0.1,
+                        randomForest.purity.min=1,
+                        absolute.expression.correlation.min=0.05)
+
+   tbl.2 <- createModel(target.genes[2], promoter.shoulder=5000,
+                        mtx.expression=mtx.rosmap,
+                        absolute.lasso.beta.min=0.1,
+                        randomForest.purity.min=1,
+                        absolute.expression.correlation.min=0.05)
+
+   tbl.list <- list(tbl.1, tbl.2)
+   names(tbl.list) <- target.genes
+   g <- tableToReducedGraph(tbl.list)
+
+   rcy <- RCyjs(10000:10100, graph=g)
+   httpSetStyle(rcy, "reducedGraphStyle.js")
+   selectNodes(rcy, names(which(nodeData(g, attr="degree") == 1)))
+   hideSelectedNodes(rcy)
+   layout(rcy, "cose")
+
+   rcy
+
+} # demo.reducedGraph
 #------------------------------------------------------------------------------------------------------------------------
 if(!interactive())
     runTests()
