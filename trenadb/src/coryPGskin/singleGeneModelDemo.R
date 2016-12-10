@@ -1,3 +1,4 @@
+stopifnot(packageVersion("TReNA") >= '0.99.57')
 source("../renderGeneModel.R")
 
 target.gene <- "COL1A1"
