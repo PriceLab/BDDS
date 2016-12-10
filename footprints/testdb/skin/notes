@@ -3,15 +3,21 @@ status: hint database built: skin_hint
 HINT IN PROGRESS:
 on screen 37072
 skin data at /local/skin/hint
-chr 13 done
-chr 1:12 in progress (chr 1 24/46)
-chr 14:22 todo
+chr 1:18 done
+chr 19:22 in progress (21 20/46)
+index database todo
+create index regions_index on regions (loc, start, endpos);
+create index hits_index on hits (loc);
+
 make table read only todo
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE on hits FROM public;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE on regions FROM public;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE on hits FROM trena;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE on regions FROM trena;
+
 
 WELLINGTON IN PROGRESS:
-on screen 37700
-skin data at /local/skin/wellington
-chr 13 done
-chr 1:12 in progress (chr 1 27/46)
-chr 14:22 todo
-make table read only todo
+chr 1:22 done
+index database done
+table read only
+
