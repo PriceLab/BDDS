@@ -4,7 +4,7 @@ library(RCyjs)
 library(RUnit)
 #------------------------------------------------------------------------------------------------------------------------
 genome.db.uri    <- "postgres://whovian/hg38"             # has gtf and motifsgenes tables
-footprint.db.uri <- "postgres://whovian/wholeBrain"       # has hits and regions tables
+footprint.db.uri <- "postgres://whovian/skin_hint"        # has hits and regions tables
 if(!exists("fpf"))
    fpf <- FootprintFinder(genome.db.uri, footprint.db.uri, quiet=TRUE)
 
@@ -43,19 +43,19 @@ createModel <- function(target.gene, promoter.shoulder,
                         absolute.expression.correlation.min=0.1)
 {
    stopifnot(target.gene %in% rownames(mtx.expression))
-    
    #query <- sprintf("select * from hg38human where gene_name='%s' and moleculetype='gene'", target.gene)
    #tbl.tmp <- dbGetQuery(db.gtf, query)
    #gene.info <- list(chrom=tbl.tmp[1, "chr"], start=tbl.tmp[1, "start"])
 
    tbl.fp <- getFootprintsForGene(fpf, target.gene, size.upstream=promoter.shoulder,
                                   size.downstream=promoter.shoulder)
-   candidate.tfs <- sort(unique(tbl.fp$tf_name))
+   tbl.fp <- mapMotifsToTFsMergeIntoTable(fpf, tbl.fp)
+   candidate.tfs <- sort(unique(tbl.fp$tf))
    candidate.tfs <- intersect(rownames(mtx.expression), candidate.tfs)
    goi <- sort(unique(c(target.gene, candidate.tfs)))
 
    mtx.matched <- mtx.expression[goi,]
-   mtx.matched <- asinh(mtx.matched)    
+   #mtx.matched <- asinh(mtx.matched)    
 
    trena.lasso <- TReNA(mtx.matched, solver="lasso")
    trena.ranfor <- TReNA(mtx.matched, solver="randomForest")
@@ -81,20 +81,21 @@ createModel <- function(target.gene, promoter.shoulder,
    tbl.03$beta[is.na(tbl.03$beta)] <- 0
    tbl.03$IncNodePurity[is.na(tbl.03$IncNodePurity)] <- 0
 
-   fpStarts.list <- lapply(tbl.02$gene, function(gene) subset(tbl.fp, tf_name==gene)[, c("tf_name", "mfpstart")])
+   fpStarts.list <- lapply(tbl.02$gene, function(gene) subset(tbl.fp, tf==gene)[, c("tf", "start")])
    tbl.fpStarts <-  unique(do.call('rbind', fpStarts.list))
 
-   tbl.04 <- merge(tbl.03, tbl.fpStarts, by.x="gene", by.y="tf_name")
+   tbl.04 <- merge(tbl.03, tbl.fpStarts, by.x="gene", by.y="tf")
    tbl.04 <- tbl.04[order(abs(tbl.04$gene.cor), decreasing=TRUE),]
    
-   # footprint.start <- unlist(lapply(rownames(tbl.04), function(gene) subset(tbl.fp, tf_name==gene)$mfpstart[1]))
+   # footprint.start <- unlist(lapply(rownames(tbl.04), function(gene) subset(tbl.fp, tfe==gene)$mfpstart[1]))
+   
    gene.info <- subset(tbl.tss, gene_name==target.gene)[1,]
    if(gene.info$strand  == "+"){
       gene.start <- gene.info$start
-      tbl.04$distance <- gene.start - tbl.04$mfpstart
+      tbl.04$distance <- gene.start - tbl.04$start
    }else{
       gene.start <- gene.info$end
-      tbl.04$distance <-  tbl.04$mfpstart - gene.start
+      tbl.04$distance <-  tbl.04$start - gene.start
       }
 
    tbl.04
@@ -451,7 +452,7 @@ demo.reducedGraph <- function()
    g <- tableToReducedGraph(tbl.list)
 
    rcy <- RCyjs(10000:10100, graph=g)
-   httpSetStyle(rcy, "tyle-reducedGraph.js")
+   httpSetStyle(rcy, "style-reducedGraph.js")
    selectNodes(rcy, names(which(nodeData(g, attr="degree") == 1)))
    hideSelectedNodes(rcy)
    layout(rcy, "cose")
