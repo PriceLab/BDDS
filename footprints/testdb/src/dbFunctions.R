@@ -106,14 +106,14 @@ getDBConnection <- function(database) {
     host="whovian"
     
   } else if (database == "testwellington_whovian") {
-    user = "trenatest"
-    password = "trenatest"
+    user = "trena"
+    password = "trena"
     dbname = "testwellington"
     host = "whovian"
     
   } else if (database == "testhint_whovian") {
-    user = "trenatest"
-    password = "trenatest"
+    user = "trena"
+    password = "trena"
     dbname = "testhint"
     host = "whovian"
     
