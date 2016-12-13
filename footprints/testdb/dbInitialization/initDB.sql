@@ -44,3 +44,15 @@ set Role trenatest;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE on fimo FROM public;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE on fimo FROM trenatest;
 
+-- to make a test wellington database:
+psql -U databasemaker -h whovian
+create database testWellington;
+grant all privileges on database testWellington to trenatest;
+set Role trenatest;
+
+-- now the trenatest user can run code like createWellington.sql
+
+-- to index test wellington database:
+create index regions_index on regions (loc, start, endpos);
+create index hits_index on hits (loc);
+
