@@ -5,8 +5,8 @@ The code is based on examples in the `legacy_examples` directory, which can be c
 Currently, my workflow is:
 
 - [ ] create a database (using code in the `dbInitialization` folder)
-- [ ] make a new folder for running each batch of data
 - [ ] add the new databases to [src/dbFunctions.R](https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/src/dbFunctions.R)
+- [ ] make a new folder for running each batch of data
 - [ ] copy the `hint.R` and `wellington.R` master scripts to the newly created folder from a previous run (such as the `lymphoblast` folder)
 - [ ] process the data using the master scripts (in R) to fill the database
 - [ ] check database contents
@@ -93,10 +93,12 @@ grant all on table "hits" to trena;
     host="whovian"
 }
 ```
+- [ ] make a new folder for running each batch of data
+this folder should be in the <root>/testdb directory (e.g. *lymphoblast*, *skin*, and *brain*)
 
 - [ ] **copy the `hint.R` and `wellington.R` master scripts** to the newly created folder from a previous run (such as the `lymphoblast` folder)
 ```
-cd <root>\testdb
+cd <root>/testdb
 cp -r lymphoblast exampleRun
 ```
 
@@ -144,12 +146,12 @@ create index hits_index on hits (loc);
 - [ ] **make database read only**
 ```
 psql testwellington -U trena -h whovian
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE on hits FROM public;
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE on hits FROM trena;
+revoke insert, update, delete, truncate on hits from public;
+revoke insert, update, delete, truncate on hits from trena;
 
 \connect testhint
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE on hits FROM public;
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE on hits FROM trena;
+revoke insert, update, delete, truncate on hits from public;
+revoke insert, update, delete, truncate on hits from trena;
 
 \q
 ```
