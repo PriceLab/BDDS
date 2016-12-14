@@ -101,7 +101,11 @@ cp -r lymphoblast exampleRun
 ```
 
 - [ ] **process the data** using the master scripts (in R) to fill the database
+
 make the following changes in exampleRun/hint.R:
+
+line | original | new
+---- | -------- | ---
 line 21 | was: `hint.path <- "/local/lymphoblast/hint"` | now `hint.path <- "/local/Ben/BDDS/footprints/functionalTests/output/hint"`
 line 33 | was `db.hint <- getDBConnection("lymphoblast_hint_whovian")` | now `db.hint <- getDBConnection("testhint_whovian")`
 line 48 | was `chromosomes <- paste("chr", c(13), sep="")` | now `chromosomes <- paste("chr", c(19), sep="")`
