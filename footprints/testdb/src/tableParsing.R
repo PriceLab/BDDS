@@ -25,9 +25,14 @@ readDataTable <- function(directory, sampleID, nrows=NA, chromosome=NA)
 #-------------------------------------------------------------------------------
 mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, method = "DEFAULT")
 {
+  # reads in the name of the chromosome number from tbl.fp, which was previously broken up b chromosome
   chromosome <- unique(tbl.fp$chrom)
   # enforce treatment of just one chromosome at a time
+  # A rationale Ben used was that by splitting this up by chromosome, you only need to have the FIMO data loaded into memory for 1 chromosome at a time (because FIMO DB is huge)
+  # As such, in doing this merge, the function pulls the data from every sample for the same chromosome and, in series, performs the merge function
+  # That it's in series is where I think an immediate speed-up can happen
   stopifnot(length(chromosome) == 1)
+  # this may be unneccessary, but it also may slightly reduce the size of each run by taking the min and max location of each footprint on the chromosome, effectively cutting off the ends
   min.pos <- min(tbl.fp$start)
   max.pos <- max(tbl.fp$end)
   
@@ -35,17 +40,20 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, me
   query <- sprintf("select * from fimo_hg38 where chrom='%s' and start >= %d and endpos <= %d",
                    fimo.chromosome, min.pos, max.pos)
   
+  # This is the actual FIMO query that gets the chosen chromosome
   tbl.fimo <- dbGetQuery(dbConnection, query)
   colnames(tbl.fimo) <- c("motif", "chrom", "motif.start", "motif.end", "motif.strand", "fimo.score",
                           "fimo.pvalue", "empty", "motif.sequence")
   tbl.fimo <- tbl.fimo[, -grep("empty", colnames(tbl.fimo))]
   tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
   
+  # Converts the FIMO data into a GenomicRanges object, making the intersection with footprints fast
   gr.fimo <- with(tbl.fimo, GRanges(seqnames=chrom, IRanges(start=motif.start, end=motif.end)))
   
   # --- get some footprints
-  
+  # Converts the footprints into GenomicRanges objects
   gr.wellington <- with(tbl.fp,   GRanges(seqnames=chrom, IRanges(start=start, end=end)))
+  # the "within" is conservative. I will run this with "any" to increase the number of motif interesects
   tbl.overlaps <- as.data.frame(findOverlaps(gr.fimo, gr.wellington, type="within"))
   
   tbl.fimo$loc <- with(tbl.fimo, sprintf("%s:%d-%d", chrom, motif.start, motif.end))
@@ -58,6 +66,8 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, me
   
 } # mergeFimoWithFootprints
 #-------------------------------------------------------------------------------
+# I cant' explain this very well, but the output is actually two tables. One table is a running list of unique positions.
+# The other table is more comprehensive, and includes all the info for the footprints and FIMO
 splitTableIntoRegionsAndHits <- function(tbl, minid = "temp.filler.minid")
 {
   tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
