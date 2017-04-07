@@ -32,4 +32,3 @@ tbl <- createModel(target.gene, promoter.shoulder=5000,
 rcy <- renderAsNetwork(tbl, target.gene)
 layoutByFootprintPosition(rcy)
 httpSetStyle(rcy, "../coryADpresentationNov2016/style-purityControlsNodeSize.js")
-

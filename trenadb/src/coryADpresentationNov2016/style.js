@@ -11,6 +11,10 @@ vizmap = [
       "height":"mapData(degree, 0.0, 100.0, 20.0, 200.0)",
       "font-size":"64px"}},
 
+   {selector: "node[label=ZHK3]", css: {
+      "height":"500px",
+      "font-size":"64px"}},
+
 
    {selector: 'node[type="info"]', css: {
        "shape": "roundrectangle",

@@ -4,7 +4,8 @@ library(RCyjs)
 library(RUnit)
 #------------------------------------------------------------------------------------------------------------------------
 genome.db.uri    <- "postgres://whovian/hg38"             # has gtf and motifsgenes tables
-footprint.db.uri <- "postgres://whovian/skin_hint"        # has hits and regions tables
+#footprint.db.uri <- "postgres://whovian/skin_hint"        # has hits and regions tables
+footprint.db.uri <- "postgres://whovian/brain_hint"        # has hits and regions tables
 if(!exists("fpf"))
    fpf <- FootprintFinder(genome.db.uri, footprint.db.uri, quiet=TRUE)
 
@@ -49,6 +50,12 @@ createModel <- function(target.gene, promoter.shoulder,
 
    tbl.fp <- getFootprintsForGene(fpf, target.gene, size.upstream=promoter.shoulder,
                                   size.downstream=promoter.shoulder)
+   printf("footprints found: %d", nrow(tbl.fp))
+   
+   if(nrow(tbl.fp) == 0){
+       printf("no foot prints found within %d bases of tss of %s, no model possible", promoter.shoulder, target.gene)
+       return(NA)
+       }
    tbl.fp <- mapMotifsToTFsMergeIntoTable(fpf, tbl.fp)
    candidate.tfs <- sort(unique(tbl.fp$tf))
    candidate.tfs <- intersect(rownames(mtx.expression), candidate.tfs)
@@ -416,15 +423,15 @@ demo <- function()
    target.gene <- "APOE"
    target.gene <- "MBP"
    target.gene <- "MOBP"
-   target.gene <- "TREM2"
    target.gene <- "SCN2A"
    target.gene <- "TYROBP"
+   target.gene <- "TREM2"
 
-   tbl <- createModel(target.gene, promoter.shoulder=10000,
+   tbl <- createModel(target.gene, promoter.shoulder=100,
                       mtx.expression=mtx.rosmap,
-                      absolute.lasso.beta.min=0.1,
-                      randomForest.purity.min=1,
-                      absolute.expression.correlation.min=0.05)
+                      absolute.lasso.beta.min=0.3,
+                      randomForest.purity.min=6,
+                      absolute.expression.correlation.min=0.3)
 
    rcy <- renderAsNetwork(tbl, target.gene)
    layoutByFootprintPosition(rcy)
