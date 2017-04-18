@@ -117,6 +117,24 @@ getDBConnection <- function(database) {
     dbname = "testhint"
     host = "whovian"
     
+  } else if (database == "testwellington_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "testwellington"
+    host = "localhost"
+    
+  } else if (database == "testhint_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "testhint"
+    host = "localhost"
+
+  } else if (database == "fimo_localhost") {
+    user= "trena" 
+    password="trena" 
+    dbname="fimo"
+    host="localhost"
+
   } else if (database == "wellington_whovian") {
     user = "trena"
     password = "trena"
