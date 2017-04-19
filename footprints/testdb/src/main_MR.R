@@ -14,11 +14,29 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
   all.sampleIDs <- unlist(lapply(strsplit(list.files(sourcePath, 
                                                      "ENCSR.*.bed$"), 
                                           ".", fixed=TRUE), "[", 1))
-  
-  for(sampleID in all.sampleIDs){
-    printf("---- %s (%s) (%d/%d)", sampleID, chromosome, 
-           grep(sampleID, all.sampleIDs), length(all.sampleIDs))
 
+
+  # Create parallel structure here
+  library(foreach); library(doParallel)
+  cores <- detectCores()
+  cl <- makeCluster(cores[1] - 1)
+  registerDoParallel(cl)
+  
+  #give it the readDataTable function and other variables
+  clusterExport(cl, varlist = c("readDataTable", "all.sampleIDs",
+                                "sourcePath", "chromosome",
+				"fimo", "dbConnection",
+				"method", "minid",
+				"dbUser", "dbTable",
+				"mergeFimoWithFootprints",
+				"fillToDatabase", "databaseSummary",
+				"splitTableIntoRegionsAndHits",
+				"dbGetQuery"),
+				envir = environment())
+
+  foreach(i=1:length(all.sampleIDs)) %dopar% {
+
+  parFillDBs <- function(sampleID,sourcePath,chromosome,  
     if (isTest) {
       # nrow set for testing
       tbl.wellington <- readDataTable(sourcePath, sampleID, nrow = 10, 
@@ -31,15 +49,12 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
                                    dbConnection = fimo,
                                    method)
-    dbDisconnect(fimo)
     print("Merged. Now splitting table to regions and hits...")
     x <- splitTableIntoRegionsAndHits(tbl, minid)
     printf("filling %d regions, %d hits for %s", nrow(x$regions), 
-           nrow(x$hits), sampleID)
+           nrow(x$hits), sampleIDs[i])
     fillToDatabase(x$regions, x$hits, dbConnection, dbUser, dbTable)
     databaseSummary(dbConnection)
-    #close the connection
-    dbDisconnect(dbConnection)
   } # for sampleID
 } # fill.all.samples.by.chromosome
 #-------------------------------------------------------------------------------

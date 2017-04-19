@@ -12,7 +12,7 @@ source("../src/dependencies.R")
 source("../src/dbFunctions.R")
 source("../src/tableParsing.R")
 source("../src/tests.R")
-source("../src/main_SJ.R")
+source("../src/main.R")
 
 #-------------------------------------------------------------------------------
 # set path to hint output 
@@ -30,15 +30,11 @@ data.path <- "/scratch/data/test_set"
 # for whovian, use this:
 
 if(!exists("db.wellington"))
-#   db.wellington <- getDBConnection("testwellington_localhost")
-    # pass a string; don't connect yet
-    db.wellington <- "testwellington_localhost"
+   db.wellington <- getDBConnection("testwellington_localhost")
 
 if(!exists("db.fimo"))
-#   db.fimo <- getDBConnection("fimo_localhost")
-    # pass a string; don't connect yet
-    db.fimo <- "fimo_localhost"
-    
+   db.fimo <- getDBConnection("fimo_localhost")
+ 
 # for bdds-rds-globusgenomics.org, use:
 # if(!exists("db.hint"))
 #   db.hint <- getDBConnection("testhint")
@@ -46,12 +42,13 @@ if(!exists("db.fimo"))
 # if(!exists("db.fimo"))
 #   db.fimo <- getDBConnection("fimo")
 #-------------------------------------------------------------------------------
-
-#if(!interactive()){
+library(BiocParallel)
+if(!interactive()){
 #    chromosomes <- paste("chr", c(1:22), sep="")
     chromosomes <- paste("chr", c(13:22), sep="")
-    for(chromosome in chromosomes)
-        fillAllSamplesByChromosome(chromosome = chromosome,
+#    for(chromosome in chromosomes)
+
+    bplapply(chromosomes, fillAllSamplesByChromosome,
                                    dbConnection = db.wellington,
                                    fimo = db.fimo,
                                    minid = "testhint_par.minid",
@@ -60,5 +57,8 @@ if(!exists("db.fimo"))
                                    dbTable = "testwellington",
                                    sourcePath = data.path,
                                    isTest = FALSE,
-                                   method = "HINT")
-#    }
+                                   method = "HINT",
+#				   BPPARAM = SerialParam())
+				   BPPARAM = MulticoreParam(workers = 8))
+
+    }
