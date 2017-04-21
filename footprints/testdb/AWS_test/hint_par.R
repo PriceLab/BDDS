@@ -16,7 +16,7 @@ source("../src/main_SJ.R")
 
 #-------------------------------------------------------------------------------
 # set path to hint output 
-
+printf = function(...) print(noquote(sprintf(...)))
 # for makefile based tests for hint on CHR 19 on whovian, use this:
 data.path <- "/scratch/data/test_set"
 #test.sampleID <- "ENCSR000DBY"
@@ -49,7 +49,7 @@ if(!exists("db.fimo"))
 
 #if(!interactive()){
 #    chromosomes <- paste("chr", c(1:22), sep="")
-    chromosomes <- paste("chr", c(13:22), sep="")
+    chromosomes <- paste("chr", c(13:14), sep="")
     for(chromosome in chromosomes)
         fillAllSamplesByChromosome(chromosome = chromosome,
                                    dbConnection = db.wellington,

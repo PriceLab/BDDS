@@ -31,7 +31,9 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
 				"mergeFimoWithFootprints",
 				"fillToDatabase", "databaseSummary",
 				"splitTableIntoRegionsAndHits",
-				"getDBConnection","region.schema"),
+				"getDBConnection","region.schema",
+				"knownLocs","printf","hit.schema",
+				"appendToRegionsTable"),
 				envir = environment())
   junk <- clusterEvalQ(cl, library(GenomicRanges))
   junk <- clusterEvalQ(cl, library(RPostgreSQL))
@@ -55,8 +57,8 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
     
     print("Merged. Now splitting table to regions and hits...")
     x <- splitTableIntoRegionsAndHits(tbl, minid)
-    printf("filling %d regions, %d hits for %s", nrow(x$regions), 
-           nrow(x$hits), sampleIDs[i])
+    #printf("filling %d regions, %d hits for %s", nrow(x$regions), 
+    #       nrow(x$hits), all.sampleIDs[i])
 
     # Connect to footprint DB
     dbConnection <- getDBConnection(dbConnection)
