@@ -30,11 +30,12 @@ data.path <- "/scratch/data/test_set"
 # for whovian, use this:
 
 if(!exists("db.wellington"))
-   db.wellington <- getDBConnection("testwellington_localhost")
+#   db.wellington <- getDBConnection("testwellington_localhost")
+    db.wellington <- "testwellington_localhost"
 
 if(!exists("db.fimo"))
-   db.fimo <- getDBConnection("fimo_localhost")
- 
+#   db.fimo <- getDBConnection("fimo_localhost")
+    db.fimo <- "fimo_localhost"
 # for bdds-rds-globusgenomics.org, use:
 # if(!exists("db.hint"))
 #   db.hint <- getDBConnection("testhint")
@@ -42,13 +43,32 @@ if(!exists("db.fimo"))
 # if(!exists("db.fimo"))
 #   db.fimo <- getDBConnection("fimo")
 #-------------------------------------------------------------------------------
-library(BiocParallel)
-if(!interactive()){
+#if(!interactive()){
 #    chromosomes <- paste("chr", c(1:22), sep="")
     chromosomes <- paste("chr", c(13:22), sep="")
 #    for(chromosome in chromosomes)
 
-    bplapply(chromosomes, fillAllSamplesByChromosome,
+  # Create parallel structure here
+  library(foreach); library(doParallel)
+  cores <- detectCores()
+  cl <- makeCluster(cores[1] - 1)
+  registerDoParallel(cl)
+  
+  #give it the readDataTable function and other variables
+  clusterExport(cl, varlist = c("readDataTable","data.path",
+				"db.fimo", "db.wellington",
+				"mergeFimoWithFootprints",
+				"fillToDatabase", "databaseSummary",
+				"splitTableIntoRegionsAndHits",
+				"getDBConnection","region.schema",
+				"printf","hit.schema",
+				"appendToRegionsTable","appendToHitsTable"),
+				envir = environment())
+  junk <- clusterEvalQ(cl, library(GenomicRanges))
+  junk <- clusterEvalQ(cl, library(RPostgreSQL))
+
+  foreach(i=1:length(chromosomes)) %dopar% {
+    fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
                                    dbConnection = db.wellington,
                                    fimo = db.fimo,
                                    minid = "testhint_par.minid",
@@ -57,8 +77,6 @@ if(!interactive()){
                                    dbTable = "testwellington",
                                    sourcePath = data.path,
                                    isTest = FALSE,
-                                   method = "HINT",
-#				   BPPARAM = SerialParam())
-				   BPPARAM = MulticoreParam(workers = 8))
-
-    }
+                                   method = "HINT")
+				   }				  
+#    }

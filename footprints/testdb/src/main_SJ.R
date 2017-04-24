@@ -33,7 +33,7 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
 				"splitTableIntoRegionsAndHits",
 				"getDBConnection","region.schema",
 				"knownLocs","printf","hit.schema",
-				"appendToRegionsTable"),
+				"appendToRegionsTable","appendToHitsTable"),
 				envir = environment())
   junk <- clusterEvalQ(cl, library(GenomicRanges))
   junk <- clusterEvalQ(cl, library(RPostgreSQL))

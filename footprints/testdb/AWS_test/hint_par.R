@@ -49,7 +49,7 @@ if(!exists("db.fimo"))
 
 #if(!interactive()){
 #    chromosomes <- paste("chr", c(1:22), sep="")
-    chromosomes <- paste("chr", c(13:14), sep="")
+    chromosomes <- paste("chr", c(13), sep="")
     for(chromosome in chromosomes)
         fillAllSamplesByChromosome(chromosome = chromosome,
                                    dbConnection = db.wellington,

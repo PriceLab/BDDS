@@ -16,27 +16,10 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
                                           ".", fixed=TRUE), "[", 1))
 
 
-  # Create parallel structure here
-  library(foreach); library(doParallel)
-  cores <- detectCores()
-  cl <- makeCluster(cores[1] - 1)
-  registerDoParallel(cl)
-  
-  #give it the readDataTable function and other variables
-  clusterExport(cl, varlist = c("readDataTable", "all.sampleIDs",
-                                "sourcePath", "chromosome",
-				"fimo", "dbConnection",
-				"method", "minid",
-				"dbUser", "dbTable",
-				"mergeFimoWithFootprints",
-				"fillToDatabase", "databaseSummary",
-				"splitTableIntoRegionsAndHits",
-				"dbGetQuery"),
-				envir = environment())
-
-  foreach(i=1:length(all.sampleIDs)) %dopar% {
-
-  parFillDBs <- function(sampleID,sourcePath,chromosome,  
+  for(sampleID in all.sampleIDs){
+    printf("--- %s (%s) (%d/%d)" sampleID, chromosome,
+           grep(sampleID, all.sampleIDs), length(all.sampleIDs))
+	   
     if (isTest) {
       # nrow set for testing
       tbl.wellington <- readDataTable(sourcePath, sampleID, nrow = 10, 
@@ -49,12 +32,16 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
                                    dbConnection = fimo,
                                    method)
+    dbDisconnect(fimo)			  				   
+				   
     print("Merged. Now splitting table to regions and hits...")
     x <- splitTableIntoRegionsAndHits(tbl, minid)
     printf("filling %d regions, %d hits for %s", nrow(x$regions), 
            nrow(x$hits), sampleIDs[i])
     fillToDatabase(x$regions, x$hits, dbConnection, dbUser, dbTable)
     databaseSummary(dbConnection)
-  } # for sampleID
+    # Close the connection
+    dbDisconnect(dbConnection)
+
 } # fill.all.samples.by.chromosome
 #-------------------------------------------------------------------------------

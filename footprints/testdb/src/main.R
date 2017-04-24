@@ -19,6 +19,7 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
     printf("---- %s (%s) (%d/%d)", sampleID, chromosome, 
            grep(sampleID, all.sampleIDs), length(all.sampleIDs))
 
+
     if (isTest) {
       # nrow set for testing
       tbl.wellington <- readDataTable(sourcePath, sampleID, nrow = 10, 
@@ -28,6 +29,7 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
                                           chromosome)
     }
     print("Data table read. Merging with Fimo...")
+    fimo <- getDBConnection(fimo)
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
                                    dbConnection = fimo,
                                    method)
@@ -36,6 +38,8 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
     x <- splitTableIntoRegionsAndHits(tbl, minid)
     printf("filling %d regions, %d hits for %s", nrow(x$regions), 
            nrow(x$hits), sampleID)
+	   
+    dbConnection <- getDBConnection(dbConnection)	   
     fillToDatabase(x$regions, x$hits, dbConnection, dbUser, dbTable)
     databaseSummary(dbConnection)
     #close the connection
