@@ -40,8 +40,24 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
            nrow(x$hits), sampleID)
 	   
     dbConnection <- getDBConnection(dbConnection)	   
-    browser()
+#    browser()
+
+    # Trim the tables using a subset
+    regions.locs <- dbGetQuery(dbConnection, "select loc from regions")
+    x$regions <- subset(x$regions, (!loc %in% regions.locs$loc))
+    
     fillToDatabase(x$regions, x$hits, dbConnection, dbUser, dbTable)
+
+    # Fill via loop
+#    simpleLoopFill(dbConnection, x$regions, "regions")
+#    simpleLoopFill(dbConnection, x$hits, "hits")
+
+    ## Fill via tempTable
+    # regions.ID <- sprintf("%s_%s_regions",sampleID,chromosome) 
+    # hits.ID <- sprintf("%s_%s_hits",sampleID, chromosome)
+    # tempTableFill(dbConnection, x$regions, regions.ID, "regions")
+    # tempTableFill(dbConnection, x$hits, hits.ID, "hits")
+    
     databaseSummary(dbConnection)
     #close the connection
     dbDisconnect(dbConnection)

@@ -45,7 +45,7 @@ if(!exists("db.fimo"))
 #-------------------------------------------------------------------------------
 #if(!interactive()){
 #    chromosomes <- paste("chr", c(1:22), sep="")
-    chromosomes <- paste("chr", c(22), sep="")
+    chromosomes <- paste("chr", c(21,22), sep="")
 #    for(chromosome in chromosomes)
 
   # Create parallel structure here
@@ -66,6 +66,7 @@ if(!exists("db.fimo"))
 				envir = environment())
   junk <- clusterEvalQ(cl, library(GenomicRanges))
   junk <- clusterEvalQ(cl, library(RPostgreSQL))
+#  junk <- clusterEvalQ(cl, source("./fillFunctions.R"))
 
   foreach(i=1:length(chromosomes)) %dopar% {
     fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
