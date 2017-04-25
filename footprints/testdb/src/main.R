@@ -40,6 +40,7 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
            nrow(x$hits), sampleID)
 	   
     dbConnection <- getDBConnection(dbConnection)	   
+    browser()
     fillToDatabase(x$regions, x$hits, dbConnection, dbUser, dbTable)
     databaseSummary(dbConnection)
     #close the connection

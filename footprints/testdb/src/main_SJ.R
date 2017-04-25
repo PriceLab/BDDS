@@ -41,16 +41,16 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
   foreach(i=1:length(all.sampleIDs)) %dopar% {
     if (isTest) {
       # nrow set for testing
-      tbl.wellington <- readDataTable(sourcePath, all.sampleIDs[i], nrow = 10, 
+      tbl.wellington <- readDataTable(sourcePath, all.sampleIDs[[i]], nrow = 10, 
                                           chromosome)
     } else {
-      tbl.wellington <- readDataTable(sourcePath, all.sampleIDs[i], NA, 
+      tbl.wellington <- readDataTable(sourcePath, all.sampleIDs[[i]], NA, 
                                           chromosome)
     }
     print("Data table read. Merging with Fimo...")
     # Connect to fimo
     fimo <- getDBConnection(fimo)
-    tbl <- mergeFimoWithFootprints(tbl.wellington, all.sampleIDs[i], 
+    tbl <- mergeFimoWithFootprints(tbl.wellington, all.sampleIDs[[i]], 
                                    dbConnection = fimo,
                                    method)
     dbDisconnect(fimo)
