@@ -29,24 +29,24 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
                                           chromosome)
     }
     print("Data table read. Merging with Fimo...")
-    fimo <- getDBConnection(fimo)
+    fimo.con <- getDBConnection(fimo)
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
-                                   dbConnection = fimo,
+                                   dbConnection = fimo.con,
                                    method)
-    dbDisconnect(fimo)
+    dbDisconnect(fimo.con)
     print("Merged. Now splitting table to regions and hits...")
     x <- splitTableIntoRegionsAndHits(tbl, minid)
     printf("filling %d regions, %d hits for %s", nrow(x$regions), 
            nrow(x$hits), sampleID)
 	   
-    dbConnection <- getDBConnection(dbConnection)	   
+    dbConnection.con <- getDBConnection(dbConnection)	   
 #    browser()
 
     # Trim the tables using a subset
-    regions.locs <- dbGetQuery(dbConnection, "select loc from regions")
+    regions.locs <- dbGetQuery(dbConnection.con, "select loc from regions")
     x$regions <- subset(x$regions, (!loc %in% regions.locs$loc))
     
-    fillToDatabase(x$regions, x$hits, dbConnection, dbUser, dbTable)
+    fillToDatabase(x$regions, x$hits, dbConnection.con, dbUser, dbTable)
 
     # Fill via loop
 #    simpleLoopFill(dbConnection, x$regions, "regions")
@@ -58,9 +58,9 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
     # tempTableFill(dbConnection, x$regions, regions.ID, "regions")
     # tempTableFill(dbConnection, x$hits, hits.ID, "hits")
     
-    databaseSummary(dbConnection)
+    databaseSummary(dbConnection.con)
     #close the connection
-    dbDisconnect(dbConnection)
+    dbDisconnect(dbConnection.con)
   } # for sampleID
 } # fill.all.samples.by.chromosome
 #-------------------------------------------------------------------------------

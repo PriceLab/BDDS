@@ -45,7 +45,7 @@ if(!exists("db.fimo"))
 #-------------------------------------------------------------------------------
 #if(!interactive()){
 #    chromosomes <- paste("chr", c(1:22), sep="")
-    chromosomes <- paste("chr", c(21,22), sep="")
+    chromosomes <- paste("chr", c(1:22), sep="")
 #    for(chromosome in chromosomes)
 
   # Create parallel structure here
