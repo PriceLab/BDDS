@@ -19,7 +19,6 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
     printf("---- %s (%s) (%d/%d)", sampleID, chromosome, 
            grep(sampleID, all.sampleIDs), length(all.sampleIDs))
 
-
     if (isTest) {
       # nrow set for testing
       tbl.wellington <- readDataTable(sourcePath, sampleID, nrow = 10, 
@@ -34,29 +33,19 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
                                    dbConnection = fimo.con,
                                    method)
     dbDisconnect(fimo.con)
+
     print("Merged. Now splitting table to regions and hits...")
     x <- splitTableIntoRegionsAndHits(tbl, minid)
     printf("filling %d regions, %d hits for %s", nrow(x$regions), 
            nrow(x$hits), sampleID)
 	   
     dbConnection.con <- getDBConnection(dbConnection)	   
-#    browser()
 
     # Trim the tables using a subset
     regions.locs <- dbGetQuery(dbConnection.con, "select loc from regions")
     x$regions <- subset(x$regions, (!loc %in% regions.locs$loc))
     
     fillToDatabase(x$regions, x$hits, dbConnection.con, dbUser, dbTable)
-
-    # Fill via loop
-#    simpleLoopFill(dbConnection, x$regions, "regions")
-#    simpleLoopFill(dbConnection, x$hits, "hits")
-
-    ## Fill via tempTable
-    # regions.ID <- sprintf("%s_%s_regions",sampleID,chromosome) 
-    # hits.ID <- sprintf("%s_%s_hits",sampleID, chromosome)
-    # tempTableFill(dbConnection, x$regions, regions.ID, "regions")
-    # tempTableFill(dbConnection, x$hits, hits.ID, "hits")
     
     databaseSummary(dbConnection.con)
     #close the connection
