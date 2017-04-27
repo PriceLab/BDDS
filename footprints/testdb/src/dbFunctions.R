@@ -8,114 +8,18 @@ getDBConnection <- function(database) {
     password="ben_PASS"
     dbname="trenatest" 
     host="bdds-rds.globusgenomics.org"
-    
-  } else if (database == "lymphoblast_wellington_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="lymphoblast_wellington"
-    host="whovian"
 
-  } else if (database == "lymphoblast_hint_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="lymphoblast_hint"
-    host="whovian"
-    
-  } else if (database == "skin_wellington_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="skin_wellington"
-    host="whovian"
-
-  } else if (database == "skin_hint_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="skin_hint"
-    host="whovian"
-    
-   } else if (database == "brain_1_hint_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="brain_1_hint"
-    host="whovian"
-
-  } else if (database == "brain_1_wellington_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="brain_1_wellington"
-    host="whovian"
-
-  } else if (database == "brain_2_hint_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="brain_2_hint"
-    host="whovian"
-
-  } else if (database == "brain_2_wellington_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="brain_2_wellington"
-    host="whovian"
-
-  } else if (database == "brain_3_hint_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="brain_3_hint"
-    host="whovian"
-
-  } else if (database == "brain_3_wellington_whovian") {
-    user= "trena"
-    password="trena"
-    dbname="brain_3_wellington"
-    host="whovian"
-
-  } else if (database == "fimo") {
-    user= "ben"
-    password="ben_PASS"
-    dbname="fimo"
-    host="bdds-rds.globusgenomics.org"
-    
-  } else if (database == "testwellington") {
-    user = "ben"
-    password = "ben_PASS"
-    dbname = "testwellington"
-    host = "bdds-rds.globusgenomics.org"
-    
-  } else if (database == "testhint") {
-    user = "ben"
-    password = "ben_PASS"
-    dbname = "testhint"
-    host = "bdds-rds.globusgenomics.org"
-    
-  } else if (database == "wellington") {
-    user= "ben"
-    password="ben_PASS"
-    dbname="wellington" 
-    host="bdds-rds.globusgenomics.org"
-    
-  } else if (database == "trenatest_whovian") {
-    user= "trenatest"
-    password="trenatest"
-    dbname="trenatest" 
-    host="whovian"
-    
-  } else if (database == "fimo_whovian") {
-    user= "trena" 
-    password="trena" 
-    dbname="fimo"
-    host="whovian"
-    
-  } else if (database == "testwellington_whovian") {
+  } else if (database == "test_brain_wellington_localhost") {
     user = "trena"
     password = "trena"
-    dbname = "testwellington"
-    host = "whovian"
+    dbname = "test_brain_wellington"
+    host = "localhost"
     
-  } else if (database == "testhint_whovian") {
+  } else if (database == "test_brain_hint_localhost") {
     user = "trena"
     password = "trena"
-    dbname = "testhint"
-    host = "whovian"
+    dbname = "test_brain_hint"
+    host = "localhost"
     
   } else if (database == "testwellington_localhost") {
     user = "trena"

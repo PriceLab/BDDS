@@ -8,7 +8,7 @@
 
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/test_set"
+data.path <- "/scratch/data/footprints"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
@@ -28,11 +28,9 @@ if(!interactive()){
     registerDoParallel(cl)      
 
     # Pass path variables and source files
-    clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
+    clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
                   envir = environment())
     
-    junk <- clusterEvalQ(cl, library(GenomicRanges))
-    junk <- clusterEvalQ(cl, library(RPostgreSQL))
     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
@@ -42,11 +40,11 @@ if(!interactive()){
     # Run on all 24 possible chromosomes at once
     foreach(i=1:length(chromosomes)) %dopar% {
         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-                                   dbConnection = db.wellington,
+                                   dbConnection = db.hint,
                                    fimo = db.fimo,
                                    minid = "testhint_par.minid",
                                    dbUser = "trena",
-                                   dbTable = "testwellington",
+                                   dbTable = "test_brain_hint",
                                    sourcePath = data.path,
                                    isTest = FALSE,
                                    method = "HINT")
@@ -57,7 +55,8 @@ print("Database fill complete; creating indices")
 
 # Index the database
 source("../src/dbFunctions.R")
-dbConnection <- getDBConnection(db.wellington)
+source("../src/dependencies.R")
+dbConnection <- getDBConnection(db.hint)
 dbSendQuery(dbConnection, "create index regions_index on regions (loc, start, endpos);")
 dbSendQuery(dbConnection, "create index hits_index on hits (loc);")
 dbDisconnect(dbConnection)
