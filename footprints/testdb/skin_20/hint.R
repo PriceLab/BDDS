@@ -9,12 +9,12 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints"
+data.path <- "/scratch/data/footprints/skin_hint_20"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
 if(!exists("db.hint"))
-    db.hint <- "test_brain_hint_localhost"
+    db.hint <- "skin_hint_20_localhost"
 
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
@@ -43,9 +43,9 @@ if(!interactive()){
         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
                                    dbConnection = db.hint,
                                    fimo = db.fimo,
-                                   minid = "testhint_par.minid",
+                                   minid = "skin_hint_20.minid",
                                    dbUser = "trena",
-                                   dbTable = "test_brain_hint",
+                                   dbTable = "skin_hint_20",
                                    sourcePath = data.path,
                                    isTest = FALSE,
                                    method = "HINT")

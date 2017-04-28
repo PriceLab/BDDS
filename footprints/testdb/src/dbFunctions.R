@@ -20,6 +20,18 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "test_brain_hint"
     host = "localhost"
+
+  } else if (database == "skin_wellington_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "skin_wellington_20"
+    host = "localhost"
+    
+  } else if (database == "skin_hint_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "skin_hint_20"
+    host = "localhost"    
     
   } else if (database == "testwellington_localhost") {
     user = "trena"

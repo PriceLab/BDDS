@@ -9,12 +9,12 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints"
+data.path <- "/scratch/data/footprints/skin_wellington_20"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
-if(!exists("db.hint"))
-    db.hint <- "test_brain_hint_localhost"
+if(!exists("db.wellington"))
+    db.wellington <- "skin_wellington_20_localhost"
 
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
@@ -29,7 +29,7 @@ if(!interactive()){
     registerDoParallel(cl)      
 
     # Pass path variables and source files
-    clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
+    clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
                   envir = environment())
     
     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
@@ -41,14 +41,14 @@ if(!interactive()){
     # Run on all 24 possible chromosomes at once
     foreach(i=1:length(chromosomes)) %dopar% {
         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-                                   dbConnection = db.hint,
+                                   dbConnection = db.wellington,
                                    fimo = db.fimo,
-                                   minid = "testhint_par.minid",
+                                   minid = "skin_wellington_20.minid",
                                    dbUser = "trena",
-                                   dbTable = "test_brain_hint",
+                                   dbTable = "skin_wellington_20",
                                    sourcePath = data.path,
                                    isTest = FALSE,
-                                   method = "HINT")
+                                   method = "WELLINGTON")
 				   }				  
 }
 
