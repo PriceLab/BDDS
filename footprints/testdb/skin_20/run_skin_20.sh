@@ -64,5 +64,5 @@ EOF
 
 cd /scratch/github/BDDS/footprints/testdb/skin_20
 
-nohup R -f hint.R &
-nohup R -f wellington.R &
+R -f hint.R &
+R -f wellington.R &

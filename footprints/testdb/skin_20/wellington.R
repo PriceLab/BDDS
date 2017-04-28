@@ -57,7 +57,7 @@ print("Database fill complete; creating indices")
 # Index the database
 source("../src/dbFunctions.R")
 source("../src/dependencies.R")
-dbConnection <- getDBConnection(db.hint)
+dbConnection <- getDBConnection(db.wellington)
 dbSendQuery(dbConnection, "create index regions_index on regions (loc, start, endpos);")
 dbSendQuery(dbConnection, "create index hits_index on hits (loc);")
 dbDisconnect(dbConnection)
