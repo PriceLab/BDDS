@@ -8,7 +8,7 @@ getDBConnection <- function(database) {
     password="ben_PASS"
     dbname="trenatest" 
     host="bdds-rds.globusgenomics.org"
-
+ 
   } else if (database == "test_brain_wellington_localhost") {
     user = "trena"
     password = "trena"
@@ -20,7 +20,19 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "test_brain_hint"
     host = "localhost"
-
+ 
+  } else if (database == "brain_wellington_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "brain_wellington_20"
+    host = "localhost"
+    
+  } else if (database == "brain_hint_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "brain_hint_20"
+    host = "localhost"
+    
   } else if (database == "skin_wellington_20_localhost") {
     user = "trena"
     password = "trena"

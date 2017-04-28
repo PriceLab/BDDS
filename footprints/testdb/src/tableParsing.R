@@ -54,7 +54,7 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, me
   # Converts the footprints into GenomicRanges objects
   gr.wellington <- with(tbl.fp,   GRanges(seqnames=chrom, IRanges(start=start, end=end)))
   # the "within" is conservative. I will run this with "any" to increase the number of motif interesects
-  tbl.overlaps <- as.data.frame(findOverlaps(gr.fimo, gr.wellington, type="within"))
+  tbl.overlaps <- as.data.frame(findOverlaps(gr.fimo, gr.wellington, type="any"))
   
   tbl.fimo$loc <- with(tbl.fimo, sprintf("%s:%d-%d", chrom, motif.start, motif.end))
   tbl.fimo$method <- method
