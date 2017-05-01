@@ -42,151 +42,75 @@ The shell script carries out two functions:
 
 In order to create the proper databases and run the proper scripts, it's vital to replace the existing database and file path names with your new ones. For our test case, that means the following substitutions:
 
-**Current up to here**
-
-make the following changes in exampleRun/hint.R:
-
 line | original | new
 ---- | -------- | ---
-line 21 | was: `hint.path <- "/local/lymphoblast/hint"` | now `hint.path <- "/local/Ben/BDDS/footprints/functionalTests/output/hint"`
-line 33 | was `db.hint <- getDBConnection("lymphoblast_hint_whovian")` | now `db.hint <- getDBConnection("testhint_whovian")`
-line 48 | was `chromosomes <- paste("chr", c(13), sep="")` | now `chromosomes <- paste("chr", c(19), sep="")`
-line 53 | was `minid = "lymphoblast.filler.minid",` | now `minid = "testexample.filler.minid",`
-line 56 | was `dbTable = "lymphoblast_hint",` | now `dbTable = "testhint",`
+line 6 | was: `create database skin_wellington_20;` | now `create database test_wellington;`
+line 7 | was: `grant all privileges on database skin_wellington_20 to trena;` | now `grant all privileges on database test_wellington to trena;`
+line 8 | was: `create database skin_hint_20;` | now `create database test_hint;`
+line 9 | was: `grant all privileges on database skin_hint_20 to trena;` | now `grant all privileges on database test_hint to trena;`
+line 11 | was `\connect skin_wellington_20` | now `\connect test_wellington`
+line 37 | was `\connect skin_hint_20` | now `\connect test_hint`
+line 65 | was `cd /scratch/github/BDDS/footprints/testdb/skin_20` | now `cd /scratch/github/BDDS/footprints/testdb/test_dbs`
 
-similarly, exampleRun/wellington.R should be edited to point to the testwellington_whovian database (edit the same lines in wellington.R)
+Save the changes in this script; you don't **need** to rename it, but it is highly recommended for clarity. In this case, we'll rename it to `run_test.sh`
 
-then the scripts can be run with `R -f hint.R` and `R -f wellington.R`
+- [ ] **Add the new databases to [src/dbFunctions.R](https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/src/dbFunctions.R)**
 
-- [ ] **Create database** (this assumes that the psql database and users have been set up as described in [initDB.sql](https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/dbInitialization/initDB.sql)) (this step is also described in [createTestHint.sql](https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/dbInitialization/createTestHint.sql))
+Following the existing format in the file, add databases of the same name, using "localhost" as the host if you're running on the same machine as the databases:
+
 ```
-psql -U databasemaker -h whovian
-create database testwellington;
-grant all privileges on database testwellington to trena;
-create database testhint;
-grant all privileges on database testhint to trena;
-\q
-
-psql testwellington -U trena -h whovian
-create table regions(loc varchar primary key,
-                     chrom varchar,
-                     start int,
-                     endpos int);
-
-grant all on table "regions" to trena;
-
-create table hits(loc varchar,
-                  type varchar,
-                  name varchar,
-                  length int,
-                  strand char(1),
-                  sample_id varchar,
-                  method varchar,
-                  provenance varchar,
-                  score1 real,
-                  score2 real,
-                  score3 real,
-                  score4 real,
-                  score5 real,
-                  score6 real);
-
-grant all on table "hits" to trena;
-
-\connect testhint;
-
-create table regions(loc varchar primary key,
-                     chrom varchar,
-                     start int,
-                     endpos int);
-
-grant all on table "regions" to trena;
-
-create table hits(loc varchar,
-                  type varchar,
-                  name varchar,
-                  length int,
-                  strand char(1),
-                  sample_id varchar,
-                  method varchar,
-                  provenance varchar,
-                  score1 real,
-                  score2 real,
-                  score3 real,
-                  score4 real,
-                  score5 real,
-                  score6 real);
-
-grant all on table "hits" to trena;
-
-\q
-```
-
-- [ ] **add the new databases to [src/dbFunctions.R](https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/src/dbFunctions.R)**
-```
-} else if (database == "testwellington_whovian") {
+} else if (database == "test_wellington_localhost") {
     user= "trena"
     password="trena"
-    dbname="testwellington"
-    host="whovian"
+    dbname="test_wellington"
+    host="localhost"
 
-} else if (database == "testhint_whovian") {
+} else if (database == "test_hint_localhost") {
     user= "trena"
     password="trena"
-    dbname="testhint"
-    host="whovian"
+    dbname="test_hint"
+    host="localhost"
 }
 ```
-- [ ] make a new folder for running each batch of data
-this folder should be in the <root>/testdb directory (e.g. *lymphoblast*, *skin*, and *brain*)
 
-- [ ] **copy the `hint.R` and `wellington.R` master scripts** to the newly created folder from a previous run (such as the `lymphoblast` folder)
-```
-cd <root>/testdb
-cp -r lymphoblast exampleRun
-```
+Note that the `"database"` variable is simply a string name, not a parameter used in the database connection. It is crucial that the 4 parameters match your database connection. In the above case, we're using the user `trena` with password `trena` on the `test_wellington` and `test_hint` databases, both of which are on the local machine. 
 
-- [ ] **process the data** using the master scripts (in R) to fill the database
+**Current to here**
 
-make the following changes in exampleRun/hint.R:
+- [ ] Alter the file paths, database names, and IDs in the master scripts (`hint.R`, `wellington.R`, etc.) 
+
+In your project directory, change the paths, names, and IDs that point to your footprints, databases, and other relevant variables. For example, I will make the following changes in hint.R:
 
 line | original | new
 ---- | -------- | ---
-line 21 | was: `hint.path <- "/local/lymphoblast/hint"` | now `hint.path <- "/local/Ben/BDDS/footprints/functionalTests/output/hint"`
-line 33 | was `db.hint <- getDBConnection("lymphoblast_hint_whovian")` | now `db.hint <- getDBConnection("testhint_whovian")`
-line 48 | was `chromosomes <- paste("chr", c(13), sep="")` | now `chromosomes <- paste("chr", c(19), sep="")`
-line 53 | was `minid = "lymphoblast.filler.minid",` | now `minid = "testexample.filler.minid",`
-line 56 | was `dbTable = "lymphoblast_hint",` | now `dbTable = "testhint",`
+line 12 | was: `data.path <- "/scratch/data/test_set/brain_hint_20"` | now `hint.path <- "/scratch/github/BDDS/footprints/functionalTests/output/hint"`
+line 17 | was `db.hint <- "brain_hint_20_localhost"` | now `db.hint <- "test_hint_localhost"`
+line 53 | was `minid = "brain_hint_20.minid",` | now `minid = "testexample.filler.minid",`
+line 56 | was `dbTable = "brain_hint_20",` | now `dbTable = "test_hint",`
 
-similarly, exampleRun/wellington.R should be edited to point to the testwellington_whovian database (edit the same lines in wellington.R)
+Similarly, the wellington.R should be edited to point to the test_wellington_localhost database and the correct data path (edit the same lines in wellington.R).
 
-then the scripts can be run with `R -f hint.R` and `R -f wellington.R`
+- [ ] Run the shell script using the nohup option to collect output
 
-- [ ] **check database contents**
+From your project directory (in this case, the `test_dbs` directory) with your master scripts, run the shell script:
+
 ```
-psql testwellington -U trena -h whovian
+nohup run_test.sh
+```
+
+- [ ] **Check database contents**
+```
+psql test_wellington -U trena -h whovian
 select * from hits limit 10;
 select * from regions limit 10;
 
-\connect testhint
+\connect test_hint
 select * from hits limit 10;
 select * from regions limit 10;
 \q
 ```
 
-- [ ] **index the databases**
-```
-psql testwellington -U trena -h whovian
-create index regions_index on regions (loc, start, endpos);
-create index hits_index on hits (loc);
-
-\connect testhint
-create index regions_index on regions (loc, start, endpos);
-create index hits_index on hits (loc);
-
-\q
-```
-
-- [ ] **make database read only**
+- [ ] **Make database read only**
 ```
 psql testwellington -U trena -h whovian
 revoke insert, update, delete, truncate on hits from public;
