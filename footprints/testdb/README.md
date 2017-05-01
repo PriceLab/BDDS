@@ -50,7 +50,7 @@ line 8 | was: `create database skin_hint_20;` | now `create database test_hint;`
 line 9 | was: `grant all privileges on database skin_hint_20 to trena;` | now `grant all privileges on database test_hint to trena;`
 line 11 | was `\connect skin_wellington_20` | now `\connect test_wellington`
 line 37 | was `\connect skin_hint_20` | now `\connect test_hint`
-line 65 | was `cd /scratch/github/BDDS/footprints/testdb/skin_20` | now `cd /scratch/github/BDDS/footprints/testdb/test_run`
+line 65 | was `cd /scratch/github/BDDS/footprints/testdb/skin_20` | now `cd /scratch/github/BDDS/footprints/testdb/test_dbs`
 
 Save the changes in this script; you don't **need** to rename it, but it is highly recommended for clarity. In this case, we'll rename it to `run_test.sh`
 
@@ -73,7 +73,7 @@ Following the existing format in the file, add databases of the same name, using
 }
 ```
 
-Note that the `"database"` variable is simply a string name, not a parameter used in the database connection. It is crucial that the 4 parameters match your database connection. 
+Note that the `"database"` variable is simply a string name, not a parameter used in the database connection. It is crucial that the 4 parameters match your database connection. In the above case, we're using the user `trena` with password `trena` on the `test_wellington` and `test_hint` databases, both of which are on the local machine. 
 
 **Current to here**
 
@@ -92,7 +92,7 @@ Similarly, the wellington.R should be edited to point to the test_wellington_loc
 
 - [ ] Run the shell script using the nohup option to collect output
 
-From your project directory with your master scripts, run the shell script:
+From your project directory (in this case, the `test_dbs` directory) with your master scripts, run the shell script:
 
 ```
 nohup run_test.sh
