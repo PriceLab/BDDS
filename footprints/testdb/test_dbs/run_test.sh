@@ -3,12 +3,12 @@
 cd /scratch/db
 sudo -u postgres psql postgres << EOF
 
-create database brain_wellington_20;
-grant all privileges on database brain_wellington_20 to trena;
-create database brain_hint_20;
-grant all privileges on database brain_hint_20 to trena;
+create database test_wellington;
+grant all privileges on database test_wellington to trena;
+create database test_hint;
+grant all privileges on database test_hint to trena;
 
-\connect brain_wellington_20
+\connect test_wellington
 
 create table regions(loc varchar primary key,
 		     chrom varchar,
@@ -18,8 +18,6 @@ create table regions(loc varchar primary key,
 grant all on table "regions" to trena;
 
 create table hits(loc varchar,
-                  fp_start int,
-                  fp_end int,
 		  type varchar,
 		  name varchar,
 		  length int,
@@ -36,7 +34,7 @@ create table hits(loc varchar,
 
 grant all on table "hits" to trena;
 
-\connect brain_hint_20
+\connect test_hint
 
 create table regions(loc varchar primary key,
 		     chrom varchar,
@@ -46,8 +44,6 @@ create table regions(loc varchar primary key,
 grant all on table "regions" to trena;
 
 create table hits(loc varchar,
-                  fp_start int,
-                  fp_end int,
 		  type varchar,
 		  name varchar,
 		  length int,
@@ -66,7 +62,7 @@ grant all on table "hits" to trena;
 
 EOF
 
-cd /scratch/github/BDDS/footprints/testdb/brain_20
+cd /scratch/github/BDDS/footprints/testdb/test_dbs
 
 R -f hint.R &
 R -f wellington.R &

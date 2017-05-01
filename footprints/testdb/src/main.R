@@ -9,7 +9,7 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
                                        isTest = True,
                                        method = "DEFAULT")
 {
-  knownLocs <<- new.env(parent=emptyenv())
+#  knownLocs <<- new.env(parent=emptyenv())
   
   all.sampleIDs <- unlist(lapply(strsplit(list.files(sourcePath, 
                                                      "ENCSR.*.bed$"), 

@@ -43,15 +43,27 @@ getDBConnection <- function(database) {
     user = "trena"
     password = "trena"
     dbname = "skin_hint_20"
+    host = "localhost"
+    
+  } else if (database == "lymphoblast_wellington_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "lymphoblast_wellington_20"
+    host = "localhost"
+    
+  } else if (database == "lymphoblast_hint_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "lymphoblast_hint_20"
     host = "localhost"    
     
-  } else if (database == "testwellington_localhost") {
+  } else if (database == "test_wellington_localhost") {
     user = "trena"
     password = "trena"
     dbname = "testwellington"
     host = "localhost"
     
-  } else if (database == "testhint_localhost") {
+  } else if (database == "test_hint_localhost") {
     user = "trena"
     password = "trena"
     dbname = "testhint"
@@ -82,7 +94,7 @@ region.schema <- function()
 #-------------------------------------------------------------------------------
 hit.schema <- function()
 {
-  c("loc", "type", "name", "length", 
+  c("loc", "fp_start", "fp_end","type", "name", "length", 
     "strand", "sample_id", "method", "provenance",
     "score1", "score2", "score3", "score4", "score5", "score6")
 } # hit.schema

@@ -2,12 +2,12 @@ CREATE DATABASE
 GRANT
 CREATE DATABASE
 GRANT
-You are now connected to database "skin_wellington_20" as user "postgres".
+You are now connected to database "test_wellington" as user "postgres".
 CREATE TABLE
 GRANT
 CREATE TABLE
 GRANT
-You are now connected to database "skin_hint_20" as user "postgres".
+You are now connected to database "test_hint" as user "postgres".
 CREATE TABLE
 GRANT
 CREATE TABLE
@@ -52,116 +52,116 @@ Type 'q()' to quit R.
 
 > # users can either step through this file, or call this file with 
 > # r -f example.R
+> # users can either step through this file, or call this file with 
 > 
-> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+> > # r -f example.R
+# THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+> 
 > # database is in ../dbInitialization/createHintTest.sql
+> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
 > 
+> # database is in ../dbInitialization/createHintTest.sql
 > # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
 > 
+> 
+> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
 > print(date())
-[1] "Fri Apr 28 00:26:45 2017"
+> 
+> print(date())
+[1][1] "Mon May  1 22:53:34 2017"
+> #-------------------------------------------------------------------------------
+ "Mon May  1 22:53:34 2017"
 > #-------------------------------------------------------------------------------
 > # set path to hint output 
-> data.path <- "/scratch/data/footprints/skin_wellington_20"
+> # set path to hint output 
+> data.path <- "/scratch/github/BDDS/functionalTests/output/wellington"
+> data.path <- "/scratch/github/BDDS/functionalTests/output/hint"
+> #-------------------------------------------------------------------------------
 > #-------------------------------------------------------------------------------
 > # establish database connections:
+> # establish database connections:
+> 
 > 
 > if(!exists("db.wellington"))
-+     db.wellington <- "skin_wellington_20_localhost"
-> 
-> if(!exists("db.fimo"))
-+     db.fimo <- "fimo_localhost"
-> #-------------------------------------------------------------------------------
-> if(!interactive()){    
-+     chromosomes <- paste("chr", c(1:22,"X","Y"), sep="")
-+     
-+     # Create parallel structure here    
-+     library(foreach); library(doParallel)    
-+     cores <- detectCores()    
-+     cl <- makeCluster(cores[1] - 1)    
-+     registerDoParallel(cl)      
-+ 
-+     # Pass path variables and source files
-+     clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
-+                   envir = environment())
-+     
-+     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
-+     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-+     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-+     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-+     junk <- clusterEvalQ(cl, source("../src/main.R"))
-+ 
-+     # Run on all 24 possible chromosomes at once
-+     foreach(i=1:length(chromosomes)) %dopar% {
-+         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-+                                    dbConnection = db.wellington,
-+                                    fimo = db.fimo,
-+                                    minid = "skin_wellington_20.minid",
-+                                    dbUser = "trena",
-+                                    dbTable = "skin_wellington_20",
-+                                    sourcePath = data.path,
-+                                    isTest = FALSE,
-+                                    method = "WELLINGTON")
-+ 				   }				  
-+ }
-> # users can either step through this file, or call this file with 
-> # r -f example.R
-> 
-> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
-> # database is in ../dbInitialization/createHintTest.sql
-> 
-> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
-> 
-> print(date())
-[1] "Fri Apr 28 00:26:45 2017"
-> #-------------------------------------------------------------------------------
-> # set path to hint output 
-> data.path <- "/scratch/data/footprints/skin_hint_20"
-> #-------------------------------------------------------------------------------
-> # establish database connections:
-> 
 > if(!exists("db.hint"))
-+     db.hint <- "skin_hint_20_localhost"
++     db.wellington <- "test_wellington_localhost"
++     db.hint <- "test_hint_localhost"
+> 
 > 
 > if(!exists("db.fimo"))
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
 +     db.fimo <- "fimo_localhost"
 > #-------------------------------------------------------------------------------
+> #-------------------------------------------------------------------------------
+> if(!interactive()){    
 > if(!interactive()){    
 +     chromosomes <- paste("chr", c(1:22,"X","Y"), sep="")
++     chromosomes <- paste("chr", c(1:22,"X","Y"), sep="")
++     
 +     
 +     # Create parallel structure here    
++     # Create parallel structure here    
++     library(foreach); library(doParallel)    
 +     library(foreach); library(doParallel)    
 +     cores <- detectCores()    
-Loading required package: iterators
++     cores <- detectCores()    
++     cl <- makeCluster(cores[1] - 1)    
 +     cl <- makeCluster(cores[1] - 1)    
 +     registerDoParallel(cl)      
-+ 
-+     # Pass path variables and source files
++     registerDoParallel(cl)      
++ + 
+
++ +     # Pass path variables and source files
+    # Pass path variables and source files
++     clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
 +     clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
 +                   envir = environment())
++                   envir = environment())
++     
 +     
 +     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
++     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
++     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
 +     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
 +     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
++     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
++     junk <- clusterEvalQ(cl, source("../src/tests.R"))
 +     junk <- clusterEvalQ(cl, source("../src/tests.R"))
 +     junk <- clusterEvalQ(cl, source("../src/main.R"))
++     junk <- clusterEvalQ(cl, source("../src/main.R"))
++ 
 + 
 +     # Run on all 24 possible chromosomes at once
++     # Run on all 24 possible chromosomes at once
++     foreach(i=1:length(chromosomes)) %dopar% {
 +     foreach(i=1:length(chromosomes)) %dopar% {
 +         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
++         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
++                                    dbConnection = db.wellington,
 +                                    dbConnection = db.hint,
 +                                    fimo = db.fimo,
-+                                    minid = "skin_hint_20.minid",
++                                    fimo = db.fimo,
++                                    minid = "testexample.filler.minid",
++                                    minid = "testexample.filler.minid",
 +                                    dbUser = "trena",
-+                                    dbTable = "skin_hint_20",
++                                    dbUser = "trena",
++                                    dbTable = "test_wellington",
++                                    dbTable = "test_hint",
++                                    sourcePath = data.path,
 +                                    sourcePath = data.path,
 +                                    isTest = FALSE,
++                                    isTest = FALSE,
++                                    method = "WELLINGTON")
 +                                    method = "HINT")
 + 				   }				  
++ 				   }				  
 + }
-Loading required package: parallel
++ }
+Loading required package: iterators
 Loading required package: iterators
 Loading required package: parallel
+Loading required package: parallel
 [[1]]
 NULL
 
@@ -243,6 +243,110 @@ NULL
 > source("../src/dependencies.R")
 Loading required package: stats4
 Loading required package: BiocGenerics
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+[[4]]
+NULL
+
+[[5]]
+NULL
+
+[[6]]
+NULL
+
+[[7]]
+NULL
+
+[[8]]
+NULL
+
+[[9]]
+NULL
+
+[[10]]
+NULL
+
+[[11]]
+NULL
+
+[[12]]
+NULL
+
+[[13]]
+NULL
+
+[[14]]
+NULL
+
+[[15]]
+NULL
+
+[[16]]
+NULL
+
+[[17]]
+NULL
+
+[[18]]
+NULL
+
+[[19]]
+NULL
+
+[[20]]
+NULL
+
+[[21]]
+NULL
+
+[[22]]
+NULL
+
+[[23]]
+NULL
+
+[[24]]
+NULL
+
+> 
+> print("Database fill complete; creating indices")
+[1] "Database fill complete; creating indices"
+> 
+> # Index the database
+> source("../src/dbFunctions.R")
+> source("../src/dependencies.R")
+Loading required package: stats4
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
+
+Loading required package: S4Vectors
+Loading required package: BiocGenerics
 
 Attaching package: ‘BiocGenerics’
 
@@ -274,133 +378,27 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
 Loading required package: DBI
-> dbConnection <- getDBConnection(db.hint)
-Error in getDBConnection(db.hint) : object 'db.hint' not found
+Loading required package: DBI
+> dbConnection <- getDBConnection(db.wellington)
+Error in postgresqlNewConnection(drv, ...) : 
+  RS-DBI driver: (could not connect trena@localhost on dbname "testwellington"
+)
+Calls: getDBConnection ... dbConnect -> dbConnect -> postgresqlNewConnection -> .Call
 Execution halted
-[[1]]
-NULL
-
-[[2]]
-NULL
-
-[[3]]
-NULL
-
-[[4]]
-NULL
-
-[[5]]
-NULL
-
-[[6]]
-NULL
-
-[[7]]
-NULL
-
-[[8]]
-NULL
-
-[[9]]
-NULL
-
-[[10]]
-NULL
-
-[[11]]
-NULL
-
-[[12]]
-NULL
-
-[[13]]
-NULL
-
-[[14]]
-NULL
-
-[[15]]
-NULL
-
-[[16]]
-NULL
-
-[[17]]
-NULL
-
-[[18]]
-NULL
-
-[[19]]
-NULL
-
-[[20]]
-NULL
-
-[[21]]
-NULL
-
-[[22]]
-NULL
-
-[[23]]
-NULL
-
-[[24]]
-NULL
-
-> 
-> print("Database fill complete; creating indices")
-[1] "Database fill complete; creating indices"
-> 
-> # Index the database
-> source("../src/dbFunctions.R")
-> source("../src/dependencies.R")
-Loading required package: stats4
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: DBI
 > dbConnection <- getDBConnection(db.hint)
-> dbSendQuery(dbConnection, "create index regions_index on regions (loc, start, endpos);")
-<PostgreSQLResult>
-> dbSendQuery(dbConnection, "create index hits_index on hits (loc);")
-<PostgreSQLResult>
-> dbDisconnect(dbConnection)
-[1] TRUE
-> 
-> print(date())
-[1] "Fri Apr 28 08:20:00 2017"
-> 
+Error in postgresqlNewConnection(drv, ...) : 
+  RS-DBI driver: (could not connect trena@localhost on dbname "testhint"
+)
+Calls: getDBConnection ... dbConnect -> dbConnect -> postgresqlNewConnection -> .Call
+Execution halted

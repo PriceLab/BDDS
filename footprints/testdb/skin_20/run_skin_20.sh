@@ -18,6 +18,8 @@ create table regions(loc varchar primary key,
 grant all on table "regions" to trena;
 
 create table hits(loc varchar,
+                  fp_start int,
+                  fp_end int,
 		  type varchar,
 		  name varchar,
 		  length int,
@@ -44,6 +46,8 @@ create table regions(loc varchar primary key,
 grant all on table "regions" to trena;
 
 create table hits(loc varchar,
+                  fp_start int,
+                  fp_end int,
 		  type varchar,
 		  name varchar,
 		  length int,

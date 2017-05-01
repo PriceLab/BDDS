@@ -55,13 +55,16 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, me
   gr.wellington <- with(tbl.fp,   GRanges(seqnames=chrom, IRanges(start=start, end=end)))
   # the "within" is conservative. I will run this with "any" to increase the number of motif interesects
   tbl.overlaps <- as.data.frame(findOverlaps(gr.fimo, gr.wellington, type="any"))
-  
+
   tbl.fimo$loc <- with(tbl.fimo, sprintf("%s:%d-%d", chrom, motif.start, motif.end))
   tbl.fimo$method <- method
   tbl.fimo$sample_id <- sampleID
   tbl.regions <- tbl.fimo[tbl.overlaps$queryHits,]
   
-  tbl.regions <- cbind(tbl.regions, wellington.score=tbl.fp[tbl.overlaps$subjectHits, "score"])
+    tbl.regions <- cbind(tbl.regions,
+                         wellington.score=tbl.fp[tbl.overlaps$subjectHits, "score"],
+                         fp.start=tbl.fp[tbl.overlaps$subjectHits, "start"],
+                         fp.end=tbl.fp[tbl.overlaps$subjectHits, "end"])
   invisible(tbl.regions)
   
 } # mergeFimoWithFootprints
@@ -70,25 +73,27 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, me
 # The other table is more comprehensive, and includes all the info for the footprints and FIMO
 splitTableIntoRegionsAndHits <- function(tbl, minid = "temp.filler.minid")
 {
-  tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
+    tbl.regions <- unique(tbl[, c("loc", "chrom", "motif.start", "motif.end")])
+
   colnames(tbl.regions) <- region.schema() # 29
   # c("loc", "chrom", "motif_start", "motif_end")
-  
-  new.locs <- setdiff(tbl.regions$loc, names(knownLocs))
+
+  # I believe this is no longer necessay
+#  new.locs <- setdiff(tbl.regions$loc, names(knownLocs))
   # enter these new.locs into the hash
-  lapply(new.locs, function(loc) knownLocs[[loc]] <- 0)   
-  printf("novel locs: %d new/%d possible (%d now known, %d dups)",
-         length(new.locs), nrow(tbl.regions), length(names(knownLocs)), 
-         nrow(tbl.regions) - length(new.locs))
+#  lapply(new.locs, function(loc) knownLocs[[loc]] <- 0)   
+#  printf("novel locs: %d new/%d possible (%d now known, %d dups)",
+#         length(new.locs), nrow(tbl.regions), length(names(knownLocs)), 
+#         nrow(tbl.regions) - length(new.locs))
   
-  if(length(new.locs) > 0){
-    keepers <- match(new.locs, tbl.regions$loc)
-    tbl.regions <- tbl.regions[keepers,]
-  } else {
-    tbl.regions <- data.frame()
-  }
+#  if(length(new.locs) > 0){
+#    keepers <- match(new.locs, tbl.regions$loc)
+#    tbl.regions <- tbl.regions[keepers,]
+#  } else {
+#    tbl.regions <- data.frame()
+#  }
   
-  tbl.hits <- tbl[, c("loc", "motif", "motif.strand", "sample_id", "method", 
+  tbl.hits <- tbl[, c("loc", "fp.start", "fp.end", "motif", "motif.strand", "sample_id", "method", 
                       "wellington.score", "fimo.score", "fimo.pvalue")]
   tbl.hits$length <- with(tbl, 1 + motif.end - motif.start)
   tbl.hits$provenance <- minid
@@ -96,10 +101,10 @@ splitTableIntoRegionsAndHits <- function(tbl, minid = "temp.filler.minid")
   tbl.hits$score5 <- NA
   tbl.hits$score6 <- NA
   tbl.hits$type <- "motif.in.footprint"
-  coi <- c("loc", "type", "motif", "length", "motif.strand", "sample_id", "method", "provenance", 
+  coi <- c("loc", "fp.start", "fp.end", "type", "motif", "length", "motif.strand", "sample_id", "method", "provenance", 
            "wellington.score", "fimo.score", "fimo.pvalue", "score4", "score5", "score6")
   tbl.hits <- tbl.hits[, coi]
-  colnames(tbl.hits) <- hit.schema()
+  colnames(tbl.hits) <- hit.schema() 
   invisible(list(regions=tbl.regions, hits=tbl.hits))
 } # splitTableIntoRegionsAndHits    
 #-------------------------------------------------------------------------------
