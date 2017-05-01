@@ -83,7 +83,7 @@ In your project directory, change the paths, names, and IDs that point to your f
 
 line | original | new
 ---- | -------- | ---
-line 12 | was: `data.path <- "/scratch/data/test_set/brain_hint_20"` | now `hint.path <- "/scratch/github/BDDS/functionalTests/output/hint"`
+line 12 | was: `data.path <- "/scratch/data/test_set/brain_hint_20"` | now `hint.path <- "/scratch/github/BDDS/footprints/functionalTests/output/hint"`
 line 17 | was `db.hint <- "brain_hint_20_localhost"` | now `db.hint <- "test_hint_localhost"`
 line 53 | was `minid = "brain_hint_20.minid",` | now `minid = "testexample.filler.minid",`
 line 56 | was `dbTable = "brain_hint_20",` | now `dbTable = "test_hint",`
