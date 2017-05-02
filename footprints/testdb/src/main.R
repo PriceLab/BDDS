@@ -22,20 +22,20 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
     if (isTest) {
       # nrow set for testing
       tbl.wellington <- readDataTable(sourcePath, sampleID, nrow = 10, 
-                                          chromosome)
+                                          chromosome, method = method)
     } else {
       tbl.wellington <- readDataTable(sourcePath, sampleID, NA, 
-                                          chromosome)
+                                          chromosome, method = method)
     }
     print("Data table read. Merging with Fimo...")
     fimo.con <- getDBConnection(fimo)
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
                                    dbConnection = fimo.con,
-                                   method)
+                                   method=method)
     dbDisconnect(fimo.con)
 
     print("Merged. Now splitting table to regions and hits...")
-    x <- splitTableIntoRegionsAndHits(tbl, minid)
+    x <- splitTableIntoRegionsAndHits(tbl, minid, method = method)
     printf("filling %d regions, %d hits for %s", nrow(x$regions), 
            nrow(x$hits), sampleID)
 	   

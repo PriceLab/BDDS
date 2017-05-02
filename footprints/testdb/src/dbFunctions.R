@@ -8,7 +8,13 @@ getDBConnection <- function(database) {
     password="ben_PASS"
     dbname="trenatest" 
     host="bdds-rds.globusgenomics.org"
- 
+
+  } else if (database == "test_piq_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "test_piq"
+    host = "localhost"
+
   } else if (database == "test_brain_wellington_localhost") {
     user = "trena"
     password = "trena"
@@ -55,6 +61,42 @@ getDBConnection <- function(database) {
     user = "trena"
     password = "trena"
     dbname = "lymphoblast_hint_20"
+    host = "localhost"    
+ 
+  } else if (database == "brain_wellington_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "brain_wellington_16"
+    host = "localhost"
+    
+  } else if (database == "brain_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "brain_hint_16"
+    host = "localhost"
+    
+  } else if (database == "skin_wellington_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "skin_wellington_16"
+    host = "localhost"
+    
+  } else if (database == "skin_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "skin_hint_16"
+    host = "localhost"
+    
+  } else if (database == "lymphoblast_wellington_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "lymphoblast_wellington_16"
+    host = "localhost"
+    
+  } else if (database == "lymphoblast_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "lymphoblast_hint_16"
     host = "localhost"    
     
   } else if (database == "test_wellington_localhost") {

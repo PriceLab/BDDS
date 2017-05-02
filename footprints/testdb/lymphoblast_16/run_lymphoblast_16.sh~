@@ -3,12 +3,12 @@
 cd /scratch/db
 sudo -u postgres psql postgres << EOF
 
-create database skin_wellington_20;
-grant all privileges on database skin_wellington_20 to trena;
-create database skin_hint_20;
-grant all privileges on database skin_hint_20 to trena;
+create database lymphoblast_wellington_20;
+grant all privileges on database lymphoblast_wellington_20 to trena;
+create database lymphoblast_hint_20;
+grant all privileges on database lymphoblast_hint_20 to trena;
 
-\connect skin_wellington_20
+\connect lymphoblast_wellington_20
 
 create table regions(loc varchar primary key,
 		     chrom varchar,
@@ -36,7 +36,7 @@ create table hits(loc varchar,
 
 grant all on table "hits" to trena;
 
-\connect skin_hint_20
+\connect lymphoblast_hint_20
 
 create table regions(loc varchar primary key,
 		     chrom varchar,
@@ -66,9 +66,7 @@ grant all on table "hits" to trena;
 
 EOF
 
-cd /scratch/github/BDDS/footprints/testdb/skin_20
+cd /scratch/github/BDDS/footprints/testdb/lymphoblast_20
 
 R -f hint.R &
 R -f wellington.R &
-
-wait
