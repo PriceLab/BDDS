@@ -1,0 +1,13 @@
+
+library(RPostgreSQL)
+
+# Read in the top 10000 lines of PIQ and sample 1000
+tbl <- read.table(file = "/scratch/data/footprints/brain_piq_16/ENCSR000DBW.bed",
+                  sep="\t", as.is=TRUE, nrows = 10000)
+tbl <- tbl[sample(nrow(tbl), 1000),]
+colnames(tbl) <- c("chrom", "motif.start", "motif.end", "motif", "motif.strand",
+                           "score1", "score2", "score3", "score4");
+
+# 
+
+
