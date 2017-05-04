@@ -1,4 +1,3 @@
-
 library(RPostgreSQL)
 library(dplyr)
 
@@ -8,7 +7,7 @@ tbl <- read.table(file = "/scratch/data/footprints/brain_piq_16/ENCSR000DBW.bed"
 # tbl <- tbl[sample(nrow(tbl), 1000),]
 colnames(tbl) <- c("chrom", "motif.start", "motif.end", "motif", "motif.strand",
                            "score1", "score2", "score3", "score4");
-tbl <- select(tbl,1:4)
+tbl <- select(tbl,1:6)
 
 # Fix the motifs by removing the RC and add a column for the fimo end
 tbl$motif <- sub('(MA\\d{4}).*','\\1',tbl$motif)
