@@ -53,7 +53,7 @@ Assuming you've installed the fimo tools from the MEME suite (if not, find instr
 
 `aws s3 cp s3://marichards/GRCh38 . --recursive`
 
-There are 17 groups of chromosomes; you can run these individually, but if you are on an AWS instance then it makes sense to run them all in parallel as these will take a while. As a guide, please see the example script created for running all HOMER motifs, [`run_all_homer.sh`]((https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/run_all_homer.sh)). 
+There are 17 groups of chromosomes; you can run these individually, but if you are on an AWS instance then it makes sense to run them all in parallel as these will take a while. As a guide, please see the example script created for running all HOMER motifs, [`run_all_homer.sh`](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/run_all_homer.sh). 
 
 If you insist on doing chromosomes individually, the notation is as follows:
 
