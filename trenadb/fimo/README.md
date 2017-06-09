@@ -9,8 +9,9 @@ When new motifs become available, they should be added to the existing fimo data
 4. Copy the existing fimo database dump from Amazon S3
 5. Restore the database (I do this on an Amazon EC2 instance)
 6. Using the template from [`create_fimo_table.sh`](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/create_fimo_table.sh), create a shell script that copies the fimo output into the existing fimo database
-7. Dump the new fimo database locally
-8. Copy the database dump to Amazon S3
+7. Create indices using the commands in [index.sql](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/index.sql)
+8. Dump the new fimo database locally
+9. Copy the database dump to Amazon S3
 
 What follows is a more detailed description of how to carry out all these steps, with examples using the fimo version created on June 8, 2017. 
 
