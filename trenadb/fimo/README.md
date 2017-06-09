@@ -57,17 +57,29 @@ There are 17 groups of chromosomes; you can run these individually, but if you a
 
 If you insist on doing chromosomes individually, the notation is as follows:
 
-``
+`fimo --text --oc . --no-qvalue ../meme/homer_all.meme ../chromosomes/1.fa > ./01_homer_all_fimo.txt`
 
-## 4. Copy the existing fimo database dump from Amazon S3
+In this example, we're using a .meme file of all HOMER motifs and chromosome 1, then dumping the output into an appropriately-labeled text file.
 
-## 5. Restore the database (I do this on an Amazon EC2 instance)
+**Please note: this step will take a long time, so plan accordingly**
 
-## 6. Using the template from [`create_fimo_table.sh`](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/create_fimo_table.sh), create a shell script that copies the fimo output into the existing fimo database
+## 4. Copy the and restore the existing fimo database dump from Amazon S3
 
-## 7. Create indices using the commands in [index.sql](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/index.sql)
+Ultimately, you'll want to add your text files created in step 3 to the fimo database. The most recent version of fimo was created on June 08, 2017 and can be copied to your machine as follows:
 
-## 8. Dump the new fimo database locally
+`aws s3 cp s3://cory-dbtest/2017_06_08_fimo.dump .`
 
-## 9. Copy the database dump to Amazon S3
+The database is around 34 GB and will take some time to download. Once it does, you'll need to restore it in PostgreSQL using the following command:
+
+`sudo pg_restore --verbose --clean --no-acl --no-owner --dbname=fimo --create 2017_06_08_fimo.dump`
+
+**This command will also take quite a while to run (probably a couple of hours), so plan accordingly**
+
+## 5. Using the template from [`create_fimo_table.sh`](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/create_fimo_table.sh), create a shell script that copies the fimo output into the existing fimo database
+
+## 6. Create indices using the commands in [index.sql](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/index.sql)
+
+## 7. Dump the new fimo database locally
+
+## 8. Copy the database dump to Amazon S3
 
