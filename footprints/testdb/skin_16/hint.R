@@ -20,7 +20,7 @@ if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
 #-------------------------------------------------------------------------------
 if(!interactive()){    
-    chromosomes <- paste("chr", c(1:22,"X","Y"), sep="")
+    chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
     
     # Create parallel structure here    
     library(foreach); library(doParallel)    

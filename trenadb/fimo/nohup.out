@@ -4,3 +4,7 @@ CREATE INDEX
 CREATE INDEX
 You are now connected to database "trena" as user "pshannon".
 COPY 449105228
+You are now connected to database "fimo" as user "root".
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
