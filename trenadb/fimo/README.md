@@ -63,9 +63,9 @@ In this example, we're using a .meme file of all HOMER motifs and chromosome 1, 
 
 ## 4. Copy the and restore the existing fimo database dump from Amazon S3
 
-Ultimately, you'll want to add your text files created in step 3 to the fimo database. The most recent version of fimo was created on June 08, 2017 and can be copied to your machine as follows:
+Ultimately, you'll want to add your text files created in step 3 to the fimo database. The most recent version of fimo was created on June 13, 2017 and can be copied to your machine as follows:
 
-`aws s3 cp s3://cory-dbtest/2017_06_08_fimo.dump .`
+`aws s3 cp s3://marichards/completed_dbs/2017_06_13_fimo.dump .`
 
 The database is around 34 GB and will take some time to download. Once it does, you'll need to restore it in PostgreSQL. First, open PostgreSQL, create an empty database, and close PostgreSQL:
 
@@ -75,7 +75,7 @@ The database is around 34 GB and will take some time to download. Once it does, 
 
 After creating the empty database, fill it using the following command:
 
-`sudo pg_restore --verbose --clean --no-acl --no-owner --dbname=fimo 2017_06_08_fimo.dump`
+`sudo pg_restore --verbose --clean --no-acl --no-owner --dbname=fimo 2017_06_13_fimo.dump`
 
 **This command will also take quite a while to run (probably a couple of hours), so plan accordingly**
 
@@ -87,7 +87,7 @@ Once the restore is complete, you should have 1829289198 rows; you can check thi
 
 As in the case of step 3, you could theoretically fill the database one file at a time, but that would be wildly inefficient. Instead, use the local file linked above as a template to copy your text files into the database. The basic line of code in the shell script is a copy command:
 
-`psql trena -c "copy fimo_hg38 from '/scratch/data/fimo/01_homer_all_fimo.txt' delimiter E'\t' CSV header NULL as 'NULL';"`
+`psql fimo -c "copy fimo_hg38 from '/scratch/data/fimo/01_homer_all_fimo.txt' delimiter E'\t' CSV header NULL as 'NULL';"`
 
 The example command here copies the info from the HOMER chromosome 1 file we created earlier. If you run a bunch of these, it'll take a while (the 85 line version in the example took a bit over an hour), but the time investment isn't terrible. 
 
@@ -97,15 +97,15 @@ The database is enormous (~2 billion lines), so you'll definitely want to invest
 
 `psql fimo -f index.sql`
 
-**Once again, this commands takes a long time to finish running; go bake something and come back**
+**Once again, this commands takes a long time to finish running; go bake something and come back. Last time it took neary 4 hours**
 
 ## 7. Dump the new fimo database locally, then copy it to Amazon S3
 
 Once you've updated the database and indexed it, you should definitely save it so you never have to repeat your work. We keep the databases in an S3 bucket, so you'll want to put your new version there. First, dump it from the command line as follows:
 
-`pg_dump -Fc -h localhost -U trena fimo > ./2017_06_08_fimo.dump`
+`pg_dump -Fc -h localhost -U trena fimo > ./2017_06_13_fimo.dump`
 
 Now that you've got a dump file, simply copy it to the proper S3 bucket and you're finished:
 
-`aws s3 cp ./2017_06_08_fimo.dump s3://cory-dbtest/'`
+`aws s3 cp ./2017_06_13_fimo.dump s3://marichards/completed_dbs/'`
 
