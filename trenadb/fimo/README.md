@@ -67,17 +67,21 @@ Ultimately, you'll want to add your text files created in step 3 to the fimo dat
 
 `aws s3 cp s3://marichards/completed_dbs/2017_06_13_fimo.dump .`
 
-The database is around 34 GB and will take some time to download. Once it does, you'll need to restore it in PostgreSQL. First, open PostgreSQL, create an empty database, and close PostgreSQL:
+The database is around 34 GB and will take some time to download. Once it does, you'll need to restore it in PostgreSQL. First, open PostgreSQL, create an empty database, give privileges to the "trena" user account, and close PostgreSQL:
 
 `psql postgres`
+
 `create database fimo`
+
+`grant all privileges on database fimo to trena`
+
 `\q`
 
 After creating the empty database, fill it using the following command:
 
 `sudo pg_restore --verbose --clean --no-acl --no-owner --dbname=fimo 2017_06_13_fimo.dump`
 
-**This command will also take quite a while to run (probably a couple of hours), so plan accordingly**
+**This command will also take quite a while to run (probably a few of hours), so plan accordingly**
 
 Once the restore is complete, you should have 1833808739 rows; you can check this using the following command inside PostgreSQL:
 
