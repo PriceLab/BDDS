@@ -5,9 +5,10 @@ The code is an updated version of that used by examples in the `serial_examples`
 Currently, the workflow is:
 
 - [ ] Make a new folder for running each batch of data by copying all contents from a previous run to the newly created folder (such as the `skin_20` folder). This should include scripts for each footprinting method (e.g. `hint.R`,`wellington.R`), a shell script (e.g. `run_skin_20.sh`), and a `nohup.out` file. 
-- [ ] Delete the `nohup.out` file from the new direcoty
+- [ ] Delete the `nohup.out` file from the new directory
 - [ ] Rename the shell script and edit it to replace its databases with your new database names
 - [ ] Add the new databases to [src/dbFunctions.R](https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/src/dbFunctions.R)
+- [ ] Add your footprint files
 - [ ] Alter the file paths, database names, and IDs in the master scripts (`hint.R`, `wellington.R`, etc.) 
 - [ ] Run the shell script using the nohup option to collect output
 - [ ] Check database contents
@@ -74,6 +75,14 @@ Following the existing format in the file, add databases of the same name, using
 ```
 
 Note that the `"database"` variable is simply a string name, not a parameter used in the database connection. It is crucial that the 4 parameters match your database connection. In the above case, we're using the user `trena` with password `trena` on the `test_wellington` and `test_hint` databases, both of which are on the local machine. 
+
+- [ ] Add your footprint files
+
+In order to perform the intersection of the fimo databasae and the hint/wellington/piq footprints, you'll need the footprint files. A sampling of these files, for seeds 16 and 20 of brain/lymphoblash/skin and the HINT/WELLINGTON methods, can be grabbed from Amazon S3 and copied into your directory (normally /scratch/data/footprints on an EC2 instance):
+
+`aws s3 cp s3://marichards/footprints . --recursive`
+
+In any case, be sure that all your footprints end with `.bed`, all lowercase, else the scripts won't work properly. 
 
 **Current to here**
 
