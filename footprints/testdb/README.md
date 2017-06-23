@@ -10,6 +10,7 @@ Currently, the workflow is:
 - [ ] Add the new databases to [src/dbFunctions.R](https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/src/dbFunctions.R)
 - [ ] Add your footprint files
 - [ ] Alter the file paths, database names, and IDs in the master scripts (`hint.R`, `wellington.R`, etc.) 
+- [ ] Install the necessary R packages
 - [ ] Run the shell script using the nohup option to collect output
 - [ ] Check database contents
 - [ ] Make database read only
@@ -98,6 +99,17 @@ line 53 | was `minid = "brain_hint_20.minid",` | now `minid = "testexample.fille
 line 56 | was `dbTable = "brain_hint_20",` | now `dbTable = "test_hint",`
 
 Similarly, the wellington.R should be edited to point to the test_wellington_localhost database and the correct data path (edit the same lines in wellington.R).
+
+- [ ] Install the necessary R packages
+
+The R scripts for filling the databases require a number of packages; the easiest way to get them is through Bioconductor. Start up R and run the following:
+
+```
+source("https://bioconductor.org/biocLite.R")
+biocLite(c("doParallel","GenomicRanges","RUnit","RPostgreSQL"))
+```
+
+Once those 4 packages have successfully installed, you should be ready to run the scripts. 
 
 - [ ] Run the shell script using the nohup option to collect output
 
