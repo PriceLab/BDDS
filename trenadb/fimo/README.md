@@ -84,7 +84,7 @@ After creating the empty database, fill it using the following command:
 
 **This command will also take quite a while to run (probably a few of hours), so plan accordingly**
 
-Once the restore is complete, you should have 1833808739 rows; you can check this using the following command inside PostgreSQL:
+Once the restore is complete, you should have 1120660701 rows; you can check this using the following command inside PostgreSQL:
 
 `select count(*) from fimo_hg38;`
 
