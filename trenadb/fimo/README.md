@@ -20,8 +20,10 @@ First, clone the repo onto your machine:
 
 Next, open up R and install the necessary dependency packages from BioConductor using the following:
 
-`source("https://bioconductor.org/biocLite.R")`
-`biocLite(c("BiocGenerics", "S4Vectors", "IRanges", "Biostrings", "rtracklayer"))`
+```
+source("https://bioconductor.org/biocLite.R")
+biocLite(c("BiocGenerics", "S4Vectors", "IRanges", "Biostrings", "rtracklayer"))
+```
 
 Once the dependency packages are installed (which will take a few minutes), exit R and navigate to the MotifDb root directory (e.g. /scratch/github/MotifDb) and install the MotifDb package locally:
 
@@ -65,17 +67,16 @@ In this example, we're using a .meme file of all HOMER motifs and chromosome 1, 
 
 Ultimately, you'll want to add your text files created in step 3 to the fimo database. The most recent version of fimo was created on June 13, 2017 and can be copied to your machine as follows:
 
-`aws s3 cp s3://marichards/completed_dbs/2017_06_13_fimo.dump .`
+`aws s3 cp s3://marichards/completed_dbs/2017_06_22_fimo.dump .`
 
 The database is around 34 GB and will take some time to download. Once it does, you'll need to restore it in PostgreSQL. First, open PostgreSQL, create an empty database, give privileges to the "trena" user account, and close PostgreSQL:
 
-`psql postgres`
-
-`create database fimo`
-
-`grant all privileges on database fimo to trena`
-
-`\q`
+```
+psql postgres
+create database fimo
+grant all privileges on database fimo to trena
+\q
+```
 
 After creating the empty database, fill it using the following command:
 
@@ -97,9 +98,9 @@ The example command here copies the info from the HOMER chromosome 1 file we cre
 
 ## 6. Create indices using the commands in [index.sql](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/index.sql)
 
-The database is enormous (~2 billion lines), so you'll definitely want to invest the time to index it and make it easier to use later. To do so, run the `index.sql` script in this directory:
+The database is enormous (~2 billion lines), so you'll definitely want to invest the time to index it and make it easier to use later. To do so, run the `index.sql` script in this directory (I'm running as nohup):
 
-`psql fimo -f index.sql`
+`nohup psql fimo -f index.sql`
 
 **Once again, this commands takes a long time to finish running; go bake something and come back. Last time it took neary 4 hours**
 
@@ -107,7 +108,7 @@ The database is enormous (~2 billion lines), so you'll definitely want to invest
 
 Once you've updated the database and indexed it, you should definitely save it so you never have to repeat your work. We keep the databases in an S3 bucket, so you'll want to put your new version there. First, dump it from the command line as follows:
 
-`pg_dump -Fc -h localhost -U trena fimo > ./2017_06_13_fimo.dump`
+`pg_dump -Fc -h localhost -U trena fimo > ./2017_06_22_fimo.dump`
 
 Now that you've got a dump file, simply copy it to the proper S3 bucket and you're finished:
 
