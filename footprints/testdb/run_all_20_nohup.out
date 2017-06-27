@@ -2,12 +2,12 @@ CREATE DATABASE
 GRANT
 CREATE DATABASE
 GRANT
-You are now connected to database "brain_wellington_16" as user "postgres".
+You are now connected to database "brain_wellington_20" as user "postgres".
 CREATE TABLE
 GRANT
 CREATE TABLE
 GRANT
-You are now connected to database "brain_hint_16" as user "postgres".
+You are now connected to database "brain_hint_20" as user "postgres".
 CREATE TABLE
 GRANT
 CREATE TABLE
@@ -59,69 +59,15 @@ Type 'q()' to quit R.
 > # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
 > 
 > print(date())
-[1] "Fri Jun 23 22:31:43 2017"
+[1] "Fri Jun 23 15:06:10 2017"
 > #-------------------------------------------------------------------------------
 > # set path to hint output 
-> data.path <- "/scratch/data/footprints/seed16/brain/hint"
-> #-------------------------------------------------------------------------------
-> # establish database connections:
-> 
-> if(!exists("db.hint"))
-+     db.hint <- "brain_hint_16_localhost"
-> 
-> if(!exists("db.fimo"))
-+     db.fimo <- "fimo_localhost"
-> #-------------------------------------------------------------------------------
-> if(!interactive()){    
-+     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
-+     
-+     # Create parallel structure here    
-+     library(foreach); library(doParallel)    
-+     cores <- detectCores()    
-+     cl <- makeCluster(cores[1] - 1)    
-+     registerDoParallel(cl)      
-+ 
-+     # Pass path variables and source files
-+     clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
-+                   envir = environment())
-+     
-+     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
-+     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-+     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-+     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-+     junk <- clusterEvalQ(cl, source("../src/main.R"))
-+ 
-+     # Run on all 24 possible chromosomes at once
-+     foreach(i=1:length(chromosomes)) %dopar% {
-+         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-+                                    dbConnection = db.hint,
-+                                    fimo = db.fimo,
-+                                    minid = "brain_hint_16.minid",
-+                                    dbUser = "trena",
-+                                    dbTable = "brain_hint_16",
-+                                    sourcePath = data.path,
-+                                    isTest = FALSE,
-+                                    method = "HINT")
-+ 				   }				  
-+ }
-> # users can either step through this file, or call this file with 
-> # r -f example.R
-> 
-> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
-> # database is in ../dbInitialization/createHintTest.sql
-> 
-> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
-> 
-> print(date())
-[1] "Fri Jun 23 22:31:43 2017"
-> #-------------------------------------------------------------------------------
-> # set path to hint output 
-> data.path <- "/scratch/data/footprints/seed16/brain/wellington"
+> data.path <- "/scratch/data/footprints/brain_wellington_20"
 > #-------------------------------------------------------------------------------
 > # establish database connections:
 > 
 > if(!exists("db.wellington"))
-+     db.wellington <- "brain_wellington_16_localhost"
++     db.wellington <- "brain_wellington_20_localhost"
 > 
 > if(!exists("db.fimo"))
 +     db.fimo <- "fimo_localhost"
@@ -150,78 +96,14 @@ Type 'q()' to quit R.
 +         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
 +                                    dbConnection = db.wellington,
 +                                    fimo = db.fimo,
-+                                    minid = "brain_wellington_16.minid",
++                                    minid = "brain_wellington_20.minid",
 +                                    dbUser = "trena",
-+                                    dbTable = "brain_wellington_16",
++                                    dbTable = "brain_wellington_20",
 +                                    sourcePath = data.path,
 +                                    isTest = FALSE,
 +                                    method = "WELLINGTON")
 + 				   }				  
 + }
-Loading required package: iterators
-Loading required package: parallel
-Loading required package: iterators
-Loading required package: parallel
-
-
-
-Execution halted
-Execution halted
-Execution halted
-
-Execution halted
-CREATE DATABASE
-GRANT
-CREATE DATABASE
-GRANT
-You are now connected to database "brain_wellington_16" as user "postgres".
-CREATE TABLE
-GRANT
-CREATE TABLE
-GRANT
-You are now connected to database "brain_hint_16" as user "postgres".
-CREATE TABLE
-GRANT
-CREATE TABLE
-GRANT
-
-R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
-Copyright (C) 2017 The R Foundation for Statistical Computing
-Platform: x86_64-pc-linux-gnu (64-bit)
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
-
-R is a collaborative project with many contributors.
-Type 'contributors()' for more information and
-'citation()' on how to cite R or R packages in publications.
-
-Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for an HTML browser interface to help.
-Type 'q()' to quit R.
-
-
-R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
-Copyright (C) 2017 The R Foundation for Statistical Computing
-Platform: x86_64-pc-linux-gnu (64-bit)
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
-
-R is a collaborative project with many contributors.
-Type 'contributors()' for more information and
-'citation()' on how to cite R or R packages in publications.
-
-Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for an HTML browser interface to help.
-Type 'q()' to quit R.
-
 > # users can either step through this file, or call this file with 
 > # r -f example.R
 > 
@@ -231,15 +113,15 @@ Type 'q()' to quit R.
 > # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
 > 
 > print(date())
-[1] "Fri Jun 23 22:32:20 2017"
+[1] "Fri Jun 23 15:06:10 2017"
 > #-------------------------------------------------------------------------------
 > # set path to hint output 
-> data.path <- "/scratch/data/footprints/seed16/brain/hint"
+> data.path <- "/scratch/data/footprints/brain_hint_20"
 > #-------------------------------------------------------------------------------
 > # establish database connections:
 > 
 > if(!exists("db.hint"))
-+     db.hint <- "brain_hint_16_localhost"
++     db.hint <- "brain_hint_20_localhost"
 > 
 > if(!exists("db.fimo"))
 +     db.fimo <- "fimo_localhost"
@@ -261,78 +143,24 @@ Type 'q()' to quit R.
 +     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
 +     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
 +     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-> # users can either step through this file, or call this file with 
 +     junk <- clusterEvalQ(cl, source("../src/main.R"))
-> # r -f example.R
-> 
-> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
-> # database is in ../dbInitialization/createHintTest.sql
-> 
 + 
-> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
-> 
-> print(date())
 +     # Run on all 24 possible chromosomes at once
 +     foreach(i=1:length(chromosomes)) %dopar% {
-[1] "Fri Jun 23 22:32:20 2017"
-> #-------------------------------------------------------------------------------
-> # set path to hint output 
 +         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-> data.path <- "/scratch/data/footprints/seed16/brain/wellington"
-> #-------------------------------------------------------------------------------
-> # establish database connections:
-> 
 +                                    dbConnection = db.hint,
-> if(!exists("db.wellington"))
-+     db.wellington <- "brain_wellington_16_localhost"
-> 
 +                                    fimo = db.fimo,
-> if(!exists("db.fimo"))
-+     db.fimo <- "fimo_localhost"
-> #-------------------------------------------------------------------------------
-> if(!interactive()){    
-+                                    minid = "brain_hint_16.minid",
-+     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
-+     
-+     # Create parallel structure here    
++                                    minid = "brain_hint_20.minid",
 +                                    dbUser = "trena",
-+     library(foreach); library(doParallel)    
-+     cores <- detectCores()    
-+                                    dbTable = "brain_hint_16",
-+     cl <- makeCluster(cores[1] - 1)    
-+     registerDoParallel(cl)      
-+ 
++                                    dbTable = "brain_hint_20",
 +                                    sourcePath = data.path,
-+     # Pass path variables and source files
-+     clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
 +                                    isTest = FALSE,
-+                   envir = environment())
-+     
 +                                    method = "HINT")
-+     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
-+     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-+ 				   }				  
-+     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-+ }
-+     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-+     junk <- clusterEvalQ(cl, source("../src/main.R"))
-+ 
-+     # Run on all 24 possible chromosomes at once
-+     foreach(i=1:length(chromosomes)) %dopar% {
-+         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-+                                    dbConnection = db.wellington,
-+                                    fimo = db.fimo,
-+                                    minid = "brain_wellington_16.minid",
-+                                    dbUser = "trena",
-+                                    dbTable = "brain_wellington_16",
-+                                    sourcePath = data.path,
-+                                    isTest = FALSE,
-+                                    method = "WELLINGTON")
 + 				   }				  
 + }
-Loading required package: iterators
 Loading required package: iterators
 Loading required package: parallel
+Loading required package: iterators
 Loading required package: parallel
 Error in unserialize(socklist[[n]]) : error reading from connection
 Calls: %dopar% ... recvOneData -> recvOneData.SOCKcluster -> unserialize
@@ -344,12 +172,12 @@ CREATE DATABASE
 GRANT
 CREATE DATABASE
 GRANT
-You are now connected to database "skin_wellington_16" as user "postgres".
+You are now connected to database "skin_wellington_20" as user "postgres".
 CREATE TABLE
 GRANT
 CREATE TABLE
 GRANT
-You are now connected to database "skin_hint_16" as user "postgres".
+You are now connected to database "skin_hint_20" as user "postgres".
 CREATE TABLE
 GRANT
 CREATE TABLE
@@ -401,24 +229,69 @@ Type 'q()' to quit R.
 > # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
 > 
 > print(date())
+[1] "Fri Jun 23 21:21:52 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> data.path <- "/scratch/data/footprints/skin_wellington_20"
+> #-------------------------------------------------------------------------------
+> # establish database connections:
+> 
+> if(!exists("db.wellington"))
++     db.wellington <- "skin_wellington_20_localhost"
+> 
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
+> #-------------------------------------------------------------------------------
+> if(!interactive()){    
++     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
++     
++     # Create parallel structure here    
++     library(foreach); library(doParallel)    
++     cores <- detectCores()    
++     cl <- makeCluster(cores[1] - 1)    
++     registerDoParallel(cl)      
++ 
++     # Pass path variables and source files
++     clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
++                   envir = environment())
++     
++     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
++     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
++     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
++     junk <- clusterEvalQ(cl, source("../src/tests.R"))
++     junk <- clusterEvalQ(cl, source("../src/main.R"))
++ 
++     # Run on all 24 possible chromosomes at once
++     foreach(i=1:length(chromosomes)) %dopar% {
++         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
++                                    dbConnection = db.wellington,
++                                    fimo = db.fimo,
++                                    minid = "skin_wellington_20.minid",
++                                    dbUser = "trena",
++                                    dbTable = "skin_wellington_20",
++                                    sourcePath = data.path,
++                                    isTest = FALSE,
++                                    method = "WELLINGTON")
++ 				   }				  
++ }
 # users can either step through this file, or call this file with 
 > # r -f example.R
-[1]> 
- "Sat Jun 24 08:21:05 2017"
-> #-------------------------------------------------------------------------------
-> > # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
-# set path to hint output 
-> data.path <- "/scratch/data/footprints/seed16/skin/hint"
+> 
+> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
 > # database is in ../dbInitialization/createHintTest.sql
-> > #-------------------------------------------------------------------------------
-
-> # establish database connections:
+> 
 > # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
 > 
-> if(!exists("db.hint"))
-> 
-+     db.hint <- "skin_hint_16_localhost"
 > print(date())
+[1] "Fri Jun 23 21:21:52 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> data.path <- "/scratch/data/footprints/skin_hint_20"
+> #-------------------------------------------------------------------------------
+> # establish database connections:
+> 
+> if(!exists("db.hint"))
++     db.hint <- "skin_hint_20_localhost"
 > 
 > if(!exists("db.fimo"))
 +     db.fimo <- "fimo_localhost"
@@ -428,82 +301,37 @@ Type 'q()' to quit R.
 +     
 +     # Create parallel structure here    
 +     library(foreach); library(doParallel)    
-[1] "Sat Jun 24 08:21:05 2017"
-> #-------------------------------------------------------------------------------
-+     cores <- detectCores()    
-> # set path to hint output 
-+ >     cl <- makeCluster(cores[1] - 1)    
-data.path <- "/scratch/data/footprints/seed16/skin/wellington"
-+     registerDoParallel(cl)      
-> #-------------------------------------------------------------------------------
-+ 
-> # establish database connections:
-+     # Pass path variables and source files
-> 
-+     clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
-> if(!exists("db.wellington"))
-+                   envir = environment())
-+ +     db.wellington <- "skin_wellington_16_localhost"
-    
-+     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
-> 
-+     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-> if(!exists("db.fimo"))
-+     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-+     db.fimo <- "fimo_localhost"
-+     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-> #-------------------------------------------------------------------------------
-+     junk <- clusterEvalQ(cl, source("../src/main.R"))
-> if(!interactive()){    
-+     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
-+ 
-+     
-+ +     # Create parallel structure here    
-    # Run on all 24 possible chromosomes at once
-+     library(foreach); library(doParallel)    
-+     foreach(i=1:length(chromosomes)) %dopar% {
-+         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
 +     cores <- detectCores()    
 +     cl <- makeCluster(cores[1] - 1)    
-+                                    dbConnection = db.hint,
 +     registerDoParallel(cl)      
-+                                    fimo = db.fimo,
 + 
-+                                    minid = "skin_hint_16.minid",
 +     # Pass path variables and source files
-+                                    dbUser = "trena",
-+     clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
-+                                    dbTable = "skin_hint_16",
++     clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
 +                   envir = environment())
-+ +     
-                                   sourcePath = data.path,
++     
 +     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
-+                                    isTest = FALSE,
 +     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-+                                    method = "HINT")
 +     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-+ 				   }				  
 +     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-+ }
 +     junk <- clusterEvalQ(cl, source("../src/main.R"))
 + 
 +     # Run on all 24 possible chromosomes at once
 +     foreach(i=1:length(chromosomes)) %dopar% {
 +         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-+                                    dbConnection = db.wellington,
++                                    dbConnection = db.hint,
 +                                    fimo = db.fimo,
-+                                    minid = "skin_wellington_16.minid",
++                                    minid = "skin_hint_20.minid",
 +                                    dbUser = "trena",
-+                                    dbTable = "skin_wellington_16",
++                                    dbTable = "skin_hint_20",
 +                                    sourcePath = data.path,
 +                                    isTest = FALSE,
-+                                    method = "WELLINGTON")
++                                    method = "HINT")
 + 				   }				  
 + }
 Loading required package: iterators
+Loading required package: parallel
 Loading required package: iterators
 Loading required package: parallel
-Loading required package: parallel
 Error in unserialize(socklist[[n]]) : error reading from connection
 Calls: %dopar% ... recvOneData -> recvOneData.SOCKcluster -> unserialize
 Execution halted
@@ -514,12 +342,12 @@ CREATE DATABASE
 GRANT
 CREATE DATABASE
 GRANT
-You are now connected to database "lymphoblast_wellington_16" as user "postgres".
+You are now connected to database "lymphoblast_wellington_20" as user "postgres".
 CREATE TABLE
 GRANT
 CREATE TABLE
 GRANT
-You are now connected to database "lymphoblast_hint_16" as user "postgres".
+You are now connected to database "lymphoblast_hint_20" as user "postgres".
 CREATE TABLE
 GRANT
 CREATE TABLE
@@ -571,103 +399,103 @@ Type 'q()' to quit R.
 > # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
 > 
 > print(date())
-[1]# users can either step through this file, or call this file with 
+[1] "Sat Jun 24 02:53:20 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> data.path <- "/scratch/data/footprints/lymphoblast_wellington_20"
+> #-------------------------------------------------------------------------------
+> # establish database connections:
+> 
+> if(!exists("db.wellington"))
++     db.wellington <- "lymphoblast_wellington_20_localhost"
+> 
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
+> #-------------------------------------------------------------------------------
+> if(!interactive()){    
++     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
++     
++     # Create parallel structure here    
++     library(foreach); library(doParallel)    
++     cores <- detectCores()    
++     cl <- makeCluster(cores[1] - 1)    
++     registerDoParallel(cl)      
++ 
++     # Pass path variables and source files
++     clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
++                   envir = environment())
++     
++     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
++     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
++     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
++     junk <- clusterEvalQ(cl, source("../src/tests.R"))
++     junk <- clusterEvalQ(cl, source("../src/main.R"))
++ 
++     # Run on all 24 possible chromosomes at once
++     foreach(i=1:length(chromosomes)) %dopar% {
++         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
+# users can either step through this file, or call this file with 
 > # r -f example.R
 > 
 > # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
 > # database is in ../dbInitialization/createHintTest.sql
-> 
++ >                                    dbConnection = db.wellington,
+
 > # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
 > 
 > print(date())
-[1] "Sat Jun 24 16:40:13 2017"
++                                    fimo = db.fimo,
+[1] "Sat Jun 24 02:53:20 2017"
 > #-------------------------------------------------------------------------------
- "Sat Jun 24 16:40:13 2017"
-> > # set path to hint output 
-#-------------------------------------------------------------------------------
-> data.path <- "/scratch/data/footprints/seed16/lymphoblast/hint"
 > # set path to hint output 
+> data.path <- "/scratch/data/footprints/lymphoblast_hint_20"
++                                    minid = "lymphoblast_wellington_20.minid",
 > #-------------------------------------------------------------------------------
 > # establish database connections:
-> data.path <- "/scratch/data/footprints/seed16/lymphoblast/wellington"
 > 
 > if(!exists("db.hint"))
-+     db.hint <- "lymphoblast_hint_16_localhost"
-> #-------------------------------------------------------------------------------
++     db.hint <- "lymphoblast_hint_20_localhost"
 > 
++                                    dbUser = "trena",
 > if(!exists("db.fimo"))
-> # establish database connections:
 +     db.fimo <- "fimo_localhost"
-> 
 > #-------------------------------------------------------------------------------
-> if(!exists("db.wellington"))
 > if(!interactive()){    
 +     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
-+     db.wellington <- "lymphoblast_wellington_16_localhost"
 +     
++                                    dbTable = "lymphoblast_wellington_20",
 +     # Create parallel structure here    
-> 
 +     library(foreach); library(doParallel)    
-> if(!exists("db.fimo"))
-+     db.fimo <- "fimo_localhost"
 +     cores <- detectCores()    
 +     cl <- makeCluster(cores[1] - 1)    
-> #-------------------------------------------------------------------------------
-> if(!interactive()){    
++                                    sourcePath = data.path,
 +     registerDoParallel(cl)      
-+     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
 + 
 +     # Pass path variables and source files
-+     
 +     clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
-+     # Create parallel structure here    
++                                    isTest = FALSE,
 +                   envir = environment())
-+     library(foreach); library(doParallel)    
 +     
-+ +     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
-    cores <- detectCores()    
-+     cl <- makeCluster(cores[1] - 1)    
-+     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-+     registerDoParallel(cl)      
-+     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-+ 
-+     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-+     # Pass path variables and source files
-+     junk <- clusterEvalQ(cl, source("../src/main.R"))
-+     clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
-+                   envir = environment())
-+ 
-+     
-+     # Run on all 24 possible chromosomes at once
 +     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
-+     foreach(i=1:length(chromosomes)) %dopar% {
-+     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-+         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-+     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-+                                    dbConnection = db.hint,
-+     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-+                                    fimo = db.fimo,
-+     junk <- clusterEvalQ(cl, source("../src/main.R"))
-+                                    minid = "lymphoblast_hint_16.minid",
-+ 
-+                                    dbUser = "trena",
-+     # Run on all 24 possible chromosomes at once
-+                                    dbTable = "lymphoblast_hint_16",
-+     foreach(i=1:length(chromosomes)) %dopar% {
-+                                    sourcePath = data.path,
-+         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-+                                    isTest = FALSE,
-+                                    dbConnection = db.wellington,
-+                                    method = "HINT")
-+                                    fimo = db.fimo,
-+ 				   }				  
-+ +                                    minid = "lymphoblast_wellington_16.minid",
-}
-+                                    dbUser = "trena",
-+                                    dbTable = "lymphoblast_wellington_16",
-+                                    sourcePath = data.path,
-+                                    isTest = FALSE,
 +                                    method = "WELLINGTON")
++     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
++     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
++ + 				   }				  
+    junk <- clusterEvalQ(cl, source("../src/tests.R"))
++     junk <- clusterEvalQ(cl, source("../src/main.R"))
++ 
++ }
++     # Run on all 24 possible chromosomes at once
++     foreach(i=1:length(chromosomes)) %dopar% {
++         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
++                                    dbConnection = db.hint,
++                                    fimo = db.fimo,
++                                    minid = "lymphoblast_hint_20.minid",
++                                    dbUser = "trena",
++                                    dbTable = "lymphoblast_hint_20",
++                                    sourcePath = data.path,
++                                    isTest = FALSE,
++                                    method = "HINT")
 + 				   }				  
 + }
 Loading required package: iterators

@@ -9,12 +9,12 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints/brain_hint_20"
+data.path <- "/scratch/data/footprints/adrenal_gland_hint_20"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
 if(!exists("db.hint"))
-    db.hint <- "brain_hint_20_localhost"
+    db.hint <- "adrenal_gland_hint_20_localhost"
 
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
@@ -25,7 +25,7 @@ if(!interactive()){
     # Create parallel structure here    
     library(foreach); library(doParallel)    
     cores <- detectCores()    
-    cl <- makeCluster(15, outfile = "")
+    cl <- makeCluster(15, outfile = "")    
     registerDoParallel(cl)      
 
     # Pass path variables and source files
@@ -43,9 +43,9 @@ if(!interactive()){
         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
                                    dbConnection = db.hint,
                                    fimo = db.fimo,
-                                   minid = "brain_hint_20.minid",
+                                   minid = "adrenal_gland_hint_20.minid",
                                    dbUser = "trena",
-                                   dbTable = "brain_hint_20",
+                                   dbTable = "adrenal_gland_hint_20",
                                    sourcePath = data.path,
                                    isTest = FALSE,
                                    method = "HINT")

@@ -38,7 +38,43 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "brain_hint_20"
     host = "localhost"
+
+  } else if (database == "adrenal_gland_wellington_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "adrenal_gland_wellington_20"
+    host = "localhost"
     
+  } else if (database == "adrenal_gland_hint_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "adrenal_gland_hint_20"
+    host = "localhost"
+
+  } else if (database == "bone_element_wellington_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "bone_element_wellington_20"
+    host = "localhost"
+    
+  } else if (database == "bone_element_hint_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "bone_element_hint_20"
+    host = "localhost"
+
+  } else if (database == "bronchus_wellington_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "bronchus_wellington_20"
+    host = "localhost"
+    
+  } else if (database == "bronchus_hint_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "bronchus_hint_20"
+    host = "localhost"
+
   } else if (database == "skin_wellington_20_localhost") {
     user = "trena"
     password = "trena"
