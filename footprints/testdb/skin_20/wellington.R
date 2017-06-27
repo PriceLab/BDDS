@@ -25,7 +25,7 @@ if(!interactive()){
     # Create parallel structure here    
     library(foreach); library(doParallel)    
     cores <- detectCores()    
-    cl <- makeCluster(cores[1] - 1)    
+    cl <- makeCluster(15, outfile = "")    
     registerDoParallel(cl)      
 
     # Pass path variables and source files
