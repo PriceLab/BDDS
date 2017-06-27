@@ -1,0 +1,170 @@
+CREATE DATABASE
+GRANT
+CREATE DATABASE
+GRANT
+You are now connected to database "bronchus_wellington_20" as user "postgres".
+CREATE TABLE
+GRANT
+CREATE TABLE
+GRANT
+You are now connected to database "bronchus_hint_20" as user "postgres".
+CREATE TABLE
+GRANT
+CREATE TABLE
+GRANT
+
+R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+
+R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # users can either step through this file, or call this file with 
+> # r -f example.R
+> 
+> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+> # database is in ../dbInitialization/createHintTest.sql
+> > 
+> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
+> 
+> print(date())
+[1] "Tue Jun 27 14:38:22 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> data.path <- "/scratch/data/footprints/bronchus_hint_20"
+# users can either step through this file, or call this file with 
+> > #-------------------------------------------------------------------------------
+# r -f example.R
+> 
+> # establish database connections:
+> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+> 
+> # database is in ../dbInitialization/createHintTest.sql
+> if(!exists("db.hint"))
+> 
+> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
++     db.hint <- "bronchus_hint_20_localhost"
+> 
+> print(date())
+> 
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
+[1] "Tue Jun 27 14:38:22 2017"
+> #-------------------------------------------------------------------------------
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> if(!interactive()){    
+> data.path <- "/scratch/data/footprints/bronchus_wellington_20"
++     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
+> #-------------------------------------------------------------------------------
++ >     
+# establish database connections:
+> 
+> + if(!exists("db.wellington"))
+    # Create parallel structure here    
++     db.wellington <- "bronchus_wellington_20_localhost"
++     library(foreach); library(doParallel)    
+> 
+> if(!exists("db.fimo"))
++     cores <- detectCores()    
++     db.fimo <- "fimo_localhost"
++     cl <- makeCluster(cores[1] - 1)    
+> #-------------------------------------------------------------------------------
+> if(!interactive()){    
++     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
++     registerDoParallel(cl)      
++     
++ 
++     # Create parallel structure here    
++     library(foreach); library(doParallel)    
++     # Pass path variables and source files
++     cores <- detectCores()    
++     clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
++     cl <- makeCluster(cores[1] - 1)    
++     registerDoParallel(cl)      
++                   envir = environment())
++ 
++     
++     # Pass path variables and source files
++     clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
++     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
++                   envir = environment())
++     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
++     
++     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
++     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
++     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
++     junk <- clusterEvalQ(cl, source("../src/tests.R"))
++     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
++     junk <- clusterEvalQ(cl, source("../src/tests.R"))
++     junk <- clusterEvalQ(cl, source("../src/main.R"))
++     junk <- clusterEvalQ(cl, source("../src/main.R"))
++ 
++ 
++     # Run on all 24 possible chromosomes at once
++     # Run on all 24 possible chromosomes at once
++     foreach(i=1:length(chromosomes)) %dopar% {
++     foreach(i=1:length(chromosomes)) %dopar% {
++         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
++                                    dbConnection = db.wellington,
++         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
++                                    fimo = db.fimo,
++                                    dbConnection = db.hint,
++                                    minid = "bronchus_wellington_20.minid",
++                                    fimo = db.fimo,
++                                    dbUser = "trena",
++                                    dbTable = "bronchus_wellington_20",
++                                    minid = "bronchus_hint_20.minid",
++                                    sourcePath = data.path,
++                                    dbUser = "trena",
++                                    isTest = FALSE,
++                                    method = "WELLINGTON")
++                                    dbTable = "bronchus_hint_20",
++ 				   }				  
++                                    sourcePath = data.path,
++ }
++                                    isTest = FALSE,
++                                    method = "HINT")
++ 				   }				  
++ }
+Loading required package: iterators
+Loading required package: iterators
+Loading required package: parallel
+Loading required package: parallel
+Error in unserialize(socklist[[n]]) : error reading from connection
+Calls: %dopar% ... recvOneData -> recvOneData.SOCKcluster -> unserialize
+Execution halted
+Error in unserialize(socklist[[n]]) : error reading from connection
+Calls: %dopar% ... recvOneData -> recvOneData.SOCKcluster -> unserialize
+Execution halted

@@ -1,4 +1,4 @@
-\connect trena;
+\connect fimo;
 drop table fimo_hg38;
 create table fimo_hg38(motifname varchar,
                        chrom varchar,
