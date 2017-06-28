@@ -20,12 +20,11 @@ if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
 #-------------------------------------------------------------------------------
 if(!interactive()){    
-    chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
+    chromosomes <- paste("chr", c(1:22,"X","Y"), sep="")
     
     # Create parallel structure here    
     library(foreach); library(doParallel)    
-    cores <- detectCores()    
-    cl <- makeCluster(cores[1] - 1, outfile = "")    
+    cl <- makeCluster(24, outfile = "")    
     registerDoParallel(cl)      
 
     # Pass path variables and source files
@@ -49,7 +48,8 @@ if(!interactive()){
                                    sourcePath = data.path,
                                    isTest = FALSE,
                                    method = "HINT")
-				   }				  
+    }
+    stopCluster(cl)
 }
 
 print("Database fill complete; creating indices")
