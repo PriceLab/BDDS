@@ -50,243 +50,168 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> > # users can either step through this file, or call this file with 
-# users can either step through this file, or call this file with 
+> # users can either step through this file, or call this file with 
 > # r -f example.R
 > 
 > # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+> # database is in ../dbInitialization/createHintTest.sql
+> 
+> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
+> 
+> print(date())
+[1] "Wed Jun 28 23:23:47 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> > data.path <- "/scratch/data/footprints/bone_element_hint_20"
+> #-------------------------------------------------------------------------------
+> # establish database connections:
+> 
+> if(!exists("db.hint"))
++     db.hint <- "bone_element_hint_20_localhost"
+> 
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
+> #-------------------------------------------------------------------------------
+> if(!interactive()){    
++     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
++     
++     # Create parallel structure here    
++     library(foreach); library(doParallel)    
+# users can either step through this file, or call this file with 
 > # r -f example.R
-> # database is in ../dbInitialization/createHintTest.sql
++     cl <- makeCluster(25, outfile = "")    
 > 
+> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
++     registerDoParallel(cl)      
+> # database is in ../dbInitialization/createHintTest.sql
++ 
 > 
 > # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
-> 
-> > # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
-print(date())
-> # database is in ../dbInitialization/createHintTest.sql
-> 
-> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
-> 
-[1]> print(date())
-[1] "Tue Jun 27 17:41:08 2017"
- "Tue Jun 27 17:41:08 2017"
-> #-------------------------------------------------------------------------------
-> #-------------------------------------------------------------------------------
-> # set path to hint output 
-> # set path to hint output 
-> data.path <- "/scratch/data/footprints/bone_element_wellington_20"
-> data.path <- "/scratch/data/footprints/bone_element_hint_20"
-> > #-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-> > # establish database connections:
-# establish database connections:
-> > 
-
-> > if(!exists("db.wellington"))
-if(!exists("db.hint"))
-+ +     db.hint <- "bone_element_hint_20_localhost"
-    db.wellington <- "bone_element_wellington_20_localhost"
-> 
-> 
-> if(!exists("db.fimo"))
-> if(!exists("db.fimo"))
-+     db.fimo <- "fimo_localhost"
-+     db.fimo <- "fimo_localhost"
-> #-------------------------------------------------------------------------------
-> #-------------------------------------------------------------------------------
-> if(!interactive()){    
-> if(!interactive()){    
-+     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
-+     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
-+     
-+     
-+     # Create parallel structure here    
-+     # Create parallel structure here    
-+     library(foreach); library(doParallel)    
-+     library(foreach); library(doParallel)    
-+     cores <- detectCores()    
-+     cores <- detectCores()    
-+     cl <- makeCluster(cores[1] - 1, outfile = "")    
-+     cl <- makeCluster(cores[1] - 1, outfile="")    
-+     registerDoParallel(cl)      
-+     registerDoParallel(cl)      
-+ 
-+ 
 +     # Pass path variables and source files
-+     # Pass path variables and source files
+> 
 +     clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
-+     clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
-+                   envir = environment())
+> print(date())
 +                   envir = environment())
 +     
-+     
-+     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
 +     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
 +     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-+     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-+     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-+     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
+[1]+     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
+ "Wed Jun 28 23:23:47 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
 +     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-+     junk <- clusterEvalQ(cl, source("../src/tests.R"))
-+     junk <- clusterEvalQ(cl, source("../src/main.R"))
-+     junk <- clusterEvalQ(cl, source("../src/main.R"))
+> data.path <- "/scratch/data/footprints/bone_element_wellington_20"
++ >     junk <- clusterEvalQ(cl, source("../src/main.R"))
+#-------------------------------------------------------------------------------
+> # establish database connections:
+> 
 + 
-+ 
+> if(!exists("db.wellington"))
++     db.wellington <- "bone_element_wellington_20_localhost"
 +     # Run on all 24 possible chromosomes at once
-+     # Run on all 24 possible chromosomes at once
+> 
 +     foreach(i=1:length(chromosomes)) %dopar% {
-+     foreach(i=1:length(chromosomes)) %dopar% {
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
 +         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-+         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
+> #-------------------------------------------------------------------------------
+> if(!interactive()){    
++     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
 +                                    dbConnection = db.hint,
++     
++     # Create parallel structure here    
++                                    fimo = db.fimo,
++     library(foreach); library(doParallel)    
++                                    minid = "bone_element_hint_20.minid",
++     cl <- makeCluster(25, outfile="")    
++ +                                    dbUser = "trena",
+    registerDoParallel(cl)      
++ 
++                                    dbTable = "bone_element_hint_20",
++     # Pass path variables and source files
++ +                                    sourcePath = data.path,
+    clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
++                   envir = environment())
++                                    isTest = FALSE,
++     
++                                    method = "HINT")
++     junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
++     }
++     junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
++     stopCluster(cl)
++     junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
++ }
++     junk <- clusterEvalQ(cl, source("../src/tests.R"))
++     junk <- clusterEvalQ(cl, source("../src/main.R"))
++ 
++     # Run on all 24 possible chromosomes at once
++     foreach(i=1:length(chromosomes)) %dopar% {
++         fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
 +                                    dbConnection = db.wellington,
 +                                    fimo = db.fimo,
-+                                    fimo = db.fimo,
-+                                    minid = "bone_element_hint_20.minid",
 +                                    minid = "bone_element_wellington_20.minid",
 +                                    dbUser = "trena",
-+                                    dbUser = "trena",
-+                                    dbTable = "bone_element_hint_20",
 +                                    dbTable = "bone_element_wellington_20",
 +                                    sourcePath = data.path,
-+                                    sourcePath = data.path,
 +                                    isTest = FALSE,
-+                                    isTest = FALSE,
-+                                    method = "HINT")
 +                                    method = "WELLINGTON")
-+ 				   }				  
-+ 				   }				  
-+ }
++     }
++     stopCluster(cl)
 + }
 Loading required package: iterators
 Loading required package: iterators
 Loading required package: parallel
 Loading required package: parallel
-starting worker pid=26907 on localhost:11835 at 17:41:08.593
-starting worker pid=26906 on localhost:11519 at 17:41:08.596
-starting worker pid=26924 on localhost:11835 at 17:41:08.815
-starting worker pid=26925 on localhost:11519 at 17:41:08.819
-starting worker pid=26943 on localhost:11519 at 17:41:09.018
-starting worker pid=26942 on localhost:11835 at 17:41:09.032
-starting worker pid=26959 on localhost:11519 at 17:41:09.223
-starting worker pid=26968 on localhost:11835 at 17:41:09.241
-starting worker pid=26986 on localhost:11835 at 17:41:09.415
-starting worker pid=26977 on localhost:11519 at 17:41:09.434
-starting worker pid=26995 on localhost:11835 at 17:41:09.585
-starting worker pid=27004 on localhost:11519 at 17:41:09.648
-starting worker pid=27013 on localhost:11835 at 17:41:09.755
-starting worker pid=27022 on localhost:11519 at 17:41:09.819
-starting worker pid=27031 on localhost:11835 at 17:41:09.975
-starting worker pid=27040 on localhost:11519 at 17:41:09.986
-starting worker pid=27049 on localhost:11835 at 17:41:10.191
-starting worker pid=27058 on localhost:11519 at 17:41:10.201
-starting worker pid=27067 on localhost:11835 at 17:41:10.415
-starting worker pid=27074 on localhost:11519 at 17:41:10.422
-starting worker pid=27085 on localhost:11835 at 17:41:10.598
-starting worker pid=27091 on localhost:11519 at 17:41:10.633
-starting worker pid=27103 on localhost:11835 at 17:41:10.804
-starting worker pid=27112 on localhost:11519 at 17:41:10.847
-starting worker pid=27122 on localhost:11835 at 17:41:10.981
-starting worker pid=27131 on localhost:11519 at 17:41:11.060
-starting worker pid=27140 on localhost:11835 at 17:41:11.196
-starting worker pid=27149 on localhost:11519 at 17:41:11.231
-starting worker pid=27158 on localhost:11835 at 17:41:11.365
-starting worker pid=27167 on localhost:11519 at 17:41:11.398
-starting worker pid=27176 on localhost:11835 at 17:41:11.535
-starting worker pid=27185 on localhost:11519 at 17:41:11.606
-starting worker pid=27195 on localhost:11835 at 17:41:11.741
-starting worker pid=27204 on localhost:11519 at 17:41:11.817
-starting worker pid=27213 on localhost:11835 at 17:41:11.958
-starting worker pid=27222 on localhost:11519 at 17:41:12.021
-starting worker pid=27231 on localhost:11835 at 17:41:12.161
-starting worker pid=27240 on localhost:11519 at 17:41:12.228
-starting worker pid=27249 on localhost:11835 at 17:41:12.368
-starting worker pid=27258 on localhost:11519 at 17:41:12.435
-starting worker pid=27267 on localhost:11835 at 17:41:12.582
-starting worker pid=27276 on localhost:11519 at 17:41:12.651
-starting worker pid=27285 on localhost:11835 at 17:41:12.795
-starting worker pid=27294 on localhost:11519 at 17:41:12.858
-starting worker pid=27303 on localhost:11835 at 17:41:12.965
-starting worker pid=27312 on localhost:11519 at 17:41:13.064
-starting worker pid=27321 on localhost:11835 at 17:41:13.136
-starting worker pid=27330 on localhost:11519 at 17:41:13.271
-starting worker pid=27339 on localhost:11835 at 17:41:13.307
-starting worker pid=27348 on localhost:11519 at 17:41:13.452
-starting worker pid=27357 on localhost:11835 at 17:41:13.477
-starting worker pid=27366 on localhost:11519 at 17:41:13.649
-starting worker pid=27375 on localhost:11835 at 17:41:13.693
-starting worker pid=27384 on localhost:11519 at 17:41:13.857
-starting worker pid=27393 on localhost:11835 at 17:41:13.902
-starting worker pid=27402 on localhost:11519 at 17:41:14.063
-starting worker pid=27411 on localhost:11835 at 17:41:14.113
-starting worker pid=27420 on localhost:11519 at 17:41:14.270
-starting worker pid=27429 on localhost:11835 at 17:41:14.284
-starting worker pid=27438 on localhost:11519 at 17:41:14.479
-starting worker pid=27447 on localhost:11835 at 17:41:14.497
-starting worker pid=27456 on localhost:11519 at 17:41:14.647
-starting worker pid=27465 on localhost:11835 at 17:41:14.712
-starting worker pid=27474 on localhost:11519 at 17:41:14.855
-starting worker pid=27483 on localhost:11835 at 17:41:14.923
-starting worker pid=27492 on localhost:11519 at 17:41:15.062
-starting worker pid=27502 on localhost:11835 at 17:41:15.092
-starting worker pid=27511 on localhost:11519 at 17:41:15.228
-starting worker pid=27520 on localhost:11835 at 17:41:15.308
-starting worker pid=27529 on localhost:11519 at 17:41:15.425
-starting worker pid=27538 on localhost:11835 at 17:41:15.521
-starting worker pid=27547 on localhost:11519 at 17:41:15.594
-starting worker pid=27556 on localhost:11835 at 17:41:15.690
-starting worker pid=27565 on localhost:11519 at 17:41:15.762
-starting worker pid=27574 on localhost:11835 at 17:41:15.861
-starting worker pid=27584 on localhost:11519 at 17:41:15.930
-starting worker pid=27593 on localhost:11835 at 17:41:16.029
-starting worker pid=27602 on localhost:11519 at 17:41:16.140
-starting worker pid=27611 on localhost:11835 at 17:41:16.198
-starting worker pid=27620 on localhost:11519 at 17:41:16.355
-starting worker pid=27629 on localhost:11835 at 17:41:16.411
-starting worker pid=27638 on localhost:11519 at 17:41:16.532
-starting worker pid=27647 on localhost:11835 at 17:41:16.621
-starting worker pid=27656 on localhost:11519 at 17:41:16.743
-starting worker pid=27665 on localhost:11835 at 17:41:16.835
-starting worker pid=27674 on localhost:11519 at 17:41:16.913
-starting worker pid=27686 on localhost:11835 at 17:41:17.007
-starting worker pid=27703 on localhost:11519 at 17:41:17.081
-starting worker pid=27712 on localhost:11835 at 17:41:17.193
-starting worker pid=27721 on localhost:11519 at 17:41:17.299
-starting worker pid=27730 on localhost:11835 at 17:41:17.412
-starting worker pid=27739 on localhost:11519 at 17:41:17.482
-starting worker pid=27750 on localhost:11835 at 17:41:17.642
-starting worker pid=27775 on localhost:11519 at 17:41:17.650
-starting worker pid=27784 on localhost:11835 at 17:41:17.858
-starting worker pid=27790 on localhost:11519 at 17:41:17.872
-starting worker pid=27835 on localhost:11835 at 17:41:18.029
-starting worker pid=27844 on localhost:11519 at 17:41:18.042
-starting worker pid=27871 on localhost:11519 at 17:41:18.218
-starting worker pid=27862 on localhost:11835 at 17:41:18.242
-starting worker pid=27898 on localhost:11519 at 17:41:18.432
-starting worker pid=27907 on localhost:11835 at 17:41:18.447
-starting worker pid=27937 on localhost:11519 at 17:41:18.642
-starting worker pid=27952 on localhost:11835 at 17:41:18.678
-starting worker pid=27970 on localhost:11519 at 17:41:18.856
-starting worker pid=27997 on localhost:11835 at 17:41:18.861
-starting worker pid=28006 on localhost:11519 at 17:41:19.065
-starting worker pid=28009 on localhost:11835 at 17:41:19.076
-starting worker pid=28051 on localhost:11519 at 17:41:19.283
-starting worker pid=28060 on localhost:11835 at 17:41:19.294
-starting worker pid=28102 on localhost:11835 at 17:41:19.492
-starting worker pid=28089 on localhost:11519 at 17:41:19.496
-starting worker pid=28135 on localhost:11519 at 17:41:19.695
-starting worker pid=28132 on localhost:11835 at 17:41:19.695
-starting worker pid=28170 on localhost:11519 at 17:41:19.887
-starting worker pid=28169 on localhost:11835 at 17:41:19.906
-starting worker pid=28201 on localhost:11519 at 17:41:20.067
-starting worker pid=28213 on localhost:11835 at 17:41:20.076
-starting worker pid=28238 on localhost:11835 at 17:41:20.269
-starting worker pid=28231 on localhost:11519 at 17:41:20.285
-starting worker pid=28282 on localhost:11519 at 17:41:20.456
-starting worker pid=28267 on localhost:11835 at 17:41:20.486
-starting worker pid=28303 on localhost:11519 at 17:41:20.635
-starting worker pid=28312 on localhost:11835 at 17:41:20.695
-starting worker pid=28339 on localhost:11519 at 17:41:20.849
+starting worker pid=82277 on localhost:11393 at 23:23:47.673
+starting worker pid=82276 on localhost:11552 at 23:23:47.673
+starting worker pid=82295 on localhost:11393 at 23:23:47.893
+starting worker pid=82294 on localhost:11552 at 23:23:47.894
+starting worker pid=82312 on localhost:11552 at 23:23:48.107
+starting worker pid=82313 on localhost:11393 at 23:23:48.117
+starting worker pid=82338 on localhost:11393 at 23:23:48.320
+starting worker pid=82329 on localhost:11552 at 23:23:48.341
+starting worker pid=82348 on localhost:11393 at 23:23:48.522
+starting worker pid=82357 on localhost:11552 at 23:23:48.557
+starting worker pid=82366 on localhost:11393 at 23:23:48.735
+starting worker pid=82375 on localhost:11552 at 23:23:48.766
+starting worker pid=82384 on localhost:11393 at 23:23:48.944
+starting worker pid=82393 on localhost:11552 at 23:23:48.979
+starting worker pid=82402 on localhost:11393 at 23:23:49.144
+starting worker pid=82411 on localhost:11552 at 23:23:49.185
+starting worker pid=82420 on localhost:11393 at 23:23:49.310
+starting worker pid=82429 on localhost:11552 at 23:23:49.394
+starting worker pid=82438 on localhost:11393 at 23:23:49.479
+starting worker pid=82447 on localhost:11552 at 23:23:49.567
+starting worker pid=82456 on localhost:11393 at 23:23:49.646
+starting worker pid=82465 on localhost:11552 at 23:23:49.768
+starting worker pid=82474 on localhost:11393 at 23:23:49.820
+starting worker pid=82483 on localhost:11552 at 23:23:49.937
+starting worker pid=82492 on localhost:11393 at 23:23:50.032
+starting worker pid=82501 on localhost:11552 at 23:23:50.106
+starting worker pid=82510 on localhost:11393 at 23:23:50.229
+starting worker pid=82519 on localhost:11552 at 23:23:50.277
+starting worker pid=82528 on localhost:11393 at 23:23:50.395
+starting worker pid=82537 on localhost:11552 at 23:23:50.445
+starting worker pid=82546 on localhost:11393 at 23:23:50.565
+starting worker pid=82555 on localhost:11552 at 23:23:50.636
+starting worker pid=82564 on localhost:11393 at 23:23:50.732
+starting worker pid=82573 on localhost:11552 at 23:23:50.849
+starting worker pid=82582 on localhost:11393 at 23:23:50.945
+starting worker pid=82591 on localhost:11552 at 23:23:51.029
+starting worker pid=82600 on localhost:11393 at 23:23:51.144
+starting worker pid=82609 on localhost:11552 at 23:23:51.202
+starting worker pid=82618 on localhost:11393 at 23:23:51.354
+starting worker pid=82627 on localhost:11552 at 23:23:51.375
+starting worker pid=82636 on localhost:11393 at 23:23:51.557
+starting worker pid=82645 on localhost:11552 at 23:23:51.566
+starting worker pid=82655 on localhost:11393 at 23:23:51.737
+starting worker pid=82662 on localhost:11552 at 23:23:51.788
+starting worker pid=82673 on localhost:11393 at 23:23:51.951
+starting worker pid=82682 on localhost:11552 at 23:23:52.000
+starting worker pid=82692 on localhost:11393 at 23:23:52.164
+starting worker pid=82701 on localhost:11552 at 23:23:52.174
+starting worker pid=82719 on localhost:11552 at 23:23:52.379
+starting worker pid=82710 on localhost:11393 at 23:23:52.381
 Loading required package: stats4
 Loading required package: stats4
 Loading required package: stats4
@@ -315,7 +240,6 @@ Loading required package: stats4
 Loading required package: stats4
 Loading required package: stats4
 Loading required package: stats4
-starting worker pid=28357 on localhost:11835 at 17:41:20.907
 Loading required package: stats4
 Loading required package: stats4
 Loading required package: stats4
@@ -338,199 +262,89 @@ Loading required package: stats4
 Loading required package: stats4
 Loading required package: stats4
 Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: parallel
+Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: parallel
-Loading required package: stats4
-Loading required package: BiocGenerics
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: parallel
-Loading required package: BiocGenerics
-Loading required package: stats4
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: parallel
+Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: parallel
 Loading required package: parallel
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: BiocGenerics
 Loading required package: parallel
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: stats4
 Loading required package: BiocGenerics
-Loading required package: parallel
 Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: parallel
-Loading required package: parallel
-Loading required package: parallel
-Loading required package: parallel
-Loading required package: parallel
-Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: parallel
-Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: stats4
 Loading required package: parallel
 Loading required package: parallel
 Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: parallel
 Loading required package: BiocGenerics
-Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: parallel
 Loading required package: parallel
+Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: parallel
-Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-Loading required package: stats4
 Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: parallel
-Loading required package: parallel
-Loading required package: stats4
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: stats4
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: parallel
-Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: stats4
 Loading required package: BiocGenerics
 Loading required package: parallel
-Loading required package: stats4
 Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: parallel
-Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: BiocGenerics
-Loading required package: parallel
 Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: parallel
 Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
 Loading required package: parallel
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: parallel
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: BiocGenerics
 Loading required package: parallel
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: stats4
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: stats4
 Loading required package: parallel
-Loading required package: stats4
-Loading required package: stats4
 Loading required package: parallel
 Loading required package: parallel
-Loading required package: stats4
+Loading required package: parallel
+Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: stats4
-Loading required package: stats4
+Loading required package: BiocGenerics
 Loading required package: parallel
-Loading required package: stats4
 Loading required package: parallel
 Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-Loading required package: stats4
 Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: parallel
-Loading required package: BiocGenerics
-Loading required package: stats4
 Loading required package: parallel
-Loading required package: stats4
+Loading required package: BiocGenerics
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
 Loading required package: parallel
@@ -538,27 +352,18 @@ Loading required package: parallel
 Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
 Loading required package: BiocGenerics
+Loading required package: parallel
 Loading required package: BiocGenerics
 Loading required package: parallel
 Loading required package: parallel
+Loading required package: parallel
 Loading required package: BiocGenerics
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
+Loading required package: parallel
+Loading required package: BiocGenerics
 Loading required package: parallel
 
 Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
 
 The following objects are masked from ‘package:parallel’:
 
@@ -566,14 +371,10 @@ The following objects are masked from ‘package:parallel’:
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: BiocGenerics
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
-Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: parallel
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -583,25 +384,19 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
+Loading required package: S4Vectors
 
 Attaching package: ‘BiocGenerics’
 
-Loading required package: parallel
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: S4Vectors
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
-
-Loading required package: parallel
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
 
 The following objects are masked from ‘package:base’:
 
@@ -622,7 +417,6 @@ The following objects are masked from ‘package:parallel’:
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: parallel
 
 Attaching package: ‘BiocGenerics’
 
@@ -630,14 +424,14 @@ The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
-The following objects are masked from ‘package:base’:
+The following objects are masked from ‘package:parallel’:
 
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+
+Attaching package: ‘BiocGenerics’
 
 The following objects are masked from ‘package:parallel’:
 
@@ -645,7 +439,10 @@ The following objects are masked from ‘package:parallel’:
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: S4Vectors
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
@@ -658,22 +455,18 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
 
 Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: BiocGenerics
+The following objects are masked from ‘package:base’:
 
-Attaching package: ‘BiocGenerics’
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
 
+Loading required package: S4Vectors
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -682,6 +475,10 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘BiocGenerics’
 
 The following objects are masked from ‘package:parallel’:
 
@@ -689,13 +486,9 @@ The following objects are masked from ‘package:parallel’:
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: parallel
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
 
 The following objects are masked from ‘package:base’:
 
@@ -706,6 +499,7 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
+Loading required package: S4Vectors
 
 Attaching package: ‘BiocGenerics’
 
@@ -714,11 +508,26 @@ The following objects are masked from ‘package:parallel’:
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
 
+    IQR, mad, sd, var, xtabs
+
 
 Attaching package: ‘BiocGenerics’
 
-Loading required package: S4Vectors
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
+
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
@@ -730,11 +539,8 @@ The following objects are masked from ‘package:parallel’:
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
 
+Loading required package: S4Vectors
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
@@ -743,17 +549,6 @@ The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
-Loading required package: BiocGenerics
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -772,9 +567,21 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: S4Vectors
 Loading required package: S4Vectors
 Loading required package: S4Vectors
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -785,8 +592,10 @@ The following objects are masked from ‘package:base’:
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
 Loading required package: S4Vectors
-Loading required package: BiocGenerics
+
+Attaching package: ‘BiocGenerics’
 
+
 Attaching package: ‘BiocGenerics’
 
 The following objects are masked from ‘package:parallel’:
@@ -794,76 +603,52 @@ The following objects are masked from ‘package:parallel’:
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: parallel
 
-Attaching package: ‘BiocGenerics’
+The following objects are masked from ‘package:parallel’:
 
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:parallel’:
-
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: parallel
+The following objects are masked from ‘package:stats’:
 
-Attaching package: ‘BiocGenerics’
+    IQR, mad, sd, var, xtabs
 
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
+
 
+Attaching package: ‘BiocGenerics’
+
+
+Attaching package: ‘BiocGenerics’
+
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-The following objects are masked from ‘package:stats’:
+The following objects are masked from ‘package:parallel’:
 
-    IQR, mad, sd, var, xtabs
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:base’:
 
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
+Attaching package: ‘BiocGenerics’
 
-The following objects are masked from ‘package:stats’:
 
-    IQR, mad, sd, var, xtabs
+Attaching package: ‘BiocGenerics’
 
-Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: S4Vectors
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:base’:
 
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
+Attaching package: ‘BiocGenerics’
 
-Loading required package: parallel
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
+The following objects are masked from ‘package:stats’:
 
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
+    IQR, mad, sd, var, xtabs
 
-Loading required package: parallel
-Loading required package: S4Vectors
 
 Attaching package: ‘BiocGenerics’
 
@@ -877,19 +662,23 @@ The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
+The following objects are masked from ‘package:parallel’:
 
-Attaching package: ‘BiocGenerics’
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: parallel
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-The following objects are masked from ‘package:stats’:
+The following objects are masked from ‘package:parallel’:
 
-    IQR, mad, sd, var, xtabs
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
 
 The following objects are masked from ‘package:base’:
 
@@ -900,15 +689,13 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
+The following objects are masked from ‘package:stats’:
 
-Attaching package: ‘BiocGenerics’
+    IQR, mad, sd, var, xtabs
 
-Loading required package: S4Vectors
-The following objects are masked from ‘package:parallel’:
+The following objects are masked from ‘package:stats’:
 
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
+    IQR, mad, sd, var, xtabs
 
 The following objects are masked from ‘package:base’:
 
@@ -924,24 +711,14 @@ The following objects are masked from ‘package:stats’:
     IQR, mad, sd, var, xtabs
 
 Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
-Loading required package: parallel
 
 Attaching package: ‘BiocGenerics’
 
+Loading required package: S4Vectors
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -958,11 +735,6 @@ The following objects are masked from ‘package:parallel’:
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
 Loading required package: S4Vectors
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -971,18 +743,16 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
 
-The following objects are masked from ‘package:parallel’:
+The following objects are masked from ‘package:base’:
 
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: parallel
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
@@ -996,9 +766,17 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
+Loading required package: S4Vectors
 Loading required package: S4Vectors
+Loading required package: S4Vectors
+The following objects are masked from ‘package:base’:
 
-Attaching package: ‘BiocGenerics’
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
 
 The following objects are masked from ‘package:base’:
 
@@ -1008,6 +786,20 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
+
+
+Attaching package: ‘BiocGenerics’
+
+
+Attaching package: ‘BiocGenerics’
+
+Loading required package: S4Vectors
+Loading required package: S4Vectors
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
 
 The following objects are masked from ‘package:parallel’:
 
@@ -1015,7 +807,6 @@ The following objects are masked from ‘package:parallel’:
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: S4Vectors
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
@@ -1029,34 +820,45 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
 
 Attaching package: ‘BiocGenerics’
 
 Loading required package: S4Vectors
+
+Attaching package: ‘BiocGenerics’
+
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: BiocGenerics
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+
+Attaching package: ‘BiocGenerics’
+
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
+The following objects are masked from ‘package:stats’:
 
-Attaching package: ‘BiocGenerics’
+    IQR, mad, sd, var, xtabs
 
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: parallel
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
 
 The following objects are masked from ‘package:base’:
 
@@ -1067,7 +869,10 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: S4Vectors
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1086,13 +891,34 @@ The following objects are masked from ‘package:parallel’:
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
+
+Loading required package: S4Vectors
 
+Attaching package: ‘BiocGenerics’
+
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1106,33 +932,25 @@ Loading required package: S4Vectors
 
 Attaching package: ‘BiocGenerics’
 
-Loading required package: parallel
+Loading required package: S4Vectors
+
+Attaching package: ‘BiocGenerics’
+
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
 
-Loading required package: BiocGenerics
-Loading required package: parallel
-
-Attaching package: ‘BiocGenerics’
-
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-The following objects are masked from ‘package:stats’:
 
-    IQR, mad, sd, var, xtabs
+Attaching package: ‘BiocGenerics’
 
-Loading required package: BiocGenerics
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1141,20 +959,6 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: parallel
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
 
 The following objects are masked from ‘package:stats’:
 
@@ -1169,8 +973,6 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: S4Vectors
-Loading required package: parallel
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1179,13 +981,6 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: BiocGenerics
-Loading required package: S4Vectors
-Loading required package: BiocGenerics
-Loading required package: parallel
-
-Attaching package: ‘BiocGenerics’
 
 The following objects are masked from ‘package:parallel’:
 
@@ -1193,11 +988,17 @@ The following objects are masked from ‘package:parallel’:
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: parallel
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+Loading required package: S4Vectors
+Loading required package: S4Vectors
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
+Loading required package: S4Vectors
 
 Attaching package: ‘BiocGenerics’
 
@@ -1211,8 +1012,6 @@ The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
-Loading required package: BiocGenerics
-Loading required package: parallel
 
 Attaching package: ‘BiocGenerics’
 
@@ -1233,6 +1032,13 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
+
+
+Attaching package: ‘BiocGenerics’
+
+Loading required package: S4Vectors
+
+Attaching package: ‘BiocGenerics’
 
 The following objects are masked from ‘package:parallel’:
 
@@ -1240,11 +1046,9 @@ The following objects are masked from ‘package:parallel’:
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: S4Vectors
 Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
 
-    IQR, mad, sd, var, xtabs
+Attaching package: ‘BiocGenerics’
 
 
 Attaching package: ‘BiocGenerics’
@@ -1264,18 +1068,15 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: BiocGenerics
-Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
+The following objects are masked from ‘package:parallel’:
 
-    IQR, mad, sd, var, xtabs
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: BiocGenerics
-Loading required package: parallel
 
 Attaching package: ‘BiocGenerics’
 
-Loading required package: parallel
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
@@ -1285,42 +1086,18 @@ The following objects are masked from ‘package:parallel’:
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: BiocGenerics
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
 
 Loading required package: S4Vectors
-Loading required package: parallel
 
 Attaching package: ‘BiocGenerics’
 
@@ -1333,33 +1110,10 @@ The following objects are masked from ‘package:parallel’:
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
-
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: parallel
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-Loading required package: BiocGenerics
-Loading required package: parallel
+The following objects are masked from ‘package:stats’:
 
-Attaching package: ‘BiocGenerics’
+    IQR, mad, sd, var, xtabs
 
 The following objects are masked from ‘package:parallel’:
 
@@ -1367,43 +1121,59 @@ The following objects are masked from ‘package:parallel’:
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: BiocGenerics
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
-Loading required package: parallel
 
 Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
 
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
+The following objects are masked from ‘package:base’:
 
-Attaching package: ‘BiocGenerics’
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
 
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
-Loading required package: BiocGenerics
+
+Attaching package: ‘BiocGenerics’
+
+Loading required package: S4Vectors
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:stats’:
+The following objects are masked from ‘package:base’:
 
-    IQR, mad, sd, var, xtabs
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: parallel
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1413,15 +1183,15 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: S4Vectors
-Loading required package: parallel
+The following objects are masked from ‘package:base’:
 
-Attaching package: ‘BiocGenerics’
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: parallel
-Loading required package: BiocGenerics
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1431,18 +1201,7 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: BiocGenerics
 Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: parallel
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1451,17 +1210,15 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: parallel
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
 
-The following objects are masked from ‘package:parallel’:
+The following objects are masked from ‘package:base’:
 
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
 
 Loading required package: S4Vectors
 The following objects are masked from ‘package:stats’:
@@ -1477,7 +1234,11 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
+Loading required package: S4Vectors
 Loading required package: S4Vectors
+Loading required package: S4Vectors
+Loading required package: S4Vectors
+Loading required package: S4Vectors
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1488,6 +1249,9 @@ The following objects are masked from ‘package:base’:
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
 Loading required package: S4Vectors
+
+Attaching package: ‘BiocGenerics’
+
 
 Attaching package: ‘BiocGenerics’
 
@@ -1496,13 +1260,15 @@ The following objects are masked from ‘package:parallel’:
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
 
-    IQR, mad, sd, var, xtabs
-
+The following objects are masked from ‘package:base’:
 
-Attaching package: ‘BiocGenerics’
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
 
 The following objects are masked from ‘package:parallel’:
 
@@ -1514,9 +1280,20 @@ The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
 
+The following objects are masked from ‘package:stats’:
 
-Attaching package: ‘BiocGenerics’
+    IQR, mad, sd, var, xtabs
+
+Loading required package: S4Vectors
+The following objects are masked from ‘package:base’:
 
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
+
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1525,25 +1302,21 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
+
+Loading required package: S4Vectors
+Loading required package: S4Vectors
+
+Attaching package: ‘BiocGenerics’
 
 
 Attaching package: ‘BiocGenerics’
 
-Loading required package: BiocGenerics
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: S4Vectors
-Loading required package: parallel
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: parallel
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
@@ -1581,12 +1354,28 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
 
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
+
+Loading required package: S4Vectors
+Loading required package: S4Vectors
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
 
 The following objects are masked from ‘package:base’:
 
@@ -1596,22 +1385,30 @@ The following objects are masked from ‘package:base’:
     mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: parallel
-The following objects are masked from ‘package:stats’:
 
-    IQR, mad, sd, var, xtabs
-
-Loading required package: parallel
 
 Attaching package: ‘BiocGenerics’
 
 Loading required package: S4Vectors
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
+
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
+
+Loading required package: S4Vectors
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
 
 The following objects are masked from ‘package:base’:
 
@@ -1622,21 +1419,16 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
-The following objects are masked from ‘package:stats’:
 
-    IQR, mad, sd, var, xtabs
+Attaching package: ‘BiocGenerics’
 
 Loading required package: S4Vectors
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-Loading required package: BiocGenerics
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: BiocGenerics
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
@@ -1644,15 +1436,14 @@ The following objects are masked from ‘package:stats’:
 
 Attaching package: ‘BiocGenerics’
 
+
+Attaching package: ‘BiocGenerics’
+
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: parallel
-
-Attaching package: ‘BiocGenerics’
 
 The following objects are masked from ‘package:base’:
 
@@ -1669,20 +1460,24 @@ The following objects are masked from ‘package:parallel’:
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
+The following objects are masked from ‘package:stats’:
 
-Attaching package: ‘BiocGenerics’
+    IQR, mad, sd, var, xtabs
 
+Loading required package: S4Vectors
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
+
 
+Attaching package: ‘BiocGenerics’
+
 The following objects are masked from ‘package:parallel’:
 
     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
     clusterExport, clusterMap, parApply, parCapply, parLapply,
     parLapplyLB, parRapply, parSapply, parSapplyLB
 
-Loading required package: parallel
 The following objects are masked from ‘package:stats’:
 
     IQR, mad, sd, var, xtabs
@@ -1696,7 +1491,6 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: S4Vectors
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
@@ -1706,2401 +1500,18 @@ The following objects are masked from ‘package:base’:
     rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
     table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: S4Vectors
 The following objects are masked from ‘package:base’:
 
     anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: S4Vectors
-Loading required package: BiocGenerics
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: parallel
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: BiocGenerics
-Loading required package: parallel
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: BiocGenerics
-Loading required package: parallel
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: parallel
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: parallel
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: parallel
-Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: parallel
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: BiocGenerics
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: parallel
-Loading required package: parallel
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: BiocGenerics
-Loading required package: parallel
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: BiocGenerics
-Loading required package: parallel
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: parallel
-Loading required package: S4Vectors
-Loading required package: parallel
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: parallel
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: parallel
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: parallel
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: parallel
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: parallel
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: BiocGenerics
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: parallel
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘S4Vectors’
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-Loading required package: IRanges
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: IRanges
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘S4Vectors’
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-Loading required package: S4Vectors
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-Loading required package: S4Vectors
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘BiocGenerics’
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-Loading required package: S4Vectors
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-Loading required package: IRanges
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘BiocGenerics’
-
-Loading required package: IRanges
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
-    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
-    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which, which.max, which.min
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: S4Vectors
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-Loading required package: IRanges
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-Loading required package: IRanges
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
 
-Loading required package: GenomeInfoDb
-Loading required package: IRanges
+Loading required package: S4Vectors
+Loading required package: S4Vectors
+Loading required package: S4Vectors
 
 Attaching package: ‘S4Vectors’
 
@@ -4116,6 +1527,7 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
+Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
@@ -4123,10 +1535,7 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: IRanges
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4135,7 +1544,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4167,6 +1575,7 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
+Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
@@ -4174,17 +1583,15 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
+Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
-Loading required package: IRanges
 The following object is masked from ‘package:base’:
 
     expand.grid
 
 Loading required package: IRanges
-Loading required package: IRanges
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4203,10 +1610,6 @@ The following object is masked from ‘package:base’:
 Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
 
 
 Attaching package: ‘S4Vectors’
@@ -4215,9 +1618,6 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-
-Attaching package: ‘S4Vectors’
-
 The following object is masked from ‘package:base’:
 
     expand.grid
@@ -4231,7 +1631,6 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: IRanges
 Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
@@ -4248,15 +1647,14 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
+Loading required package: IRanges
 The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
@@ -4264,6 +1662,7 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
+Loading required package: IRanges
 Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
@@ -4297,10 +1696,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-
-Attaching package: ‘S4Vectors’
-
 
 Attaching package: ‘S4Vectors’
 
@@ -4308,9 +1703,7 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-
-Attaching package: ‘S4Vectors’
-
+Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
@@ -4318,33 +1711,22 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-The following object is masked from ‘package:base’:
+Loading required package: IRanges
 
-    expand.grid
+Attaching package: ‘S4Vectors’
 
 
 Attaching package: ‘S4Vectors’
 
-Loading required package: IRanges
 The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: IRanges
-Loading required package: IRanges
-Loading required package: IRanges
 The following object is masked from ‘package:base’:
 
     expand.grid
 
 Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
 Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
@@ -4361,9 +1743,7 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: GenomeInfoDb
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4371,7 +1751,6 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
@@ -4379,15 +1758,9 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
 
-Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
@@ -4395,28 +1768,14 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-
-Attaching package: ‘S4Vectors’
-
 The following object is masked from ‘package:base’:
 
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
 Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
-
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
+Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
@@ -4424,74 +1783,42 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-
-Attaching package: ‘S4Vectors’
-
+Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
 
 The following object is masked from ‘package:base’:
 
     expand.grid
 
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
 Loading required package: IRanges
-Loading required package: IRanges
-Loading required package: IRanges
-Loading required package: GenomeInfoDb
-
-Attaching package: ‘S4Vectors’
-
 
 Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
 
-    expand.grid
-
-Loading required package: IRanges
 The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: IRanges
-Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
+Loading required package: IRanges
 The following object is masked from ‘package:base’:
 
     expand.grid
 
 Loading required package: IRanges
-
-Attaching package: ‘S4Vectors’
 
-
 Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
 
-Loading required package: IRanges
 The following object is masked from ‘package:base’:
 
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
-Loading required package: GenomeInfoDb
 The following object is masked from ‘package:base’:
 
     expand.grid
@@ -4505,8 +1832,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4523,9 +1848,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4533,10 +1855,6 @@ The following object is masked from ‘package:base’:
 
     expand.grid
 
-Loading required package: GenomeInfoDb
-Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4545,9 +1863,7 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
+Loading required package: IRanges
 
 Attaching package: ‘S4Vectors’
 
@@ -4556,13 +1872,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
@@ -4572,16 +1881,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4590,10 +1889,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4602,9 +1897,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4613,20 +1905,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 
 Attaching package: ‘S4Vectors’
 
@@ -4635,15 +1913,6 @@ The following object is masked from ‘package:base’:
     expand.grid
 
 Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
@@ -4677,103 +1946,22 @@ Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
-Loading required package: DBI
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: DBI
-Loading required package: GenomeInfoDb
-Loading required package: GenomeInfoDb
-Loading required package: DBI
-Loading required package: GenomeInfoDb
-Loading required package: DBI
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
-Loading required package: DBI
 Loading required package: GenomeInfoDb
-Loading required package: DBI
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
-Loading required package: DBI
-Loading required package: DBI
 Loading required package: GenomeInfoDb
 Loading required package: GenomeInfoDb
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
 Loading required package: GenomeInfoDb
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
 Loading required package: GenomeInfoDb
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
 Loading required package: GenomeInfoDb
-Loading required package: DBI
 Loading required package: GenomeInfoDb
-Loading required package: DBI
 Loading required package: GenomeInfoDb
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
 Loading required package: GenomeInfoDb
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
-Loading required package: DBI
 Loading required package: DBI
 Loading required package: DBI
 Loading required package: DBI
@@ -4824,56 +2012,56 @@ Loading required package: DBI
 Loading required package: DBI
 Loading required package: DBI
 Loading required package: DBI
-[1][1] ---- ENCSR000EMH_hint (chr15) (1/1)
-[1] ---- ENCSR000EMH_hint (chrX) (1/1)
- ---- ENCSR000EMH_hint (chr3) (1/1)
-[1] ---- ENCSR000EMH_hint (chr16) (1/1)
-[1] ---- ENCSR000EMH_hint (chr13) (1/1)
-[1] ---- ENCSR000EMH_hint (chr14) (1/1)
-[1] ---- ENCSR000EMH_hint (chr10) (1/1)
-[1] ---- ENCSR000EMH_hint (chr20) (1/1)
-[1] ---- ENCSR000EMH_hint (chr18) (1/1)
-[1] ---- ENCSR000EMH_hint (chr21) (1/1)
-[1] ---- ENCSR000EMH_hint (chr12) (1/1)
-[1] ---- ENCSR000EMH_hint (chr11) (1/1)
-[1] ---- ENCSR000EMH_hint (chr19) (1/1)
-[1] ---- ENCSR000EMH_hint (chr2) (1/1)
-[1] ---- ENCSR000EMH_hint (chrMT) (1/1)
-[1] ---- ENCSR000EMH_hint (chrY) (1/1)
-[1] ---- ENCSR000EMH_hint (chr8) (1/1)
-[1] ---- ENCSR000EMH_hint (chr1) (1/1)
-[1] ---- ENCSR000EMH_hint (chr9) (1/1)
-[1] ---- ENCSR000EMH_hint (chr22) (1/1)
-[1] ---- ENCSR000EMH_hint (chr7) (1/1)
-[1] ---- ENCSR000EMH_hint (chr4) (1/1)
-[1] ---- ENCSR000EMH_hint (chr6) (1/1)
-[1] ---- ENCSR000EMH_hint (chr5) (1/1)
-[1] ---- ENCSR000EMH_hint (chr17) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr5) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr13) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr11) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr10) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr12) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr8) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr3) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr2) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr4) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr1) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr9) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr6) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr7) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr16) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr15) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr14) (1/1)
-[1] ---- ENCSR000EMH_wellington (chrMT) (1/1)
-[1] ---- ENCSR000EMH_wellington (chrY) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr18) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr21) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr20) (1/1)
-[1] ---- ENCSR000EMH_wellington (chrX) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr22) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr19) (1/1)
-[1] ---- ENCSR000EMH_wellington (chr17) (1/1)
+[1] ---- ENCSR000EMH (chr5) (1/1)
+[1] ---- ENCSR000EMH (chr10) (1/1)
+[1] ---- ENCSR000EMH (chr2) (1/1)
+[1] ---- ENCSR000EMH (chr21) (1/1)
+[1] ---- ENCSR000EMH (chr6) (1/1)
+[1] ---- ENCSR000EMH (chrX) (1/1)
+[1] ---- ENCSR000EMH (chrY) (1/1)
+[1] ---- ENCSR000EMH (chr13) (1/1)
+[1] ---- ENCSR000EMH (chr1) (1/1)
+[1] ---- ENCSR000EMH (chr14) (1/1)
+[1] ---- ENCSR000EMH (chr9) (1/1)
+[1] ---- ENCSR000EMH (chr4) (1/1)
+[1] ---- ENCSR000EMH (chr11) (1/1)
+[1] ---- ENCSR000EMH (chr16) (1/1)
+[1] ---- ENCSR000EMH (chrMT) (1/1)
+[1] ---- ENCSR000EMH (chr17) (1/1)
+[1] ---- ENCSR000EMH (chr20) (1/1)
+[1] ---- ENCSR000EMH (chr3) (1/1)
+[1] ---- ENCSR000EMH (chr8) (1/1)
+[1] ---- ENCSR000EMH (chr12) (1/1)
+[1] ---- ENCSR000EMH (chr15) (1/1)
+[1] ---- ENCSR000EMH (chr18) (1/1)
+[1] ---- ENCSR000EMH (chr22) (1/1)
+[1] ---- ENCSR000EMH (chr19) (1/1)
+[1] ---- ENCSR000EMH (chr7) (1/1)
+[1] ---- ENCSR000EMH (chr22) (1/1)
+[1] ---- ENCSR000EMH (chr19) (1/1)
+[1] ---- ENCSR000EMH (chr6) (1/1)
+[1][1] ---- ENCSR000EMH (chr17) (1/1)
+ ---- ENCSR000EMH (chrMT) (1/1)
+[1] ---- ENCSR000EMH (chr18) (1/1)
+[1] ---- ENCSR000EMH (chrX) (1/1)
+[1] ---- ENCSR000EMH (chr10) (1/1)
+[1] ---- ENCSR000EMH (chr13) (1/1)
+[1] ---- ENCSR000EMH (chr14) (1/1)
+[1] ---- ENCSR000EMH (chr9) (1/1)
+[1] ---- ENCSR000EMH (chrY) (1/1)
+[1] ---- ENCSR000EMH (chr5) (1/1)
+[1] ---- ENCSR000EMH (chr4) (1/1)
+[1] ---- ENCSR000EMH (chr15) (1/1)
+[1] ---- ENCSR000EMH (chr21) (1/1)
+[1] ---- ENCSR000EMH (chr2) (1/1)
+[1] ---- ENCSR000EMH (chr7) (1/1)
+[1] ---- ENCSR000EMH (chr20) (1/1)
+[1] ---- ENCSR000EMH (chr11) (1/1)
+[1] ---- ENCSR000EMH (chr3) (1/1)
+[1] ---- ENCSR000EMH (chr1) (1/1)
+[1] ---- ENCSR000EMH (chr8) (1/1)
+[1] ---- ENCSR000EMH (chr16) (1/1)
+[1] ---- ENCSR000EMH (chr12) (1/1)
 [1] "Data table read. Merging with Fimo..."
 [1] "Data table read. Merging with Fimo..."
 [1] "Data table read. Merging with Fimo..."
@@ -4887,6 +2075,7 @@ Loading required package: DBI
 [1] "Data table read. Merging with Fimo..."
 [1] "Data table read. Merging with Fimo..."
 [1] "Data table read. Merging with Fimo..."
+[1] No rows matching chrMT
 [1] "Data table read. Merging with Fimo..."
 [1] "Data table read. Merging with Fimo..."
 [1] "Data table read. Merging with Fimo..."
@@ -4899,94 +2088,3 @@ Loading required package: DBI
 [1] "Data table read. Merging with Fimo..."
 [1] "Data table read. Merging with Fimo..."
 [1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Data table read. Merging with Fimo..."
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 15088 regions, 27698 hits for ENCSR000EMH_hint
-[1] 27698 hits in 15088 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 7353 regions, 11320 hits for ENCSR000EMH_wellington
-[1] 11320 hits in 7353 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 55337 regions, 85007 hits for ENCSR000EMH_wellington
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 187503 regions, 365483 hits for ENCSR000EMH_hint
-[1] 96327 hits in 62690 regions
-[1] 393181 hits in 202591 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 283997 regions, 555201 hits for ENCSR000EMH_hint
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 83497 regions, 126902 hits for ENCSR000EMH_wellington
-[1] 223229 hits in 146187 regions
-[1] 948382 hits in 486588 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 379345 regions, 749480 hits for ENCSR000EMH_hint
-[1] 1697862 hits in 865933 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 108164 regions, 165926 hits for ENCSR000EMH_wellington
-[1] 389155 hits in 254351 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 538317 regions, 1046741 hits for ENCSR000EMH_hint
-[1] 2744603 hits in 1404250 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 161936 regions, 242752 hits for ENCSR000EMH_wellington
-[1] 631907 hits in 416287 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 80039 regions, 123810 hits for ENCSR000EMH_wellington
-[1] filling 291354 regions, 575535 hits for ENCSR000EMH_hint
-[1] 755717 hits in 496326 regions
-[1] 3320138 hits in 1695604 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 490168 regions, 961232 hits for ENCSR000EMH_hint
-[1] 4281370 hits in 2185772 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 135412 regions, 207399 hits for ENCSR000EMH_wellington
-[1] 963116 hits in 631738 regions
-[1] filling 502610 regions, 989739 hits for ENCSR000EMH_hint
-[1] 5271109 hits in 2688382 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 117884 regions, 180922 hits for ENCSR000EMH_wellington
-[1] filling 426138 regions, 840488 hits for ENCSR000EMH_hint
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 670536 regions, 1311511 hits for ENCSR000EMH_hint
-[1] "Merged. Now splitting table to regions and hits..."
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 336472 regions, 663768 hits for ENCSR000EMH_hint
-[1] filling 189593 regions, 287184 hits for ENCSR000EMH_wellington
-[1] 1144038 hits in 749622 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 139757 regions, 213234 hits for ENCSR000EMH_wellington
-[1] 1431222 hits in 939215 regions
-[1] 6111597 hits in 3114520 regions
-[1] 6775365 hits in 4121528 regions
-[1] 1644456 hits in 1078972 regions
-[1] 8086876 hits in 4121528 regions
-[1] "Merged. Now splitting table to regions and hits..."
-[1] filling 91259 regions, 141669 hits for ENCSR000EMH_wellington
-[1] 1786125 hits in 1170231 regions
