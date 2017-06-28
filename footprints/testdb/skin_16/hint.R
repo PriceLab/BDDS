@@ -49,7 +49,8 @@ if(!interactive()){
                                    sourcePath = data.path,
                                    isTest = FALSE,
                                    method = "HINT")
-				   }				  
+    }
+    stopCluster(cl)
 }
 
 print("Database fill complete; creating indices")
