@@ -24,8 +24,7 @@ if(!interactive()){
     
     # Create parallel structure here    
     library(foreach); library(doParallel)    
-    cores <- detectCores()    
-    cl <- makeCluster(15, outfile = "")
+    cl <- makeCluster(25, outfile = "")
     registerDoParallel(cl)      
 
     # Pass path variables and source files
@@ -49,7 +48,8 @@ if(!interactive()){
                                    sourcePath = data.path,
                                    isTest = FALSE,
                                    method = "HINT")
-				   }				  
+    }
+    stopCluster(cl)
 }
 
 print("Database fill complete; creating indices")
