@@ -28,6 +28,14 @@ fillAllSamplesByChromosome <- function(dbConnection = db.wellington,
                                           chromosome, method = method)
     }
     print("Data table read. Merging with Fimo...")
+
+#    browser()
+    # Make a check for the table rows; if there's none, then break the loop
+    if(nrow(tbl.wellington) < 1){
+        printf("No rows matching %s", chromosome)
+        break
+    }
+       
     fimo.con <- getDBConnection(fimo)
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
                                    dbConnection = fimo.con,
