@@ -11,7 +11,7 @@ fillAllSamplesByChromosome <- function(chromosome,
 {
 #  knownLocs <<- new.env(parent=emptyenv())
 
-    browser()
+#    browser()
   all.sampleIDs <- unlist(lapply(strsplit(list.files(sourcePath, 
                                                      "ENCSR.*.bed$"), 
                                           ".", fixed=TRUE), "[", 1))
@@ -29,6 +29,13 @@ fillAllSamplesByChromosome <- function(chromosome,
                                           chromosome, method = method)
     }
     print("Data table read. Merging with Fimo...")
+
+    # Make a check for the table rows; if there's none, then break the loop
+    if(nrow(tbl.wellington) < 1){
+        printf("No rows matching %s", chromosome)
+        break
+    }
+
     fimo.con <- getDBConnection(fimo)
     tbl <- mergeFimoWithFootprints(tbl.wellington, sampleID, 
                                    dbConnection = fimo.con,
