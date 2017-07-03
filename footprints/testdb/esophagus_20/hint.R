@@ -9,12 +9,12 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints/bronchus_hint_20"
+data.path <- "/scratch/data/footprints/esophagus_hint_20"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
 if(!exists("db.hint"))
-    db.hint <- "bronchus_hint_20_localhost"
+    db.hint <- "esophagus_hint_20_localhost"
 
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
@@ -41,9 +41,9 @@ if(!interactive()){
     result <- bptry(bplapply(chromosomes,fillAllSamplesByChromosome,
              dbConnection = db.hint,             
              fimo = db.fimo,             
-             minid = "bronchus_hint_20.minid",             
+             minid = "esophagus_hint_20.minid",             
              dbUser = "trena",             
-             dbTable = "bronchus_hint_20",             
+             dbTable = "esophagus_hint_20",             
              sourcePath = data.path,             
              isTest = FALSE,             
              method = "HINT"))    
@@ -52,11 +52,4 @@ if(!interactive()){
 print(bpok(result))
 
 print("Database fill complete; creating indices")
-
-# Index the database
-dbConnection <- getDBConnection(db.hint)
-dbSendQuery(dbConnection, "create index regions_index on regions (loc, start, endpos);")
-dbSendQuery(dbConnection, "create index hits_index on hits (loc);")
-dbDisconnect(dbConnection)
-
 print(date())

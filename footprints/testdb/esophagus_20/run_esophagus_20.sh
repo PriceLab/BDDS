@@ -3,12 +3,12 @@
 cd /scratch/db
 sudo -u postgres psql postgres << EOF
 
-create database adrenal_gland_wellington_20;
-grant all privileges on database adrenal_gland_wellington_20 to trena;
-create database adrenal_gland_hint_20;
-grant all privileges on database adrenal_gland_hint_20 to trena;
+create database esophagus_wellington_20;
+grant all privileges on database esophagus_wellington_20 to trena;
+create database esophagus_hint_20;
+grant all privileges on database esophagus_hint_20 to trena;
 
-\connect adrenal_gland_wellington_20
+\connect esophagus_wellington_20
 
 create table regions(loc varchar primary key,
 		     chrom varchar,
@@ -36,7 +36,7 @@ create table hits(loc varchar,
 
 grant all on table "hits" to trena;
 
-\connect adrenal_gland_hint_20
+\connect esophagus_hint_20
 
 create table regions(loc varchar primary key,
 		     chrom varchar,
@@ -66,19 +66,19 @@ grant all on table "hits" to trena;
 
 EOF
 
-cd /scratch/github/BDDS/footprints/testdb/adrenal_gland_20
+cd /scratch/github/BDDS/footprints/testdb/esophagus_20
 
 R -f hint.R &
 R -f wellington.R &
 
 wait
 
-sudo -u postgres psql adrenal_gland_wellington_20 <<EOF
+sudo -u postgres psql esophagus_wellington_20 <<EOF
 
 create index regions_index on regions (loc, start, endpos);
 create index hits_index on hits (loc);
 
-\connect adrenal_gland_hint_20
+\connect esophagus_hint_20
 
 create index regions_index on regions (loc, start, endpos);
 create index hits_index on hits (loc);

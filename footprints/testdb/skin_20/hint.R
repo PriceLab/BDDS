@@ -19,44 +19,41 @@ if(!exists("db.hint"))
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
 #-------------------------------------------------------------------------------
+# Source the libraries
+source("../src/dependencies.R")
+source("../src/dbFunctions.R")
+source("../src/tableParsing.R")
+source("../src/tests.R")
+source("../src/main_Bioc.R")
+
 if(!interactive()){    
     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
     
     # Create parallel structure here    
-    library(foreach); library(doParallel)    
-    cl <- makeCluster(25, outfile = "")    
-    registerDoParallel(cl)      
+    library(BiocParallel)    
+    register(MulticoreParam(workers = 25), default = TRUE)
 
     # Pass path variables and source files
-    clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
-                  envir = environment())
+#    clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
+#                  envir = environment())
     
-    junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
-    junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-    junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-    junk <- clusterEvalQ(cl, source("../src/tests.R"))
-    junk <- clusterEvalQ(cl, source("../src/main.R"))
-
     # Run on all 24 possible chromosomes at once
-    foreach(i=1:length(chromosomes)) %dopar% {
-        fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-                                   dbConnection = db.hint,
-                                   fimo = db.fimo,
-                                   minid = "skin_hint_20.minid",
-                                   dbUser = "trena",
-                                   dbTable = "skin_hint_20",
-                                   sourcePath = data.path,
-                                   isTest = FALSE,
-                                   method = "HINT")
-    }
-    stopCluster(cl)
+    result <- bptry(bplapply(chromosomes,fillAllSamplesByChromosome,
+             dbConnection = db.hint,             
+             fimo = db.fimo,             
+             minid = "skin_hint_20.minid",             
+             dbUser = "trena",             
+             dbTable = "skin_hint_20",             
+             sourcePath = data.path,             
+             isTest = FALSE,             
+             method = "HINT"))    
 }
+
+print(bpok(result))
 
 print("Database fill complete; creating indices")
 
 # Index the database
-source("../src/dbFunctions.R")
-source("../src/dependencies.R")
 dbConnection <- getDBConnection(db.hint)
 dbSendQuery(dbConnection, "create index regions_index on regions (loc, start, endpos);")
 dbSendQuery(dbConnection, "create index hits_index on hits (loc);")

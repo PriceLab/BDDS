@@ -9,12 +9,12 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints/bronchus_hint_20"
+data.path <- "/scratch/data/footprints/esophagus_wellington_20"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
-if(!exists("db.hint"))
-    db.hint <- "bronchus_hint_20_localhost"
+if(!exists("db.wellington"))
+    db.wellington <- "esophagus_wellington_20_localhost"
 
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
@@ -29,34 +29,27 @@ source("../src/main_Bioc.R")
 if(!interactive()){    
     chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
     
-    # Create parallel structure here    
-    library(BiocParallel)    
+    # Create parallel structure here
+    library(BiocParallel)
     register(MulticoreParam(workers = 25), default = TRUE)
 
     # Pass path variables and source files
-#    clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
-#                  envir = environment())
+#    clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
+ #                 envir = environment())
     
     # Run on all 24 possible chromosomes at once
-    result <- bptry(bplapply(chromosomes,fillAllSamplesByChromosome,
-             dbConnection = db.hint,             
-             fimo = db.fimo,             
-             minid = "bronchus_hint_20.minid",             
-             dbUser = "trena",             
-             dbTable = "bronchus_hint_20",             
-             sourcePath = data.path,             
-             isTest = FALSE,             
-             method = "HINT"))    
+    result <- bptry(bplapply(chromosomes, fillAllSamplesByChromosome,
+             dbConnection = db.wellington,
+             fimo = db.fimo,
+             minid = "esophagus_wellington_20.minid",
+             dbUser = "trena",
+             dbTable = "esophagus_wellington_20",
+             sourcePath = data.path,
+             isTest = FALSE,
+             method = "WELLINGTON"))
 }
 
 print(bpok(result))
 
 print("Database fill complete; creating indices")
-
-# Index the database
-dbConnection <- getDBConnection(db.hint)
-dbSendQuery(dbConnection, "create index regions_index on regions (loc, start, endpos);")
-dbSendQuery(dbConnection, "create index hits_index on hits (loc);")
-dbDisconnect(dbConnection)
-
 print(date())
