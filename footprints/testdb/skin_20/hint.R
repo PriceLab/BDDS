@@ -50,13 +50,5 @@ if(!interactive()){
 }
 
 print(bpok(result))
-
 print("Database fill complete; creating indices")
-
-# Index the database
-dbConnection <- getDBConnection(db.hint)
-dbSendQuery(dbConnection, "create index regions_index on regions (loc, start, endpos);")
-dbSendQuery(dbConnection, "create index hits_index on hits (loc);")
-dbDisconnect(dbConnection)
-
 print(date())

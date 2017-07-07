@@ -19,47 +19,36 @@ if(!exists("db.wellington"))
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
 #-------------------------------------------------------------------------------
+# Source the libraries
+source("../src/dependencies.R")
+source("../src/dbFunctions.R")
+source("../src/tableParsing.R")
+source("../src/tests.R")
+source("../src/main_Bioc.R")
+
 if(!interactive()){    
-    chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
+    chromosomes <- paste("chr", c(6:9,13:22), sep="")#"X","Y","MT"), sep="")
     
-    # Create parallel structure here    
-    library(foreach); library(doParallel)    
-    cl <- makeCluster(25, outfile = "")
-    registerDoParallel(cl)      
+    # Create parallel structure here
+    library(BiocParallel)
+    register(MulticoreParam(workers = 25, stop.on.error = FALSE, log = TRUE), default = TRUE)
 
     # Pass path variables and source files
-    clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
-                  envir = environment())
+#    clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
+ #                 envir = environment())
     
-    junk <- clusterEvalQ(cl, source("../src/dependencies.R"))
-    junk <- clusterEvalQ(cl, source("../src/dbFunctions.R"))
-    junk <- clusterEvalQ(cl, source("../src/tableParsing.R"))
-    junk <- clusterEvalQ(cl, source("../src/tests.R"))
-    junk <- clusterEvalQ(cl, source("../src/main.R"))
-
     # Run on all 24 possible chromosomes at once
-    foreach(i=1:length(chromosomes)) %dopar% {
-        fillAllSamplesByChromosome(chromosome = chromosomes[[i]],
-                                   dbConnection = db.wellington,
-                                   fimo = db.fimo,
-                                   minid = "brain_wellington_20.minid",
-                                   dbUser = "trena",
-                                   dbTable = "brain_wellington_20",
-                                   sourcePath = data.path,
-                                   isTest = FALSE,
-                                   method = "WELLINGTON")
-    }
-    stopCluster(cl)
+    result <- bptry(bplapply(chromosomes, fillAllSamplesByChromosome,
+             dbConnection = db.wellington,
+             fimo = db.fimo,
+             minid = "brain_wellington_20.minid",
+             dbUser = "trena",
+             dbTable = "brain_wellington_20",
+             sourcePath = data.path,
+             isTest = FALSE,
+             method = "WELLINGTON"))
 }
 
+print(bpok(result))
 print("Database fill complete; creating indices")
-
-# Index the database
-source("../src/dbFunctions.R")
-source("../src/dependencies.R")
-dbConnection <- getDBConnection(db.wellington)
-dbSendQuery(dbConnection, "create index regions_index on regions (loc, start, endpos);")
-dbSendQuery(dbConnection, "create index hits_index on hits (loc);")
-dbDisconnect(dbConnection)
-
 print(date())

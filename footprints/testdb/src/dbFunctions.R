@@ -75,6 +75,18 @@ getDBConnection <- function(database) {
     dbname = "bronchus_hint_20"
     host = "localhost"
 
+} else if (database == "esophagus_wellington_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "esophagus_wellington_20"
+    host = "localhost"
+    
+  } else if (database == "esophagus_hint_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "esophagus_hint_20"
+    host = "localhost"
+    
   } else if (database == "skin_wellington_20_localhost") {
     user = "trena"
     password = "trena"
