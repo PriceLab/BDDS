@@ -9,12 +9,12 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints/skin_wellington_20"
+data.path <- "/scratch/data/footprints/skin_hint_20"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
-if(!exists("db.wellington"))
-    db.wellington <- "skin_wellington_20_localhost"
+if(!exists("db.hint"))
+    db.hint <- "skin_hint_20_localhost"
 
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
@@ -27,29 +27,24 @@ source("../src/tests.R")
 source("../src/main_Bioc.R")
 
 if(!interactive()){    
-    chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
-    #chromosomes <- paste("chr", c("21","22"), sep="")
+    chromosomes <- paste0("chr",1:10)
     
-    # Create parallel structure here
-    library(BiocParallel)
-    register(MulticoreParam(workers = 25), default = TRUE)
+    # Create parallel structure here    
+    library(BiocParallel)    
+    register(MulticoreParam(workers = 25, stop.on.error = FALSE, log = TRUE), default = TRUE)
 
-    # Pass path variables and source files
-#    clusterExport(cl, varlist = c("data.path","db.fimo", "db.wellington"),
- #                 envir = environment())
-    
     # Run on all 24 possible chromosomes at once
-    result <- bptry(bplapply(chromosomes, fillAllSamplesByChromosome,
-             dbConnection = db.wellington,
-             fimo = db.fimo,
-             minid = "skin_wellington_20.minid",
-             dbUser = "trena",
-             dbTable = "skin_wellington_20",
-             sourcePath = data.path,
-             isTest = FALSE,
-             method = "WELLINGTON"))
+    result <- bptry(bplapply(chromosomes,fillAllSamplesByChromosome,
+             dbConnection = db.hint,             
+             fimo = db.fimo,             
+             minid = "skin_hint_20.minid",             
+             dbUser = "trena",             
+             dbTable = "skin_hint_20",             
+             sourcePath = data.path,             
+             isTest = FALSE,             
+             method = "HINT"))    
 }
 
 print(bpok(result))
-print("Database fill complete; creating indices")
+print("Database fill complete")
 print(date())
