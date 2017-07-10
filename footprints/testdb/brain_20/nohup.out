@@ -4679,3 +4679,7 @@ stderr and stdout:
 > print(date())
 [1] "Fri Jul  7 01:54:22 2017"
 > 
+pg_dump: [archiver (db)] connection to database "brain_wellington_20" failed: fe_sendauth: no password supplied
+pg_dump: [archiver (db)] connection to database "brain_hint_20" failed: fe_sendauth: no password supplied
+upload failed: ./brain_hint_20.dump to s3://marichards/completed_dbs/brain_hint_20.dump seek() takes 2 positional arguments but 3 were given
+upload failed: ./brain_wellington_20.dump to s3://marichards/completed_dbs/brain_wellington_20.dump seek() takes 2 positional arguments but 3 were given

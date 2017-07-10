@@ -1,9 +1,0 @@
-#/bin/bash
-
-cd /scratch/db
-
-pg_dump -Fc -h localhost -U root brain_hint_20 > ./brain_hint_20.dump
-pg_dump -Fc -h localhost -U root brain_wellington_20 > ./brain_wellington_20.dump
-
-aws s3 cp ./brain_hint_20.dump s3://marichards/completed_dbs/
-aws s3 cp ./brain_wellington_20.dump s3://marichards/completed_dbs/
