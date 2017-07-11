@@ -9,12 +9,12 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints/seed16/skin/hint"
+data.path <- "/scratch/data/footprints/seed16/brain/hint"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
 if(!exists("db.hint"))
-    db.hint <- "skin_hint_16_localhost"
+    db.hint <- "brain_hint_16_localhost"
 
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
@@ -37,9 +37,9 @@ if(!interactive()){
     result <- bptry(bplapply(chromosomes,fillAllSamplesByChromosome,
              dbConnection = db.hint,             
              fimo = db.fimo,             
-             minid = "skin_hint_16.minid",             
+             minid = "brain_hint_16.minid",             
              dbUser = "trena",             
-             dbTable = "skin_hint_16",             
+             dbTable = "brain_hint_16",             
              sourcePath = data.path,             
              isTest = FALSE,             
              method = "HINT"))    

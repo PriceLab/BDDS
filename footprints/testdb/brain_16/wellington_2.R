@@ -9,12 +9,12 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints/seed16/skin/hint"
+data.path <- "/scratch/data/footprints/seed16/brain/wellington"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
-if(!exists("db.hint"))
-    db.hint <- "skin_hint_16_localhost"
+if(!exists("db.wellington"))
+    db.wellington <- "brain_wellington_16_localhost"
 
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
@@ -27,22 +27,22 @@ source("../src/tests.R")
 source("../src/main_Bioc.R")
 
 if(!interactive()){    
-    chromosomes <- paste0("chr",1:10)
+    chromosomes <- paste0("chr",c(11:22,"X","Y","MT"))
     
-    # Create parallel structure here    
-    library(BiocParallel)    
+    # Create parallel structure here
+    library(BiocParallel)
     register(MulticoreParam(workers = 25, stop.on.error = FALSE, log = TRUE), default = TRUE)
 
     # Run on all 24 possible chromosomes at once
-    result <- bptry(bplapply(chromosomes,fillAllSamplesByChromosome,
-             dbConnection = db.hint,             
-             fimo = db.fimo,             
-             minid = "skin_hint_16.minid",             
-             dbUser = "trena",             
-             dbTable = "skin_hint_16",             
-             sourcePath = data.path,             
-             isTest = FALSE,             
-             method = "HINT"))    
+    result <- bptry(bplapply(chromosomes, fillAllSamplesByChromosome,
+             dbConnection = db.wellington,
+             fimo = db.fimo,
+             minid = "brain_wellington_16.minid",
+             dbUser = "trena",
+             dbTable = "brain_wellington_16",
+             sourcePath = data.path,
+             isTest = FALSE,
+             method = "WELLINGTON"))
 }
 
 print(bpok(result))

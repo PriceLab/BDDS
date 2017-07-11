@@ -1,14 +1,13 @@
 #/bin/bash
 
-cd /scratch/db
 sudo -u postgres psql postgres << EOF
 
-create database skin_wellington_16;
-grant all privileges on database skin_wellington_16 to trena;
-create database skin_hint_16;
-grant all privileges on database skin_hint_16 to trena;
+create database brain_wellington_16;
+grant all privileges on database brain_wellington_16 to trena;
+create database brain_hint_16;
+grant all privileges on database brain_hint_16 to trena;
 
-\connect skin_wellington_16
+\connect brain_wellington_16
 
 create table regions(loc varchar primary key,
 		     chrom varchar,
@@ -36,7 +35,7 @@ create table hits(loc varchar,
 
 grant all on table "hits" to trena;
 
-\connect skin_hint_16
+\connect brain_hint_16
 
 create table regions(loc varchar primary key,
 		     chrom varchar,
@@ -65,10 +64,3 @@ create table hits(loc varchar,
 grant all on table "hits" to trena;
 
 EOF
-
-cd /scratch/github/BDDS/footprints/testdb/skin_16
-
-R -f hint.R &
-R -f wellington.R &
-
-wait
