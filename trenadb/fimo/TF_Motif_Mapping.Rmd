@@ -397,4 +397,9 @@ If we don't add anything, we'd also miss these 4:
 intersect(all.new.tfs,still.missing)
 ```
 
+Also of interest: here are the non-Jaspar motifs we'd add (the 67):
+
+```{r}
+non.jaspar
+```
 So...what now?
