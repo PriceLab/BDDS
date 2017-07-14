@@ -247,7 +247,6 @@ This looks pretty good; let's proceed forward and narrow down our HOCOMOCO/Jaspa
 We would like a list of the motifs we want in FIMO so that we can use them to create our database. Let's grab this list of unique HOCOMOCO IDs and then use MotifDb to screen them out. 
 
 ```{r}
-
 repeat.motifs <- unique(above.p$Query.ID)
 length(repeat.motifs)
 ```
@@ -301,3 +300,12 @@ This new set is exactly 417 motifs shorter than before; it's exactly what we wan
 ```{r}
 export(fimo.motifs, "./final_fimo_motifs.meme",format="meme")
 ```
+
+## Expanding the Motifs
+
+In comparing with our previous table, we found that our human and mouse motifs from Jaspar didn't cover everything we had before. Instead, several other vertebrates popped up, forcing us to consider these as well. 
+
+```{r}
+other.vertebrates <- c("Ggallus","Ocuniculus","Rnorvegicus","Rrattus","Xlaevis")
+```
+
