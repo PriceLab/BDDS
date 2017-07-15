@@ -1,6 +1,5 @@
 #/bin/bash
 
-cd /scratch/db
 sudo -u postgres psql postgres << EOF
 
 create database lymphoblast_wellington_16;
@@ -65,8 +64,3 @@ create table hits(loc varchar,
 grant all on table "hits" to trena;
 
 EOF
-
-cd /scratch/github/BDDS/footprints/testdb/lymphoblast_16
-
-R -f hint.R &
-R -f wellington.R &
