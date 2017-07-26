@@ -308,7 +308,7 @@ asset.8 &lt;- select(above.p, Query.ID, Target.ID); head(asset.8)</code></pre>
 ## 5 ALX4_HUMAN.H10MO.D  MA0715.1 ALX4
 ## 6 ANDR_HUMAN.H10MO.A  MA0007.2 ANDR</code></pre>
 <pre><code>## [1] 1047    3</code></pre>
-<p>Now we’ve got a mapping of our “Target” motifs to the TFs, so we can put this together with our initial list of TFs, our “fimo.TFs”. This may result in some redundancy, but we’ll take care of that in a minute. We’ll also change a column name while we’re at it:</p>
+<p>Now we’ve got a mapping of our “Target” motifs to the TFs, so we can put this together with our initial list of TFs, our <code>fimo.TFs</code>. This may result in some redundancy, but we’ll take care of that in a minute. We’ll also change a column name while we’re at it:</p>
 <pre class="r"><code>names(prelim.mapping)[2] &lt;- &quot;motifs&quot;
 final.mapping &lt;- rbind(prelim.mapping[,2:3], fimo.TFs)
 head(final.mapping);dim(final.mapping)</code></pre>
@@ -555,7 +555,9 @@ intersect(final.2, jaspar.2.tfs)</code></pre>
 ## [63] &quot;sci09.v2_Osr1_3033 UP00027&quot;    &quot;sci09.v2_Plagl1_0972 UP00088&quot; 
 ## [65] &quot;sci09.v2_Sp100_2947 UP00049&quot;   &quot;sci09.v2_Zbtb12_2932 UP00019&quot; 
 ## [67] &quot;sci09.v2_Zbtb3_1048 UP00031&quot;</code></pre>
-<p>So…what now?</p>
+<p>So…what now? We need some way to deal with these missing motifs. To that end, we’ll continue this in another document, <code>swiss_uniprobe_compare.Rmd</code>. For that document, we’ll go ahead and save our <code>final.mapping</code> variable.</p>
+<pre class="r"><code>saveRDS(final.mapping,&quot;./jaspar_hocomoco_mapping.RDS&quot;)</code></pre>
+<p>So ends our initial mapping document. We’ve got a first mapping, but we need to add a good 82 TFs, most of which will come from other databases.</p>
 </div>
 
 
