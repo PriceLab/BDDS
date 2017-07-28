@@ -6,9 +6,10 @@ When new motifs become available, they should be added to the existing fimo data
 2. Using MotifDb in R, export .meme files of your desired motifs
 3. Using the fimo program, intersect the motif .meme files with all chromosomes
 4. Copy and restore the existing fimo database dump from Amazon S3
-5. Using the template from [`create_fimo_table.sh`](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/create_fimo_table.sh), create a shell script that copies the fimo output into the existing fimo database
-6. Create indices using the commands in [index.sql](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/index.sql)
-7. Dump the new fimo database locally, then copy it to Amazon S3
+5. Use loop.sh to add the `loc` column to the fimo files
+6. Using the template from [`create_fimo_table.sh`](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/create_fimo_table.sh), create a shell script that copies the fimo output into the existing fimo database
+7. Create indices using the commands in [index.sql](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/index.sql)
+8. Dump the new fimo database locally, then copy it to Amazon S3
 
 What follows is a more detailed description of how to carry out all these steps, with examples using the fimo version created on June 8, 2017. 
 
@@ -65,11 +66,11 @@ In this example, we're using a .meme file of all HOMER motifs and chromosome 1, 
 
 ## 4. Copy the and restore the existing fimo database dump from Amazon S3
 
-Ultimately, you'll want to add your text files created in step 3 to the fimo database. The most recent version of fimo was created on June 13, 2017 and can be copied to your machine as follows:
+Ultimately, you'll want to add your text files created in step 3 to the fimo database. The most recent version of fimo was created on July 27, 2017 and can be copied to your machine as follows:
 
-`aws s3 cp s3://marichards/completed_dbs/2017_06_22_fimo.dump .`
+`aws s3 cp s3://marichards/completed_dbs/2017_06_27_fimo.dump .`
 
-The database is around 34 GB and will take some time to download. Once it does, you'll need to restore it in PostgreSQL. First, open PostgreSQL, create an empty database, give privileges to the "trena" user account, and close PostgreSQL:
+The database is around 32 GB and will take some time to download. Once it does, you'll need to restore it in PostgreSQL. First, open PostgreSQL, create an empty database, give privileges to the "trena" user account, and close PostgreSQL:
 
 ```
 psql postgres
@@ -80,15 +81,19 @@ grant all privileges on database fimo to trena
 
 After creating the empty database, fill it using the following command:
 
-`sudo pg_restore --verbose --clean --no-acl --no-owner --dbname=fimo 2017_06_13_fimo.dump`
+`sudo pg_restore --verbose --clean --no-acl --no-owner --dbname=fimo 2017_06_27_fimo.dump`
 
 **This command will also take quite a while to run (probably a few of hours), so plan accordingly**
 
-Once the restore is complete, you should have 1120660701 rows; you can check this using the following command inside PostgreSQL:
+Once the restore is complete, you should have about 1.3 billion rows; you can check this using the following command inside PostgreSQL:
 
 `select count(*) from fimo_hg38;`
 
-## 5. Using the template from [`create_fimo_table.sh`](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/create_fimo_table.sh), create a shell script that copies the fimo output into the existing fimo database
+## 5. Use the `loop.sh` script to add the `loc` column to fimo files
+
+The FIMO database has an extra column not found in the output of running FIMO; copy the `loop.sh` script to the directory with your fimo output, so you can run it to add the `loc` column to all of them. Open up the script and edit it so that it's renaming your files correctly, then go ahead and run it. It shouldn't take too long; it took about 30 seconds to run on output for 274 new motifs. 
+
+## 6. Using the template from [`create_fimo_table.sh`](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/create_fimo_table.sh), create a shell script that copies the fimo output into the existing fimo database
 
 As in the case of step 3, you could theoretically fill the database one file at a time, but that would be wildly inefficient. Instead, use the local file linked above as a template to copy your text files into the database. The basic line of code in the shell script is a copy command:
 
@@ -96,21 +101,21 @@ As in the case of step 3, you could theoretically fill the database one file at 
 
 The example command here copies the info from the HOMER chromosome 1 file we created earlier. If you run a bunch of these, it'll take a while (the 85 line version in the example took a bit over an hour), but the time investment isn't terrible. 
 
-## 6. Create indices using the commands in [index.sql](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/index.sql)
+## 7. Create indices using the commands in [index.sql](https://github.com/PriceLab/BDDS/blob/master/trenadb/fimo/index.sql)
 
-The database is enormous (~2 billion lines), so you'll definitely want to invest the time to index it and make it easier to use later. To do so, run the `index.sql` script in this directory (I'm running as nohup):
+The database is enormous (~1.3 billion lines), so you'll definitely want to invest the time to index it and make it easier to use later. To do so, run the `index.sql` script in this directory (I'm running as nohup):
 
 `nohup psql fimo -f index.sql`
 
 **Once again, this commands takes a long time to finish running; go bake something and come back. Last time it took neary 4 hours**
 
-## 7. Dump the new fimo database locally, then copy it to Amazon S3
+## 8. Dump the new fimo database locally, then copy it to Amazon S3
 
 Once you've updated the database and indexed it, you should definitely save it so you never have to repeat your work. We keep the databases in an S3 bucket, so you'll want to put your new version there. First, dump it from the command line as follows:
 
-`pg_dump -Fc -h localhost -U trena fimo > ./2017_06_22_fimo.dump`
+`pg_dump -Fc -h localhost -U trena fimo > ./2017_07_27_fimo.dump`
 
 Now that you've got a dump file, simply copy it to the proper S3 bucket and you're finished:
 
-`aws s3 cp ./2017_06_13_fimo.dump s3://marichards/completed_dbs/'`
+`aws s3 cp ./2017_07_27_fimo.dump s3://marichards/2017_07_27_fimo_dbs/'`
 
