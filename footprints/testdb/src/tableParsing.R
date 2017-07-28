@@ -67,7 +67,7 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, me
             # This is the actual FIMO query that gets the chosen chromosome
             tbl.fimo <- dbGetQuery(dbConnection, query)
             colnames(tbl.fimo) <- c("motif", "chrom", "motif.start", "motif.end", "motif.strand",
-                                    "fimo.score","fimo.pvalue", "empty", "motif.sequence")
+                                    "fimo.score","fimo.pvalue", "empty", "motif.sequence", "loc")
             
             tbl.fimo <- tbl.fimo[, -grep("empty", colnames(tbl.fimo))]
             tbl.fimo$chrom <- paste("chr", tbl.fimo$chrom, sep="")
@@ -82,15 +82,17 @@ mergeFimoWithFootprints <- function(tbl.fp, sampleID, dbConnection = db.fimo, me
             # the "within" is conservative. I will run this with "any" to increase
             #the number of motif interesects
             tbl.overlaps <- as.data.frame(findOverlaps(gr.fimo, gr.wellington, type="any"))
-    
-            tbl.fimo$loc <- with(tbl.fimo, sprintf("%s:%d-%d", chrom, motif.start, motif.end))
+
+            # Comment out this line, which is no longer necessary and took a long time
+#            tbl.fimo$loc <- with(tbl.fimo, sprintf("%s:%d-%d", chrom, motif.start, motif.end))
             tbl.fimo$method <- method
             tbl.fimo$sample_id <- sampleID
             
             tbl.regions <- tbl.fimo[tbl.overlaps$queryHits,]
             tbl.regions <- cbind(tbl.regions,
                                  wellington.score=tbl.fp[tbl.overlaps$subjectHits, "score"],
-                                 fp.start=tbl.fp[tbl.overlaps$subjectHits, "start"],                                                              fp.end=tbl.fp[tbl.overlaps$subjectHits, "end"])
+                                 fp.start=tbl.fp[tbl.overlaps$subjectHits, "start"],
+                                 fp.end=tbl.fp[tbl.overlaps$subjectHits, "end"])
         }    
     
   invisible(tbl.regions)
