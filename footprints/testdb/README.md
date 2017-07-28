@@ -6,14 +6,13 @@ Currently, the workflow is:
 
 - [ ] Make a new folder for running each batch of data by copying all contents from a previous run to the newly created folder (such as the `skin_20` folder). This should include scripts for each footprinting method (e.g. `hint.R`,`wellington.R`), a shell script (e.g. `run_skin_20.sh`), and a `nohup.out` file. 
 - [ ] Delete the `nohup.out` file from the new directory
-- [ ] Rename the shell scripts and edit them to replace their databases with your new database names
+- [ ] Rename and edit the scripts to replace their databases with your new database names and change file paths
 - [ ] Add the new databases to [src/dbFunctions.R](https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/src/dbFunctions.R)
 - [ ] Add your footprint files
-- [ ] Alter the file paths, database names, and IDs in the master scripts (`hint_1/2.R`, `wellington_1/2.R`)
 - [ ] Install the necessary R packages
-- [ ] Run the database creation shell script
+- [ ] Run the database creation shell script using the nohup option to collect output
 - [ ] Run the master scripts using the nohup option to collect output
-- [ ] Index the databases
+- [ ] Index the databases using the nohup option to collect output
 - [ ] Check database contents
 - [ ] Make database read only
 - [ ] Dump the databases to S3
@@ -38,13 +37,13 @@ The `nohup.out` file is a record of the previous run; each run of a `run_<name>.
 rm test_dbs/nohup.out
 ```
 
-- [ ] **Rename and edit the shell scripts** 
+- [ ] **Rename and edit the scripts** 
 
-The shell script carry out several functions: 
+There are 6 scripts in the folder that carry out several functions: 
 
-- Creating the new databases and their tables
-- Indexing the databases once they're finished
-- Dumping and saving the indexed databases to S3
+- Creating the new databases and their tables (create_dbs_XXXX_XXXX.sh)
+- Filling the new databases with footprint data (hint_1.R/hint_2.R/wellington_1.R/wellington_2.R)
+- Indexing the databases once they're finished (index_XXXX_XXXX.sql)
 
 In order to create the proper databases and run the proper scripts, it's vital to replace the existing database and file path names with your new ones. For our test case, that means the following substitutions in the `create_dbs_skin_20.sh` file:
 
@@ -55,9 +54,28 @@ line 7 | was: `grant all privileges on database skin_wellington_20 to trena;` | 
 line 8 | was: `create database skin_hint_20;` | now `create database test_hint;`
 line 9 | was: `grant all privileges on database skin_hint_20 to trena;` | now `grant all privileges on database test_hint to trena;`
 line 11 | was `\connect skin_wellington_20` | now `\connect test_wellington`
-line 37 | was `\connect skin_hint_20` | now `\connect test_hint`
 
 Save the changes in this script; you don't **need** to rename it, but it is highly recommended for clarity. In this case, we'll rename it to `run_test.sh`. Then go ahead and make the same database name changes to the indexing (`create_index_skin_20.sh`) and dumping/saving (`dump_save_skin_20.sh`) scripts.
+
+We'll also need to alter the file paths, database names, and IDs in the master scripts (`hint.R`, `wellington.R`, etc.) 
+
+In your project directory, change the paths, names, and IDs that point to your footprints, databases, and other relevant variables. For example, I will make the following changes in hint_1.R:
+
+line | original | new
+---- | -------- | ---
+line 12 | was: `data.path <- "/scratch/data/test_set/brain_hint_20"` | now `hint.path <- "/scratch/github/BDDS/footprints/functionalTests/output/hint"`
+line 17 | was `db.hint <- "brain_hint_20_localhost"` | now `db.hint <- "test_hint_localhost"`
+line 53 | was `minid = "brain_hint_20.minid",` | now `minid = "testexample.filler.minid",`
+line 56 | was `dbTable = "brain_hint_20",` | now `dbTable = "test_hint",`
+
+You'll have to make changes in the other 3 master scripts as well. 
+
+Finally, edit the indexing file (e.g. `index_skin_20.sql`) to change the database names:
+
+line | original | new
+---- | -------- | ---
+line 12 | was: `data.path <- "/scratch/data/test_set/brain_hint_20"` | now `hint.path <- "/scratch/github/BDDS/footprints/functionalTests/output/hint"`
+line 17 | was `db.hint <- "brain_hint_20_localhost"` | now `db.hint <- "test_hint_localhost"`
 
 - [ ] **Add the new databases to [src/dbFunctions.R](https://github.com/PriceLab/BDDS/blob/master/footprints/testdb/src/dbFunctions.R)**
 
@@ -88,19 +106,6 @@ In order to perform the intersection of the fimo databasae and the hint/wellingt
 
 In any case, be sure that all your footprints end with `.bed`, all lowercase, else the scripts won't work properly. 
 
-- [ ] Alter the file paths, database names, and IDs in the master scripts (`hint.R`, `wellington.R`, etc.) 
-
-In your project directory, change the paths, names, and IDs that point to your footprints, databases, and other relevant variables. For example, I will make the following changes in hint.R:
-
-line | original | new
----- | -------- | ---
-line 12 | was: `data.path <- "/scratch/data/test_set/brain_hint_20"` | now `hint.path <- "/scratch/github/BDDS/footprints/functionalTests/output/hint"`
-line 17 | was `db.hint <- "brain_hint_20_localhost"` | now `db.hint <- "test_hint_localhost"`
-line 53 | was `minid = "brain_hint_20.minid",` | now `minid = "testexample.filler.minid",`
-line 56 | was `dbTable = "brain_hint_20",` | now `dbTable = "test_hint",`
-
-Similarly, the wellington.R should be edited to point to the test_wellington_localhost database and the correct data path (edit the same lines in wellington.R).
-
 - [ ] Install the necessary R packages
 
 The R scripts for filling the databases require a number of packages; the easiest way to get them is through Bioconductor. Start up R and run the following:
@@ -125,8 +130,8 @@ You'll need to create your databases first or else there will be nothing there t
 In the interest of not overloading your machine, the master scripts are each split into 2 pieces. Our recommendation, particularly for tissues with large numbers of footprinting files (e.g. skin), is to run `hint_1.R` and `wellington_1.R` concurrently, followed by `hint_2.R` and `wellington_2.R`. You can do this from the project directory as follows (for the first 2)
 
 ```
-nohup hint_1.R &
-nohup wellington_1.R &
+nohup R -f hint_1.R &
+nohup R -f wellington_1.R &
 ```
 
 These scripts will now run in the background, where you can monitor them while accomplishing other tasks. Once the first 2 scripts are finished, check the `nohup.out` file created and make sure there are no errors. Near the end of the script, there should be a couple of lines that look something like this:
@@ -149,7 +154,7 @@ Again, these will run in the background. Once you're finished, check again to ma
 It's vital to index your finished database so lookups can be relatively quick and easy. You should have already altered the indexing script so it's tailored to your tissue type. Run it in the background, as it'll take a while for tissues with lots of footprints:
 
 ```
-nohup create_index_test.sh &
+nohup psql test_wellington -f index_test_20.sql &
 ```
 
 - [ ] **Check database contents**
@@ -184,21 +189,12 @@ revoke insert, update, delete, truncate on hits from trena;
 
 It's vital that we preserve all the work we've put into these databases, as they serve as important resources to other projects, both within and outside the lab. Presuming that your final database isn't a "test" database, you should save it to an S3 bucket to make it reusable.
 
-At this point, you can run your modified `dump_save_test.sh` script, in the background as usual:
+First, dump the database (here, we'll do test_hint_20):
 
-```
-nohup dump_save_test.sh
-```
-
-Once this is complete, the databases should appear in the `marichards/completed_dbs` bucket on S3
-
-
-First, dump the database (here, we'll do brain_hint_20):
-
-`pg_dump -Fc -h localhost -U trena brain_hint_20 > ./brain_hint_20`
+`pg_dump -Fc -h localhost -U trena test_hint_20 > ./test_hint_20`
 
 Then, copy the database to S3; here, I'm copying it to my "completed_dbs" bucket:
 
-`aws s3 cp ./brain_hint_20.dump s3://marichards/completed_dbs/`
+`aws s3 cp ./test_hint_20.dump s3://marichards/completed_dbs/`
 
 Now the database dump file is saved to S3 and can be restored and shared. 
