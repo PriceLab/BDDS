@@ -12198,3 +12198,11 @@ stderr and stdout:
 > print(date())
 [1] "Sun Jul  9 04:37:19 2017"
 > 
+CREATE INDEX
+CREATE INDEX
+You are now connected to database "skin_hint_20" as user "postgres".
+CREATE INDEX
+CREATE INDEX
+ERROR:  syntax error at or near "EOF"
+LINE 1: EOF 
+        ^
