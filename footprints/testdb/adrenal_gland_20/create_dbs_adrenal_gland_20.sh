@@ -1,7 +1,6 @@
 #/bin/bash
 
-cd /scratch/db
-sudo -u postgres psql postgres << EOF
+psql postgres -U trena -h localhost << EOF
 
 create database adrenal_gland_wellington_20;
 grant all privileges on database adrenal_gland_wellington_20 to trena;
@@ -63,24 +62,5 @@ create table hits(loc varchar,
 		  score6 real);
 
 grant all on table "hits" to trena;
-
-EOF
-
-cd /scratch/github/BDDS/footprints/testdb/adrenal_gland_20
-
-R -f hint.R &
-R -f wellington.R &
-
-wait
-
-sudo -u postgres psql adrenal_gland_wellington_20 <<EOF
-
-create index regions_index on regions (loc, start, endpos);
-create index hits_index on hits (loc);
-
-\connect adrenal_gland_hint_20
-
-create index regions_index on regions (loc, start, endpos);
-create index hits_index on hits (loc);
 
 EOF

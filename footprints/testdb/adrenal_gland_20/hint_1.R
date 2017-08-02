@@ -9,7 +9,7 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints/adrenal_gland_hint_20"
+data.path <- "/ssd/mrichard/data/footprints/adrenal_gland_hint_20"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
@@ -27,16 +27,12 @@ source("../src/tests.R")
 source("../src/main_Bioc.R")
 
 if(!interactive()){    
-    chromosomes <- paste("chr", c(1:22,"X","Y","MT"), sep="")
+    chromosomes <- paste0("chr",1:10)
     
     # Create parallel structure here    
     library(BiocParallel)    
-    register(MulticoreParam(workers = 25), default = TRUE)
+    register(MulticoreParam(workers = 10, stop.on.error = FALSE, log = TRUE), default = TRUE)
 
-    # Pass path variables and source files
-#    clusterExport(cl, varlist = c("data.path","db.fimo", "db.hint"),
-#                  envir = environment())
-    
     # Run on all 24 possible chromosomes at once
     result <- bptry(bplapply(chromosomes,fillAllSamplesByChromosome,
              dbConnection = db.hint,             
@@ -50,6 +46,5 @@ if(!interactive()){
 }
 
 print(bpok(result))
-
-print("Database fill complete; creating indices")
+print("Database fill complete")
 print(date())

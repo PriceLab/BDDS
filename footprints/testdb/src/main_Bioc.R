@@ -9,9 +9,7 @@ fillAllSamplesByChromosome <- function(chromosome,
                                        isTest = True,
                                        method = "DEFAULT")
 {
-#  knownLocs <<- new.env(parent=emptyenv())
 
-#    browser()
   all.sampleIDs <- unlist(lapply(strsplit(list.files(sourcePath, 
                                                      "ENCSR.*.bed$"), 
                                           ".", fixed=TRUE), "[", 1))
