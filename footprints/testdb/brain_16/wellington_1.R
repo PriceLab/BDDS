@@ -31,7 +31,7 @@ if(!interactive()){
     
     # Create parallel structure here
     library(BiocParallel)
-    register(MulticoreParam(workers = 25, stop.on.error = FALSE, log = TRUE), default = TRUE)
+    register(MulticoreParam(workers = 10, stop.on.error = FALSE, log = TRUE), default = TRUE)
 
     # Run on all 24 possible chromosomes at once
     result <- bptry(bplapply(chromosomes, fillAllSamplesByChromosome,
