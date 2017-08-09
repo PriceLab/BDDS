@@ -12204,3 +12204,7 @@ CREATE INDEX
 CREATE INDEX
 You are now connected to database "skin_hint_16" as user "postgres".
 CREATE INDEX
+CREATE INDEX
+ERROR:  syntax error at or near "EOF"
+LINE 1: EOF 
+        ^
