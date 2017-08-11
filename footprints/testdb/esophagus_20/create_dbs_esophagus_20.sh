@@ -1,42 +1,13 @@
 #/bin/bash
 
-cd /scratch/db
 sudo -u postgres psql postgres << EOF
 
-create database adrenal_gland_wellington_20;
-grant all privileges on database adrenal_gland_wellington_20 to trena;
-create database adrenal_gland_hint_20;
-grant all privileges on database adrenal_gland_hint_20 to trena;
+create database esophagus_wellington_20;
+grant all privileges on database esophagus_wellington_20 to trena;
+create database esophagus_hint_20;
+grant all privileges on database esophagus_hint_20 to trena;
 
-\connect adrenal_gland_wellington_20
-
-create table regions(loc varchar primary key,
-		     chrom varchar,
-		     start int,
-		     endpos int);
-
-grant all on table "regions" to trena;
-
-create table hits(loc varchar,
-                  fp_start int,
-                  fp_end int,
-		  type varchar,
-		  name varchar,
-		  length int,
-		  strand char(1),
-		  sample_id varchar,
-		  method varchar,
-		  provenance varchar,
-		  score1 real,
-		  score2 real,
-		  score3 real,
-		  score4 real,
-		  score5 real,
-		  score6 real);
-
-grant all on table "hits" to trena;
-
-\connect adrenal_gland_hint_20
+\connect esophagus_wellington_20
 
 create table regions(loc varchar primary key,
 		     chrom varchar,
@@ -64,23 +35,32 @@ create table hits(loc varchar,
 
 grant all on table "hits" to trena;
 
-EOF
+\connect esophagus_hint_20
 
-cd /scratch/github/BDDS/footprints/testdb/adrenal_gland_20
+create table regions(loc varchar primary key,
+		     chrom varchar,
+		     start int,
+		     endpos int);
 
-R -f hint.R &
-R -f wellington.R &
+grant all on table "regions" to trena;
 
-wait
+create table hits(loc varchar,
+                  fp_start int,
+                  fp_end int,
+		  type varchar,
+		  name varchar,
+		  length int,
+		  strand char(1),
+		  sample_id varchar,
+		  method varchar,
+		  provenance varchar,
+		  score1 real,
+		  score2 real,
+		  score3 real,
+		  score4 real,
+		  score5 real,
+		  score6 real);
 
-sudo -u postgres psql adrenal_gland_wellington_20 <<EOF
-
-create index regions_index on regions (loc, start, endpos);
-create index hits_index on hits (loc);
-
-\connect adrenal_gland_hint_20
-
-create index regions_index on regions (loc, start, endpos);
-create index hits_index on hits (loc);
+grant all on table "hits" to trena;
 
 EOF
