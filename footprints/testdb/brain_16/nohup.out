@@ -216,3 +216,1620 @@ Loading required package: DBI
 +              isTest = FALSE,
 +              method = "WELLINGTON"))
 + }
+> 
+> print(bpok(result))
+             message original_error_class 
+                TRUE                 TRUE 
+> print("Database fill complete")
+[1] "Database fill complete"
+> print(date())
+[1] "Thu Aug 10 11:07:47 2017"
+> 
+############### LOG OUTPUT ###############
+Task: 9
+Node: 9
+Timestamp: 2017-08-10 22:51:03
+Success: TRUE
+Task duration:
+     user    system   elapsed 
+ 11589.70   5186.68 170767.96 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1644564 87.9    2637877 140.9  1848581 98.8
+Vcells 1726274 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr9) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 305324 regions, 428439 hits for ENCSR000DBW
+[1] 5875789 hits in 4145337 regions
+[1] ---- ENCSR000EIJ (chr9) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 289757 regions, 408840 hits for ENCSR000EIJ
+[1] 10503964 hits in 7278940 regions
+[1] ---- ENCSR000EIK (chr9) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 31934 regions, 44691 hits for ENCSR000EIK
+[1] 13206741 hits in 8818785 regions
+[1] ---- ENCSR000EIY (chr9) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 18567 regions, 25814 hits for ENCSR000EIY
+[1] 14812210 hits in 9664414 regions
+[1] ---- ENCSR000ENA (chr9) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 310750 regions, 456175 hits for ENCSR000ENA
+[1] 17440388 hits in 10746657 regions
+[1] ---- ENCSR000ENC (chr9) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 165576 regions, 243666 hits for ENCSR000ENC
+[1] 18995284 hits in 11168795 regions
+[1] ---- ENCSR000ENE (chr9) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 171142 regions, 256413 hits for ENCSR000ENE
+[1] 20085052 hits in 11547769 regions
+[1] ---- ENCSR000ENF (chr9) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 121772 regions, 177772 hits for ENCSR000ENF
+[1] 22746902 hits in 12852610 regions
+[1] ---- ENCSR000ENL (chr9) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 223505 regions, 329808 hits for ENCSR000ENL
+[1] 25814742 hits in 13816279 regions
+[1] ---- ENCSR015BGH (chr9) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 223677 regions, 324461 hits for ENCSR015BGH
+[1] 26407170 hits in 14026648 regions
+[1] ---- ENCSR026EOM (chr9) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 245251 regions, 354917 hits for ENCSR026EOM
+[1] 28538097 hits in 14732741 regions
+[1] ---- ENCSR118WIQ (chr9) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 189273 regions, 271370 hits for ENCSR118WIQ
+[1] 30790485 hits in 15520308 regions
+[1] ---- ENCSR156CLC (chr9) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 201933 regions, 294027 hits for ENCSR156CLC
+[1] 33413492 hits in 16218706 regions
+[1] ---- ENCSR187PYY (chr9) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 183958 regions, 263964 hits for ENCSR187PYY
+[1] 36277536 hits in 17179440 regions
+[1] ---- ENCSR224IYD (chr9) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 453773 regions, 647744 hits for ENCSR224IYD
+[1] 39017635 hits in 18185970 regions
+[1] ---- ENCSR309FOO (chr9) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 169647 regions, 248541 hits for ENCSR309FOO
+[1] 42640864 hits in 19530865 regions
+[1] ---- ENCSR318PRQ (chr9) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 661157 regions, 945074 hits for ENCSR318PRQ
+[1] 46281828 hits in 20854737 regions
+[1] ---- ENCSR344FLH (chr9) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 177208 regions, 258088 hits for ENCSR344FLH
+[1] 48227177 hits in 21348450 regions
+[1] ---- ENCSR475VQD (chr9) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 385376 regions, 564739 hits for ENCSR475VQD
+[1] 53111912 hits in 23279653 regions
+[1] ---- ENCSR493VDS (chr9) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 227869 regions, 328699 hits for ENCSR493VDS
+[1] 56825693 hits in 24277394 regions
+[1] ---- ENCSR503HIB (chr9) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 244192 regions, 352033 hits for ENCSR503HIB
+[1] 59295454 hits in 24982118 regions
+[1] ---- ENCSR572LDG (chr9) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 226879 regions, 328563 hits for ENCSR572LDG
+[1] 66219510 hits in 27940065 regions
+[1] ---- ENCSR584LUZ (chr9) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 357208 regions, 515004 hits for ENCSR584LUZ
+[1] 70149256 hits in 28878628 regions
+[1] ---- ENCSR595CSH (chr9) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 367962 regions, 537061 hits for ENCSR595CSH
+[1] 74143342 hits in 29961224 regions
+[1] ---- ENCSR706IDL (chr9) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 502562 regions, 711960 hits for ENCSR706IDL
+[1] 78974585 hits in 31922404 regions
+[1] ---- ENCSR771DAX (chr9) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 198656 regions, 285926 hits for ENCSR771DAX
+[1] 85013526 hits in 33971977 regions
+[1] ---- ENCSR820XRX (chr9) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 186215 regions, 270434 hits for ENCSR820XRX
+[1] 87511243 hits in 34380640 regions
+[1] ---- ENCSR829MXU (chr9) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 89214 regions, 128147 hits for ENCSR829MXU
+[1] 94084102 hits in 36487301 regions
+[1] ---- ENCSR947POC (chr9) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 159749 regions, 231063 hits for ENCSR947POC
+[1] 95856008 hits in 36750729 regions
+############### LOG OUTPUT ###############
+Task: 10
+Node: 10
+Timestamp: 2017-08-11 08:09:37
+Success: TRUE
+Task duration:
+      user     system    elapsed 
+ 12323.764   6243.828 204295.506 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1645548 87.9    2637877 140.9  1848581 98.8
+Vcells 1728775 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr10) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 313270 regions, 440092 hits for ENCSR000DBW
+[1] 7456264 hits in 5238173 regions
+[1] ---- ENCSR000EIJ (chr10) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 261636 regions, 367731 hits for ENCSR000EIJ
+[1] 11584649 hits in 7872678 regions
+[1] ---- ENCSR000EIK (chr10) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 32387 regions, 44817 hits for ENCSR000EIK
+[1] 15654390 hits in 10139974 regions
+[1] ---- ENCSR000EIY (chr10) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 20154 regions, 27518 hits for ENCSR000EIY
+[1] 18730466 hits in 11100710 regions
+[1] ---- ENCSR000ENA (chr10) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 309791 regions, 455537 hits for ENCSR000ENA
+[1] 20695690 hits in 11856872 regions
+[1] ---- ENCSR000ENC (chr10) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 168281 regions, 247046 hits for ENCSR000ENC
+[1] 23497441 hits in 13205869 regions
+[1] ---- ENCSR000ENE (chr10) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 179722 regions, 269517 hits for ENCSR000ENE
+[1] 26676687 hits in 14101264 regions
+[1] ---- ENCSR000ENF (chr10) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 121920 regions, 176676 hits for ENCSR000ENF
+[1] 29739825 hits in 15201898 regions
+[1] ---- ENCSR000ENL (chr10) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 223245 regions, 329043 hits for ENCSR000ENL
+[1] 32220802 hits in 15924399 regions
+[1] ---- ENCSR015BGH (chr10) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 231400 regions, 336858 hits for ENCSR015BGH
+[1] 34695486 hits in 16693574 regions
+[1] ---- ENCSR026EOM (chr10) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 275569 regions, 398033 hits for ENCSR026EOM
+[1] 38005067 hits in 17787682 regions
+[1] ---- ENCSR118WIQ (chr10) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 197055 regions, 281433 hits for ENCSR118WIQ
+[1] 41728906 hits in 19228907 regions
+[1] ---- ENCSR156CLC (chr10) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 213032 regions, 309581 hits for ENCSR156CLC
+[1] 44730528 hits in 20265069 regions
+[1] ---- ENCSR187PYY (chr10) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 190140 regions, 273723 hits for ENCSR187PYY
+[1] 47969089 hits in 21320980 regions
+[1] ---- ENCSR224IYD (chr10) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 450792 regions, 644721 hits for ENCSR224IYD
+[1] 53756633 hits in 23533204 regions
+[1] ---- ENCSR309FOO (chr10) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 184846 regions, 269520 hits for ENCSR309FOO
+[1] 57095213 hits in 24309897 regions
+[1] ---- ENCSR318PRQ (chr10) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 678991 regions, 972831 hits for ENCSR318PRQ
+[1] 62427831 hits in 26568183 regions
+[1] ---- ENCSR344FLH (chr10) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 180920 regions, 261338 hits for ENCSR344FLH
+[1] 66480848 hits in 27971936 regions
+[1] ---- ENCSR475VQD (chr10) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 441907 regions, 645721 hits for ENCSR475VQD
+[1] 70794977 hits in 29060174 regions
+[1] ---- ENCSR493VDS (chr10) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 234881 regions, 338826 hits for ENCSR493VDS
+[1] 77972821 hits in 31602052 regions
+[1] ---- ENCSR503HIB (chr10) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 240523 regions, 346029 hits for ENCSR503HIB
+[1] 83149640 hits in 33731735 regions
+[1] ---- ENCSR572LDG (chr10) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 241034 regions, 348310 hits for ENCSR572LDG
+[1] 85361836 hits in 34013912 regions
+[1] ---- ENCSR584LUZ (chr10) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 372916 regions, 537135 hits for ENCSR584LUZ
+[1] 90638242 hits in 35664671 regions
+[1] ---- ENCSR595CSH (chr10) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 404083 regions, 588660 hits for ENCSR595CSH
+[1] 94976140 hits in 36633405 regions
+[1] ---- ENCSR706IDL (chr10) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 522453 regions, 743052 hits for ENCSR706IDL
+[1] 99735821 hits in 37572996 regions
+[1] ---- ENCSR771DAX (chr10) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 207138 regions, 297772 hits for ENCSR771DAX
+[1] 102962047 hits in 38557823 regions
+[1] ---- ENCSR820XRX (chr10) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 188779 regions, 272478 hits for ENCSR820XRX
+[1] 105753917 hits in 39122690 regions
+[1] ---- ENCSR829MXU (chr10) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 95084 regions, 135912 hits for ENCSR829MXU
+[1] 109228607 hits in 39881670 regions
+[1] ---- ENCSR947POC (chr10) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 163554 regions, 237897 hits for ENCSR947POC
+[1] 112501486 hits in 40344921 regions
+Error in serialize(data, node$con, xdr = FALSE) : ignoring SIGPIPE signal
+Calls: bptry ... .send_VALUE -> <Anonymous> -> sendData.SOCK0node -> serialize
+Error in serialize(data, node$con, xdr = FALSE) : ignoring SIGPIPE signal
+Calls: bptry ... .send_VALUE -> <Anonymous> -> sendData.SOCK0node -> serialize
+############### LOG OUTPUT ###############
+Task: 8
+Node: 8
+Timestamp: 2017-08-11 08:42:26
+Success: TRUE
+Task duration:
+     user    system   elapsed 
+ 13179.78   5880.72 206271.63 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1645549 87.9    2637877 140.9  1848581 98.8
+Vcells 1728768 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr8) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 386160 regions, 544303 hits for ENCSR000DBW
+[1] 8000567 hits in 5624333 regions
+[1] ---- ENCSR000EIJ (chr8) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 238455 regions, 336231 hits for ENCSR000EIJ
+[1] 11216918 hits in 7612947 regions
+[1] ---- ENCSR000EIK (chr8) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 27530 regions, 38332 hits for ENCSR000EIK
+[1] 15692722 hits in 10155501 regions
+[1] ---- ENCSR000EIY (chr8) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 15436 regions, 21152 hits for ENCSR000EIY
+[1] 18751618 hits in 11106136 regions
+[1] ---- ENCSR000ENA (chr8) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 286095 regions, 420801 hits for ENCSR000ENA
+[1] 21116491 hits in 12098090 regions
+[1] ---- ENCSR000ENC (chr8) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 154552 regions, 228602 hits for ENCSR000ENC
+[1] 23726043 hits in 13264019 regions
+[1] ---- ENCSR000ENE (chr8) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 175124 regions, 263399 hits for ENCSR000ENE
+[1] 26940086 hits in 14179067 regions
+[1] ---- ENCSR000ENF (chr8) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 107368 regions, 156171 hits for ENCSR000ENF
+[1] 30182701 hits in 15333400 regions
+[1] ---- ENCSR000ENL (chr8) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 214752 regions, 316711 hits for ENCSR000ENL
+[1] 32537513 hits in 15999441 regions
+[1] ---- ENCSR015BGH (chr8) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 219992 regions, 319426 hits for ENCSR015BGH
+[1] 35014912 hits in 16842940 regions
+[1] ---- ENCSR026EOM (chr8) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 250993 regions, 364824 hits for ENCSR026EOM
+[1] 38369891 hits in 17930418 regions
+[1] ---- ENCSR118WIQ (chr8) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 190948 regions, 271701 hits for ENCSR118WIQ
+[1] 42000607 hits in 19330307 regions
+[1] ---- ENCSR156CLC (chr8) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 209120 regions, 304326 hits for ENCSR156CLC
+[1] 46586154 hits in 20932903 regions
+[1] ---- ENCSR187PYY (chr8) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 198046 regions, 284731 hits for ENCSR187PYY
+[1] 48511908 hits in 21428111 regions
+[1] ---- ENCSR224IYD (chr8) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 395355 regions, 563737 hits for ENCSR224IYD
+[1] 54665400 hits in 23843809 regions
+[1] ---- ENCSR309FOO (chr8) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 187080 regions, 273958 hits for ENCSR309FOO
+[1] 57369171 hits in 24345199 regions
+[1] ---- ENCSR318PRQ (chr8) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 828425 regions, 1181055 hits for ENCSR318PRQ
+[1] 63951869 hits in 27282048 regions
+[1] ---- ENCSR344FLH (chr8) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 182171 regions, 263572 hits for ENCSR344FLH
+[1] 67960973 hits in 28342544 regions
+[1] ---- ENCSR475VQD (chr8) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 394747 regions, 579860 hits for ENCSR475VQD
+[1] 72393371 hits in 29629635 regions
+[1] ---- ENCSR493VDS (chr8) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 201124 regions, 289804 hits for ENCSR493VDS
+[1] 78262625 hits in 31650337 regions
+[1] ---- ENCSR503HIB (chr8) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 222862 regions, 320835 hits for ENCSR503HIB
+[1] 83771882 hits in 33838890 regions
+[1] ---- ENCSR572LDG (chr8) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 223218 regions, 323263 hits for ENCSR572LDG
+[1] 87240809 hits in 34362964 regions
+[1] ---- ENCSR584LUZ (chr8) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 318297 regions, 458059 hits for ENCSR584LUZ
+[1] 93283944 hits in 36284767 regions
+[1] ---- ENCSR595CSH (chr8) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 355581 regions, 516860 hits for ENCSR595CSH
+[1] 96813080 hits in 36895557 regions
+[1] ---- ENCSR706IDL (chr8) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 515910 regions, 730602 hits for ENCSR706IDL
+[1] 100466423 hits in 37873543 regions
+[1] ---- ENCSR771DAX (chr8) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 178823 regions, 256978 hits for ENCSR771DAX
+[1] 104736505 hits in 38950194 regions
+[1] ---- ENCSR820XRX (chr8) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 184127 regions, 266427 hits for ENCSR820XRX
+[1] 108563876 hits in 39775534 regions
+[1] ---- ENCSR829MXU (chr8) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 73579 regions, 104776 hits for ENCSR829MXU
+[1] 111648414 hits in 40277076 regions
+[1] ---- ENCSR947POC (chr8) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 158920 regions, 231126 hits for ENCSR947POC
+[1] 112732612 hits in 40354935 regions
+############### LOG OUTPUT ###############
+Task: 3
+Node: 3
+Timestamp: 2017-08-11 10:18:10
+Success: TRUE
+Task duration:
+      user     system    elapsed 
+ 19267.316   6311.528 211989.132 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1645550 87.9    2637877 140.9  1848581 98.8
+Vcells 1728777 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr3) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 598116 regions, 843726 hits for ENCSR000DBW
+[1] 843726 hits in 598116 regions
+[1] ---- ENCSR000EIJ (chr3) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 290588 regions, 410855 hits for ENCSR000EIJ
+[1] 3010717 hits in 2132062 regions
+[1] ---- ENCSR000EIK (chr3) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 36525 regions, 51269 hits for ENCSR000EIK
+[1] 5447350 hits in 3840013 regions
+[1] ---- ENCSR000EIY (chr3) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 20280 regions, 28072 hits for ENCSR000EIY
+[1] 8097852 hits in 5660624 regions
+[1] ---- ENCSR000ENA (chr3) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 393848 regions, 577826 hits for ENCSR000ENA
+[1] 10057988 hits in 6974240 regions
+[1] ---- ENCSR000ENC (chr3) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 221616 regions, 325098 hits for ENCSR000ENC
+[1] 10829062 hits in 7363296 regions
+[1] ---- ENCSR000ENE (chr3) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 248027 regions, 371232 hits for ENCSR000ENE
+[1] 12810230 hits in 8554348 regions
+[1] ---- ENCSR000ENF (chr3) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 154104 regions, 223294 hits for ENCSR000ENF
+[1] 14363425 hits in 9408974 regions
+[1] ---- ENCSR000ENL (chr3) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 301192 regions, 442406 hits for ENCSR000ENL
+[1] 16984213 hits in 10493557 regions
+[1] ---- ENCSR015BGH (chr3) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 296720 regions, 432680 hits for ENCSR015BGH
+[1] 19485777 hits in 11378411 regions
+[1] ---- ENCSR026EOM (chr3) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 335712 regions, 488394 hits for ENCSR026EOM
+[1] 24830362 hits in 13601653 regions
+[1] ---- ENCSR118WIQ (chr3) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 256972 regions, 366881 hits for ENCSR118WIQ
+[1] 28904978 hits in 14864867 regions
+[1] ---- ENCSR156CLC (chr3) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 272257 regions, 396820 hits for ENCSR156CLC
+[1] 32934333 hits in 16095027 regions
+[1] ---- ENCSR187PYY (chr3) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 263644 regions, 378646 hits for ENCSR187PYY
+[1] 36656182 hits in 17285519 regions
+[1] ---- ENCSR224IYD (chr3) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 573820 regions, 817514 hits for ENCSR224IYD
+[1] 41447473 hits in 19127940 regions
+[1] ---- ENCSR309FOO (chr3) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 246994 regions, 361874 hits for ENCSR309FOO
+[1] 46948028 hits in 20978773 regions
+[1] ---- ENCSR318PRQ (chr3) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1191704 regions, 1702977 hits for ENCSR318PRQ
+[1] 51652508 hits in 22886087 regions
+[1] ---- ENCSR344FLH (chr3) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 232191 regions, 337682 hits for ENCSR344FLH
+[1] 56496994 hits in 24225333 regions
+[1] ---- ENCSR475VQD (chr3) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 509688 regions, 751073 hits for ENCSR475VQD
+[1] 64702942 hits in 27480187 regions
+[1] ---- ENCSR493VDS (chr3) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 282180 regions, 408409 hits for ENCSR493VDS
+[1] 69333022 hits in 28730159 regions
+[1] ---- ENCSR503HIB (chr3) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 294392 regions, 425001 hits for ENCSR503HIB
+[1] 77633995 hits in 31543602 regions
+[1] ---- ENCSR572LDG (chr3) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 288383 regions, 419956 hits for ENCSR572LDG
+[1] 84191838 hits in 33883257 regions
+[1] ---- ENCSR584LUZ (chr3) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 406188 regions, 587353 hits for ENCSR584LUZ
+[1] 90101107 hits in 35539982 regions
+[1] ---- ENCSR595CSH (chr3) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 442737 regions, 648805 hits for ENCSR595CSH
+[1] 95624945 hits in 36741036 regions
+[1] ---- ENCSR706IDL (chr3) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 755938 regions, 1068605 hits for ENCSR706IDL
+[1] 102290837 hits in 38440256 regions
+[1] ---- ENCSR771DAX (chr3) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 255433 regions, 368877 hits for ENCSR771DAX
+[1] 107431582 hits in 39375658 regions
+[1] ---- ENCSR820XRX (chr3) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 235442 regions, 341072 hits for ENCSR820XRX
+[1] 112263589 hits in 40333926 regions
+[1] ---- ENCSR829MXU (chr3) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 115487 regions, 165325 hits for ENCSR829MXU
+[1] 114947290 hits in 40929684 regions
+[1] ---- ENCSR947POC (chr3) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 206352 regions, 299787 hits for ENCSR947POC
+[1] 119321858 hits in 42096026 regions
+############### LOG OUTPUT ###############
+Task: 4
+Node: 4
+Timestamp: 2017-08-11 11:30:57
+Success: TRUE
+Task duration:
+      user     system    elapsed 
+ 15760.572   8863.392 216369.510 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1645551 87.9    2637877 140.9  1848581 98.8
+Vcells 1728778 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr4) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 743029 regions, 1048806 hits for ENCSR000DBW
+[1] 4059523 hits in 2875091 regions
+[1] ---- ENCSR000EIJ (chr4) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 196686 regions, 276362 hits for ENCSR000EIJ
+[1] 6152151 hits in 4340224 regions
+[1] ---- ENCSR000EIK (chr4) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 26770 regions, 37136 hits for ENCSR000EIK
+[1] 10095124 hits in 6990666 regions
+[1] ---- ENCSR000EIY (chr4) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 17173 regions, 23531 hits for ENCSR000EIY
+[1] 12438998 hits in 8446739 regions
+[1] ---- ENCSR000ENA (chr4) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 288554 regions, 422971 hits for ENCSR000ENA
+[1] 14786396 hits in 9657954 regions
+[1] ---- ENCSR000ENC (chr4) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 169539 regions, 250366 hits for ENCSR000ENC
+[1] 16541807 hits in 10388653 regions
+[1] ---- ENCSR000ENE (chr4) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 196899 regions, 296260 hits for ENCSR000ENE
+[1] 18702948 hits in 11093654 regions
+[1] ---- ENCSR000ENF (chr4) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 106264 regions, 155101 hits for ENCSR000ENF
+[1] 20240153 hits in 11595822 regions
+[1] ---- ENCSR000ENL (chr4) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 228076 regions, 336898 hits for ENCSR000ENL
+[1] 24062941 hits in 13343051 regions
+[1] ---- ENCSR015BGH (chr4) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 237036 regions, 343300 hits for ENCSR015BGH
+[1] 27873841 hits in 14514272 regions
+[1] ---- ENCSR026EOM (chr4) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 245816 regions, 357088 hits for ENCSR026EOM
+[1] 31332120 hits in 15717379 regions
+[1] ---- ENCSR118WIQ (chr4) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 192511 regions, 276131 hits for ENCSR118WIQ
+[1] 35640443 hits in 17026084 regions
+[1] ---- ENCSR156CLC (chr4) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 203411 regions, 296805 hits for ENCSR156CLC
+[1] 40629959 hits in 18799847 regions
+[1] ---- ENCSR187PYY (chr4) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 198254 regions, 285280 hits for ENCSR187PYY
+[1] 43986464 hits in 20016655 regions
+[1] ---- ENCSR224IYD (chr4) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 443019 regions, 628919 hits for ENCSR224IYD
+[1] 49618999 hits in 21871331 regions
+[1] ---- ENCSR309FOO (chr4) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 181848 regions, 267647 hits for ENCSR309FOO
+[1] 55283194 hits in 23967375 regions
+[1] ---- ENCSR318PRQ (chr4) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1282547 regions, 1831404 hits for ENCSR318PRQ
+[1] 61455000 hits in 26099713 regions
+[1] ---- ENCSR344FLH (chr4) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 168568 regions, 243616 hits for ENCSR344FLH
+[1] 68204589 hits in 28371837 regions
+[1] ---- ENCSR475VQD (chr4) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 394963 regions, 579676 hits for ENCSR475VQD
+[1] 73283154 hits in 29832098 regions
+[1] ---- ENCSR493VDS (chr4) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 210214 regions, 301658 hits for ENCSR493VDS
+[1] 80773592 hits in 32755704 regions
+[1] ---- ENCSR503HIB (chr4) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 205872 regions, 294709 hits for ENCSR503HIB
+[1] 86255182 hits in 34147237 regions
+[1] ---- ENCSR572LDG (chr4) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 208917 regions, 303378 hits for ENCSR572LDG
+[1] 94387480 hits in 36523754 regions
+[1] ---- ENCSR584LUZ (chr4) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 284354 regions, 407259 hits for ENCSR584LUZ
+[1] 98308759 hits in 37178730 regions
+[1] ---- ENCSR595CSH (chr4) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 347742 regions, 504915 hits for ENCSR595CSH
+[1] 103466962 hits in 38646459 regions
+[1] ---- ENCSR706IDL (chr4) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 611765 regions, 865867 hits for ENCSR706IDL
+[1] 108297449 hits in 39754911 regions
+[1] ---- ENCSR771DAX (chr4) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 191319 regions, 274103 hits for ENCSR771DAX
+[1] 111922517 hits in 40311012 regions
+[1] ---- ENCSR820XRX (chr4) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 170039 regions, 245825 hits for ENCSR820XRX
+[1] 115193115 hits in 40946587 regions
+[1] ---- ENCSR829MXU (chr4) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 81627 regions, 115923 hits for ENCSR829MXU
+[1] 119022071 hits in 42082822 regions
+[1] ---- ENCSR947POC (chr4) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 147793 regions, 214451 hits for ENCSR947POC
+[1] 122612053 hits in 42480214 regions
+############### LOG OUTPUT ###############
+Task: 6
+Node: 6
+Timestamp: 2017-08-11 11:42:17
+Success: TRUE
+Task duration:
+      user     system    elapsed 
+ 15620.828   7839.712 217046.726 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1645552 87.9    2637877 140.9  1848581 98.8
+Vcells 1728779 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr6) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 528753 regions, 745182 hits for ENCSR000DBW
+[1] 9480162 hits in 6641547 regions
+[1] ---- ENCSR000EIJ (chr6) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 249815 regions, 351820 hits for ENCSR000EIJ
+[1] 13162050 hits in 8801689 regions
+[1] ---- ENCSR000EIK (chr6) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 35445 regions, 49296 hits for ENCSR000EIK
+[1] 15791497 hits in 10195287 regions
+[1] ---- ENCSR000EIY (chr6) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 21184 regions, 29302 hits for ENCSR000EIY
+[1] 19053097 hits in 11182648 regions
+[1] ---- ENCSR000ENA (chr6) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 343923 regions, 503493 hits for ENCSR000ENA
+[1] 23250395 hits in 13141665 regions
+[1] ---- ENCSR000ENC (chr6) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 202934 regions, 296946 hits for ENCSR000ENC
+[1] 27530541 hits in 14351234 regions
+[1] ---- ENCSR000ENE (chr6) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 225909 regions, 336414 hits for ENCSR000ENE
+[1] 30519115 hits in 15431474 regions
+[1] ---- ENCSR000ENF (chr6) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 142877 regions, 206167 hits for ENCSR000ENF
+[1] 33619659 hits in 16282036 regions
+[1] ---- ENCSR000ENL (chr6) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 280624 regions, 411477 hits for ENCSR000ENL
+[1] 37607034 hits in 17632895 regions
+[1] ---- ENCSR015BGH (chr6) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 269879 regions, 391716 hits for ENCSR015BGH
+[1] 42392323 hits in 19503976 regions
+[1] ---- ENCSR026EOM (chr6) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 299643 regions, 433962 hits for ENCSR026EOM
+[1] 47381990 hits in 21137837 regions
+[1] ---- ENCSR118WIQ (chr6) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 238167 regions, 340349 hits for ENCSR118WIQ
+[1] 51992857 hits in 23006996 regions
+[1] ---- ENCSR156CLC (chr6) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 244539 regions, 357107 hits for ENCSR156CLC
+[1] 56159312 hits in 24186743 regions
+[1] ---- ENCSR187PYY (chr6) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 238779 regions, 342983 hits for ENCSR187PYY
+[1] 62770814 hits in 26661721 regions
+[1] ---- ENCSR224IYD (chr6) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 506067 regions, 720024 hits for ENCSR224IYD
+[1] 68924613 hits in 28661631 regions
+[1] ---- ENCSR309FOO (chr6) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 220929 regions, 323127 hits for ENCSR309FOO
+[1] 73606281 hits in 29872003 regions
+[1] ---- ENCSR318PRQ (chr6) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1049607 regions, 1497349 hits for ENCSR318PRQ
+[1] 80471934 hits in 32704322 regions
+[1] ---- ENCSR344FLH (chr6) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 209689 regions, 303620 hits for ENCSR344FLH
+[1] 85665456 hits in 34047797 regions
+[1] ---- ENCSR475VQD (chr6) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 449416 regions, 658987 hits for ENCSR475VQD
+[1] 92464103 hits in 36120812 regions
+[1] ---- ENCSR493VDS (chr6) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 248169 regions, 357850 hits for ENCSR493VDS
+[1] 97170930 hits in 36954152 regions
+[1] ---- ENCSR503HIB (chr6) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 263141 regions, 379644 hits for ENCSR503HIB
+[1] 100846067 hits in 37952258 regions
+[1] ---- ENCSR572LDG (chr6) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 258177 regions, 374463 hits for ENCSR572LDG
+[1] 106502618 hits in 39204778 regions
+[1] ---- ENCSR584LUZ (chr6) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 339653 regions, 489150 hits for ENCSR584LUZ
+[1] 109717757 hits in 39972659 regions
+[1] ---- ENCSR595CSH (chr6) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 406343 regions, 591493 hits for ENCSR595CSH
+[1] 113324105 hits in 40453795 regions
+[1] ---- ENCSR706IDL (chr6) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 668392 regions, 946374 hits for ENCSR706IDL
+[1] 117688150 hits in 41653484 regions
+[1] ---- ENCSR771DAX (chr6) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 233607 regions, 335387 hits for ENCSR771DAX
+[1] 121314952 hits in 42369443 regions
+[1] ---- ENCSR820XRX (chr6) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 216666 regions, 313929 hits for ENCSR820XRX
+[1] 121934075 hits in 42411768 regions
+[1] ---- ENCSR829MXU (chr6) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 108752 regions, 155637 hits for ENCSR829MXU
+[1] 122397602 hits in 42470735 regions
+[1] ---- ENCSR947POC (chr6) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 185589 regions, 269691 hits for ENCSR947POC
+[1] 122881744 hits in 42490398 regions
+############### LOG OUTPUT ###############
+Task: 7
+Node: 7
+Timestamp: 2017-08-11 12:38:43
+Success: TRUE
+Task duration:
+     user    system   elapsed 
+ 14201.08  11342.32 220431.11 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1645553 87.9    2637877 140.9  1848581 98.8
+Vcells 1728772 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr7) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 452170 regions, 637128 hits for ENCSR000DBW
+[1] 8734980 hits in 6112794 regions
+[1] ---- ENCSR000EIJ (chr7) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 302377 regions, 426876 hits for ENCSR000EIJ
+[1] 12415467 hits in 8440449 regions
+[1] ---- ENCSR000EIK (chr7) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 35571 regions, 49479 hits for ENCSR000EIK
+[1] 15742201 hits in 10175567 regions
+[1] ---- ENCSR000EIY (chr7) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 20571 regions, 28511 hits for ENCSR000EIY
+[1] 19023795 hits in 11175723 regions
+[1] ---- ENCSR000ENA (chr7) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 339660 regions, 497103 hits for ENCSR000ENA
+[1] 22569130 hits in 12799275 regions
+[1] ---- ENCSR000ENC (chr7) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 182450 regions, 267967 hits for ENCSR000ENC
+[1] 26082709 hits in 13886159 regions
+[1] ---- ENCSR000ENE (chr7) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 191323 regions, 286705 hits for ENCSR000ENE
+[1] 30026530 hits in 15284433 regions
+[1] ---- ENCSR000ENF (chr7) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 127303 regions, 185132 hits for ENCSR000ENF
+[1] 33119465 hits in 16151975 regions
+[1] ---- ENCSR000ENL (chr7) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 237620 regions, 349400 hits for ENCSR000ENL
+[1] 35364312 hits in 16921391 regions
+[1] ---- ENCSR015BGH (chr7) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 259151 regions, 377324 hits for ENCSR015BGH
+[1] 39950971 hits in 18542118 regions
+[1] ---- ENCSR026EOM (chr7) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 284971 regions, 413100 hits for ENCSR026EOM
+[1] 43701184 hits in 19933121 regions
+[1] ---- ENCSR118WIQ (chr7) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 219519 regions, 313376 hits for ENCSR118WIQ
+[1] 47695366 hits in 21249841 regions
+[1] ---- ENCSR156CLC (chr7) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 237353 regions, 345030 hits for ENCSR156CLC
+[1] 54101663 hits in 23619465 regions
+[1] ---- ENCSR187PYY (chr7) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 224251 regions, 321527 hits for ENCSR187PYY
+[1] 57690698 hits in 24431035 regions
+[1] ---- ENCSR224IYD (chr7) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 491035 regions, 700337 hits for ENCSR224IYD
+[1] 65890947 hits in 27904735 regions
+[1] ---- ENCSR309FOO (chr7) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 206047 regions, 301230 hits for ENCSR309FOO
+[1] 69634252 hits in 28767916 regions
+[1] ---- ENCSR318PRQ (chr7) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 910191 regions, 1301963 hits for ENCSR318PRQ
+[1] 77208994 hits in 31451540 regions
+[1] ---- ENCSR344FLH (chr7) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 208000 regions, 301407 hits for ENCSR344FLH
+[1] 83451047 hits in 33768461 regions
+[1] ---- ENCSR475VQD (chr7) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 451874 regions, 662364 hits for ENCSR475VQD
+[1] 86917546 hits in 34324113 regions
+[1] ---- ENCSR493VDS (chr7) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 249574 regions, 361782 hits for ENCSR493VDS
+[1] 92825885 hits in 36181134 regions
+[1] ---- ENCSR503HIB (chr7) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 275042 regions, 396483 hits for ENCSR503HIB
+[1] 97567413 hits in 37039322 regions
+[1] ---- ENCSR572LDG (chr7) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 259395 regions, 376165 hits for ENCSR572LDG
+[1] 101222232 hits in 37996373 regions
+[1] ---- ENCSR584LUZ (chr7) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 389118 regions, 560087 hits for ENCSR584LUZ
+[1] 107062705 hits in 39331472 regions
+[1] ---- ENCSR595CSH (chr7) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 430222 regions, 626036 hits for ENCSR595CSH
+[1] 110343793 hits in 40084393 regions
+[1] ---- ENCSR706IDL (chr7) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 607990 regions, 863221 hits for ENCSR706IDL
+[1] 114187326 hits in 40801647 regions
+[1] ---- ENCSR771DAX (chr7) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 211803 regions, 304938 hits for ENCSR771DAX
+[1] 117993088 hits in 41687484 regions
+[1] ---- ENCSR820XRX (chr7) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 210843 regions, 305194 hits for ENCSR820XRX
+[1] 121620146 hits in 42390564 regions
+[1] ---- ENCSR829MXU (chr7) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 93085 regions, 132813 hits for ENCSR829MXU
+[1] 123014557 hits in 42505983 regions
+[1] ---- ENCSR947POC (chr7) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 180434 regions, 262100 hits for ENCSR947POC
+[1] 125966236 hits in 43270696 regions
+Error in serialize(data, node$con, xdr = FALSE) : ignoring SIGPIPE signal
+Calls: bptry ... .send_VALUE -> <Anonymous> -> sendData.SOCK0node -> serialize
+############### LOG OUTPUT ###############
+Task: 5
+Node: 5
+Timestamp: 2017-08-11 12:51:12
+Success: TRUE
+Task duration:
+      user     system    elapsed 
+ 16568.592   9725.308 221181.875 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1645554 87.9    2637877 140.9  1848581 98.8
+Vcells 1728781 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr5) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 548379 regions, 772920 hits for ENCSR000DBW
+[1] 7016172 hits in 4924903 regions
+[1] ---- ENCSR000EIJ (chr5) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 259266 regions, 365125 hits for ENCSR000EIJ
+[1] 11949774 hits in 8129960 regions
+[1] ---- ENCSR000EIK (chr5) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 31181 regions, 43301 hits for ENCSR000EIK
+[1] 15609573 hits in 10121624 regions
+[1] ---- ENCSR000EIY (chr5) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 17995 regions, 24639 hits for ENCSR000EIY
+[1] 18406688 hits in 11003064 regions
+[1] ---- ENCSR000ENA (chr5) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 333774 regions, 489068 hits for ENCSR000ENA
+[1] 21605559 hits in 12382030 regions
+[1] ---- ENCSR000ENC (chr5) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 190771 regions, 279027 hits for ENCSR000ENC
+[1] 24341968 hits in 13419452 regions
+[1] ---- ENCSR000ENE (chr5) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 206994 regions, 309339 hits for ENCSR000ENE
+[1] 28183180 hits in 14608088 regions
+[1] ---- ENCSR000ENF (chr5) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 127251 regions, 184547 hits for ENCSR000ENF
+[1] 30975032 hits in 15578014 regions
+[1] ---- ENCSR000ENL (chr5) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 253628 regions, 373129 hits for ENCSR000ENL
+[1] 36013572 hits in 17115675 regions
+[1] ---- ENCSR015BGH (chr5) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 262338 regions, 382183 hits for ENCSR015BGH
+[1] 40333154 hits in 18721855 regions
+[1] ---- ENCSR026EOM (chr5) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 300085 regions, 434483 hits for ENCSR026EOM
+[1] 44420947 hits in 20188815 regions
+[1] ---- ENCSR118WIQ (chr5) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 232257 regions, 330532 hits for ENCSR118WIQ
+[1] 49949531 hits in 21994956 regions
+[1] ---- ENCSR156CLC (chr5) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 240042 regions, 350147 hits for ENCSR156CLC
+[1] 55015547 hits in 23931618 regions
+[1] ---- ENCSR187PYY (chr5) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 228888 regions, 328142 hits for ENCSR187PYY
+[1] 59623596 hits in 25074808 regions
+[1] ---- ENCSR224IYD (chr5) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 486783 regions, 693858 hits for ENCSR224IYD
+[1] 67697401 hits in 28309554 regions
+[1] ---- ENCSR309FOO (chr5) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 212405 regions, 310107 hits for ENCSR309FOO
+[1] 72703478 hits in 29669802 regions
+[1] ---- ENCSR318PRQ (chr5) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1099457 regions, 1568314 hits for ENCSR318PRQ
+[1] 82341906 hits in 33595146 regions
+[1] ---- ENCSR344FLH (chr5) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 203455 regions, 295017 hits for ENCSR344FLH
+[1] 85960473 hits in 34084177 regions
+[1] ---- ENCSR475VQD (chr5) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 456290 regions, 672011 hits for ENCSR475VQD
+[1] 93955955 hits in 36471948 regions
+[1] ---- ENCSR493VDS (chr5) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 232624 regions, 334087 hits for ENCSR493VDS
+[1] 97901500 hits in 37096922 regions
+[1] ---- ENCSR503HIB (chr5) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 259231 regions, 373438 hits for ENCSR503HIB
+[1] 102664275 hits in 38522751 regions
+[1] ---- ENCSR572LDG (chr5) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 258406 regions, 374238 hits for ENCSR572LDG
+[1] 106128155 hits in 39165836 regions
+[1] ---- ENCSR584LUZ (chr5) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 354600 regions, 510396 hits for ENCSR584LUZ
+[1] 110854189 hits in 40191922 regions
+[1] ---- ENCSR595CSH (chr5) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 408462 regions, 594639 hits for ENCSR595CSH
+[1] 114781965 hits in 40908924 regions
+[1] ---- ENCSR706IDL (chr5) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 645133 regions, 913060 hits for ENCSR706IDL
+[1] 118906148 hits in 42067201 regions
+[1] ---- ENCSR771DAX (chr5) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 214465 regions, 307890 hits for ENCSR771DAX
+[1] 122241965 hits in 42450746 regions
+[1] ---- ENCSR820XRX (chr5) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 204553 regions, 295902 hits for ENCSR820XRX
+[1] 123310459 hits in 42526101 regions
+[1] ---- ENCSR829MXU (chr5) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 93192 regions, 132654 hits for ENCSR829MXU
+[1] 125704136 hits in 43258962 regions
+[1] ---- ENCSR947POC (chr5) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 176431 regions, 255580 hits for ENCSR947POC
+[1] 126221816 hits in 43281806 regions
+Error in serialize(data, node$con, xdr = FALSE) : ignoring SIGPIPE signal
+Calls: bptry ... .send_VALUE -> <Anonymous> -> sendData.SOCK0node -> serialize
+############### LOG OUTPUT ###############
+Task: 1
+Node: 1
+Timestamp: 2017-08-11 14:03:41
+Success: TRUE
+Task duration:
+     user    system   elapsed 
+ 20988.52  10469.94 225542.16 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1645555 87.9    2637877 140.9  1848581 98.8
+Vcells 1728774 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr1) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 542264 regions, 761972 hits for ENCSR000DBW
+[1] 2599862 hits in 1844535 regions
+[1] ---- ENCSR000EIJ (chr1) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 570434 regions, 802421 hits for ENCSR000EIJ
+[1] 4861944 hits in 3441204 regions
+[1] ---- ENCSR000EIK (chr1) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 65417 regions, 91101 hits for ENCSR000EIK
+[1] 6243252 hits in 4376524 regions
+[1] ---- ENCSR000EIY (chr1) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 37523 regions, 51625 hits for ENCSR000EIY
+[1] 10880687 hits in 7375893 regions
+[1] ---- ENCSR000ENA (chr1) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 636792 regions, 933390 hits for ENCSR000ENA
+[1] 14140131 hits in 9338857 regions
+[1] ---- ENCSR000ENC (chr1) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 340487 regions, 499944 hits for ENCSR000ENC
+[1] 16291441 hits in 10321258 regions
+[1] ---- ENCSR000ENE (chr1) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 351421 regions, 525845 hits for ENCSR000ENE
+[1] 18382049 hits in 10996751 regions
+[1] ---- ENCSR000ENF (chr1) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 236915 regions, 342862 hits for ENCSR000ENF
+[1] 19828639 hits in 11479199 regions
+[1] ---- ENCSR000ENL (chr1) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 444760 regions, 654572 hits for ENCSR000ENL
+[1] 25484934 hits in 13742502 regions
+[1] ---- ENCSR015BGH (chr1) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 451788 regions, 658171 hits for ENCSR015BGH
+[1] 29563149 hits in 15146101 regions
+[1] ---- ENCSR026EOM (chr1) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 509605 regions, 738969 hits for ENCSR026EOM
+[1] 34358628 hits in 16539075 regions
+[1] ---- ENCSR118WIQ (chr1) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 389638 regions, 556012 hits for ENCSR118WIQ
+[1] 39573647 hits in 18367234 regions
+[1] ---- ENCSR156CLC (chr1) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 417176 regions, 606226 hits for ENCSR156CLC
+[1] 45336754 hits in 20396696 regions
+[1] ---- ENCSR187PYY (chr1) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 387755 regions, 554316 hits for ENCSR187PYY
+[1] 52547173 hits in 23139805 regions
+[1] ---- ENCSR224IYD (chr1) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 874922 regions, 1252723 hits for ENCSR224IYD
+[1] 58943421 hits in 24908829 regions
+[1] ---- ENCSR309FOO (chr1) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 357413 regions, 522695 hits for ENCSR309FOO
+[1] 67003543 hits in 28025988 regions
+[1] ---- ENCSR318PRQ (chr1) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1231586 regions, 1763689 hits for ENCSR318PRQ
+[1] 75907031 hits in 30787060 regions
+[1] ---- ENCSR344FLH (chr1) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 370053 regions, 535762 hits for ENCSR344FLH
+[1] 84727600 hits in 33940979 regions
+[1] ---- ENCSR475VQD (chr1) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 796508 regions, 1166874 hits for ENCSR475VQD
+[1] 91805116 hits in 35949209 regions
+[1] ---- ENCSR493VDS (chr1) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 474204 regions, 684010 hits for ENCSR493VDS
+[1] 98992769 hits in 37286252 regions
+[1] ---- ENCSR503HIB (chr1) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 517041 regions, 744934 hits for ENCSR503HIB
+[1] 105481439 hits in 39103856 regions
+[1] ---- ENCSR572LDG (chr1) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 475372 regions, 689449 hits for ENCSR572LDG
+[1] 111543638 hits in 40263735 regions
+[1] ---- ENCSR584LUZ (chr1) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 725003 regions, 1043783 hits for ENCSR584LUZ
+[1] 116741776 hits in 41265552 regions
+[1] ---- ENCSR595CSH (chr1) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 757799 regions, 1106267 hits for ENCSR595CSH
+[1] 120979565 hits in 42330139 regions
+[1] ---- ENCSR706IDL (chr1) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1023945 regions, 1454780 hits for ENCSR706IDL
+[1] 125571482 hits in 43241218 regions
+[1] ---- ENCSR771DAX (chr1) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 419178 regions, 603288 hits for ENCSR771DAX
+[1] 127733151 hits in 43507281 regions
+[1] ---- ENCSR820XRX (chr1) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 396546 regions, 573129 hits for ENCSR820XRX
+[1] 129556483 hits in 44050632 regions
+[1] ---- ENCSR829MXU (chr1) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 196405 regions, 280988 hits for ENCSR829MXU
+[1] 130300445 hits in 44137102 regions
+[1] ---- ENCSR947POC (chr1) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 338463 regions, 489572 hits for ENCSR947POC
+[1] 131239325 hits in 44192000 regions
+############### LOG OUTPUT ###############
+Task: 2
+Node: 2
+Timestamp: 2017-08-11 14:35:31
+Success: TRUE
+Task duration:
+     user    system   elapsed 
+ 21404.68  10351.19 227428.93 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1645556 87.9    2637877 140.9  1848581 98.8
+Vcells 1728775 13.2    3142662  24.0  2551855 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000DBW (chr2) (1/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 704155 regions, 994164 hits for ENCSR000DBW
+[1] 1837890 hits in 1302271 regions
+[1] ---- ENCSR000EIJ (chr2) (2/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 380186 regions, 534137 hits for ENCSR000EIJ
+[1] 5396081 hits in 3819154 regions
+[1] ---- ENCSR000EIK (chr2) (3/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 49923 regions, 69213 hits for ENCSR000EIK
+[1] 8069780 hits in 5653565 regions
+[1] ---- ENCSR000EIY (chr2) (4/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 28297 regions, 38817 hits for ENCSR000EIY
+[1] 11988591 hits in 8139831 regions
+[1] ---- ENCSR000ENA (chr2) (5/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 514046 regions, 754062 hits for ENCSR000ENA
+[1] 15566272 hits in 10104256 regions
+[1] ---- ENCSR000ENC (chr2) (6/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 280979 regions, 415816 hits for ENCSR000ENC
+[1] 17856204 hits in 10858426 regions
+[1] ---- ENCSR000ENE (chr2) (7/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 310113 regions, 466468 hits for ENCSR000ENE
+[1] 22072027 hits in 12519920 regions
+[1] ---- ENCSR000ENF (chr2) (8/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 200963 regions, 293509 hits for ENCSR000ENF
+[1] 27233595 hits in 14272926 regions
+[1] ---- ENCSR000ENL (chr2) (9/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 379511 regions, 559639 hits for ENCSR000ENL
+[1] 32220802 hits in 15924399 regions
+[1] ---- ENCSR015BGH (chr2) (10/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 370025 regions, 539375 hits for ENCSR015BGH
+[1] 37195557 hits in 17532995 regions
+[1] ---- ENCSR026EOM (chr2) (11/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 442499 regions, 647220 hits for ENCSR026EOM
+[1] 43288084 hits in 19778734 regions
+[1] ---- ENCSR118WIQ (chr2) (12/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 332960 regions, 478172 hits for ENCSR118WIQ
+[1] 48990080 hits in 21604894 regions
+[1] ---- ENCSR156CLC (chr2) (13/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 355198 regions, 519011 hits for ENCSR156CLC
+[1] 55802205 hits in 24101270 regions
+[1] ---- ENCSR187PYY (chr2) (14/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 338912 regions, 487668 hits for ENCSR187PYY
+[1] 65190610 hits in 27620633 regions
+[1] ---- ENCSR224IYD (chr2) (15/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 712378 regions, 1018534 hits for ENCSR224IYD
+[1] 71813511 hits in 29469712 regions
+[1] ---- ENCSR309FOO (chr2) (16/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 314461 regions, 461705 hits for ENCSR309FOO
+[1] 82803611 hits in 33656913 regions
+[1] ---- ENCSR318PRQ (chr2) (17/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1401223 regions, 2002511 hits for ENCSR318PRQ
+[1] 89513754 hits in 35419668 regions
+[1] ---- ENCSR344FLH (chr2) (18/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 302154 regions, 440212 hits for ENCSR344FLH
+[1] 96296220 hits in 36802910 regions
+[1] ---- ENCSR475VQD (chr2) (19/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 686319 regions, 1012565 hits for ENCSR475VQD
+[1] 104479527 hits in 38920645 regions
+[1] ---- ENCSR493VDS (chr2) (20/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 364627 regions, 528819 hits for ENCSR493VDS
+[1] 109092695 hits in 39865155 regions
+[1] ---- ENCSR503HIB (chr2) (21/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 348865 regions, 504878 hits for ENCSR503HIB
+[1] 115697993 hits in 41048840 regions
+[1] ---- ENCSR572LDG (chr2) (22/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 379587 regions, 551440 hits for ENCSR572LDG
+[1] 119873298 hits in 42158713 regions
+[1] ---- ENCSR584LUZ (chr2) (23/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 558207 regions, 806243 hits for ENCSR584LUZ
+[1] 124116702 hits in 42700905 regions
+[1] ---- ENCSR595CSH (chr2) (24/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 619831 regions, 908047 hits for ENCSR595CSH
+[1] 127129863 hits in 43445429 regions
+[1] ---- ENCSR706IDL (chr2) (25/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 882961 regions, 1250203 hits for ENCSR706IDL
+[1] 128983354 hits in 44013209 regions
+[1] ---- ENCSR771DAX (chr2) (26/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 318881 regions, 462974 hits for ENCSR771DAX
+[1] 130019457 hits in 44104246 regions
+[1] ---- ENCSR820XRX (chr2) (27/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 310046 regions, 449308 hits for ENCSR820XRX
+[1] 130749753 hits in 44171588 regions
+[1] ---- ENCSR829MXU (chr2) (28/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 141484 regions, 203765 hits for ENCSR829MXU
+[1] 131443090 hits in 44216743 regions
+[1] ---- ENCSR947POC (chr2) (29/29)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 264871 regions, 384136 hits for ENCSR947POC
+[1] 131827226 hits in 44234642 regions
+> 
+> print(bpok(result))
+ [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+> print("Database fill complete")
+[1] "Database fill complete"
+> print(date())
+[1] "Fri Aug 11 14:35:31 2017"
+> 
+Error in serialize(data, node$con, xdr = FALSE) : ignoring SIGPIPE signal
+Calls: bptry ... .send_VALUE -> <Anonymous> -> sendData.SOCK0node -> serialize
