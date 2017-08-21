@@ -177,8 +177,8 @@ length(final.new.motifs)
 And finally, let's save these motifs as both an RDS and a .MEME file for later use
 
 ```{r}
-export(final.new.motifs, "./2017_07_26_new_motifs.meme",format = "meme")
-saveRDS(final.new.motifs, "./2017_07_26_new_motifs.RDS")
+export(final.new.motifs, "../2017_07_26_new_motifs.meme",format = "meme")
+saveRDS(final.new.motifs, "../2017_07_26_new_motifs.RDS")
 ```
 
 ## Mapping the Final Motifs
@@ -202,7 +202,7 @@ existing.motifs <- readRDS("../jaspar_hocomoco_mapping.RDS")
 
 We can also load up Seth's table:
 ```{r}
-seth.table <- read.table(system.file(package="TReNA", "extdata", "motifGenes.tsv"), sep = "\t", header=TRUE)
+seth.table <- read.table(system.file(package="trena", "extdata", "motifGenes.tsv"), sep = "\t", header=TRUE)
 ```
 
 Annoyingly, these tables have similar info but are somewhat disparate in their column names. We'll quickly fix that so they line up better:
