@@ -1,3 +1,13 @@
+# Quick Motif Guide
+
+This directory contains several versions of Motifs, both in MotifDb lists (`.RDS` format) and in JASPAR-formatted files (`.txt` format). Here is the explanation of what's in each:
+
+- `2017_07_27_all_fimo_motifs` - Everything in our 2017_07_27 FIMO database, including motifs from JASPAR 2016, HOCOMOCOv10, UniPROBE, and SwissRegulon. Said motifs were settled on using a few investigations, chronicled in a couple RMarkdown files. Notably, due to some strange "NA" organism designations from JASPAR, this collection is missing 2 motifs present in the "JASPAR Vertebrates" database
+
+- `2017_07_27_non_jaspar_vert.txt` - All the motifs from the above file, minus the 519 that appear in the JASPAR Vertebrates. This file represents what must be added to the smaller dataset to achieve the full FIMO dataset
+
+- `2017_08_21_fimo_plus_vert.txt` - Essentially, this is the union of the 2 aforementioned datasets. It has all the FIMO motifs in our 2017_07_27 database version, plus 2 extra motifs found in the JASPAR Vertebrates dataset. 
+
 # Instructions for creating/updating fimo
 
 When new motifs become available, they should be added to the existing fimo database. For the purposes of this short tutorial, we'll assume said motifs have already been added to the PriceLab/MotifDb repository. If not, please refer to that repository, located [here](https://github.com/PriceLab/MotifDb). At this point, the workflow for doing so is as follows:
