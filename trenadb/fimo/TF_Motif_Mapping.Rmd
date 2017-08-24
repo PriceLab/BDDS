@@ -217,7 +217,7 @@ final.mapping %>%
 We'll also compare to Seth's previous mapping:
 
 ```{r}
-seth.table <- read.table(system.file(package="TReNA", "extdata", "motifGenes.tsv"), sep = "\t", header=TRUE)
+seth.table <- read.table(system.file(package="trena", "extdata", "motifGenes.tsv"), sep = "\t", header=TRUE)
 dim(seth.table)
 ```
 
