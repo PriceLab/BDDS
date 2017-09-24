@@ -195,7 +195,7 @@ Loading required package: IRanges
 Loading required package: GenomeInfoDb
 Loading required package: DBI
 > dbConnection <- getDBConnection(db.piq)
-> dbSendQuery(dbConnection, "create index regions_index on regions (loc, start, endpos);")
+> dbSendQuery(dbConnection, "create index regions_index on regions (chrom, start, endpos);")
 <PostgreSQLResult>
 > dbSendQuery(dbConnection, "create index hits_index on hits (loc);")
 <PostgreSQLResult>
