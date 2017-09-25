@@ -2891,3 +2891,5 @@ You are now connected to database "extraembryonic_structure_wellington_16" as us
 CREATE INDEX
 CREATE INDEX
 You are now connected to database "extraembryonic_structure_hint_16" as user "root".
+CREATE INDEX
+CREATE INDEX

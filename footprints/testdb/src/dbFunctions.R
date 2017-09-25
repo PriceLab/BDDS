@@ -135,7 +135,18 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "eye_wellington_20"
     host = "localhost"
-    
+
+  } else if (database == "eye_hint_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "eye_hint_16"
+    host = "localhost"
+  } else if (database == "eye_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "eye_wellington_16"
+    host = "localhost"
+
   } else if (database == "gonad_hint_20_localhost") {
     user = "trena"
     password = "trena"
