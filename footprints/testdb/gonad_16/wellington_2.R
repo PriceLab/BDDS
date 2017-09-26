@@ -9,12 +9,12 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/scratch/data/footprints/esophagus_wellington_20"
+data.path <- "/scratch/data/footprints/gonad_wellington_16"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
 if(!exists("db.wellington"))
-    db.wellington <- "esophagus_wellington_20_localhost"
+    db.wellington <- "gonad_wellington_16_localhost"
 
 if(!exists("db.fimo"))
     db.fimo <- "fimo_localhost"
@@ -37,9 +37,9 @@ if(!interactive()){
     result <- bptry(bplapply(chromosomes, fillAllSamplesByChromosome,
              dbConnection = db.wellington,
              fimo = db.fimo,
-             minid = "esophagus_wellington_20.minid",
+             minid = "gonad_wellington_16.minid",
              dbUser = "trena",
-             dbTable = "esophagus_wellington_20",
+             dbTable = "gonad_wellington_16",
              sourcePath = data.path,
              isTest = FALSE,
              method = "WELLINGTON"))
