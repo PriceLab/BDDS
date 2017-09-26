@@ -70,6 +70,17 @@ getDBConnection <- function(database) {
     dbname = "bone_element_hint_20"
     host = "localhost"
 
+  } else if (database == "bone_element_wellington_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "bone_element_wellington_16"
+    host = "localhost"    
+  } else if (database == "bone_element_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "bone_element_hint_16"
+    host = "localhost"
+    
   } else if (database == "brain_wellington_16_localhost") {
     user = "trena"
     password = "trena"

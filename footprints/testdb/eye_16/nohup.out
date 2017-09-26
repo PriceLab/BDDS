@@ -3016,3 +3016,71 @@ stderr and stdout:
 [1] "Merged. Now splitting table to regions and hits..."
 [1] filling 1085149 regions, 1907308 hits for ENCSR820ICX
 [1] 321844628 hits in 72878730 regions
+############### LOG OUTPUT ###############
+Task: 13
+Node: 13
+Timestamp: 2017-09-26 01:17:13
+Success: TRUE
+Task duration:
+     user    system   elapsed 
+ 5868.996  3547.500 15074.412 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647178 88.0    2637877 140.9  1851722 98.9
+Vcells 1729243 13.2    3142662  24.0  2552200 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ENK (chrX) (1/8)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 412192 regions, 768581 hits for ENCSR000ENK
+[1] 225789371 hits in 55904429 regions
+[1] ---- ENCSR000ENT (chrX) (2/8)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 558757 regions, 1040551 hits for ENCSR000ENT
+[1] 257780704 hits in 63840088 regions
+[1] ---- ENCSR000EON (chrX) (3/8)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 403711 regions, 770461 hits for ENCSR000EON
+[1] 282480796 hits in 68244190 regions
+[1] ---- ENCSR127PWK (chrX) (4/8)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 703297 regions, 1212069 hits for ENCSR127PWK
+[1] 303915813 hits in 71129719 regions
+[1] ---- ENCSR474GZQ (chrX) (5/8)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 533065 regions, 893866 hits for ENCSR474GZQ
+[1] 314235819 hits in 72170273 regions
+[1] ---- ENCSR621ENC (chrX) (6/8)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 633592 regions, 1101157 hits for ENCSR621ENC
+[1] 319937320 hits in 72738638 regions
+[1] ---- ENCSR782XFY (chrX) (7/8)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 744083 regions, 1318106 hits for ENCSR782XFY
+[1] 323162734 hits in 73017221 regions
+[1] ---- ENCSR820ICX (chrX) (8/8)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 632269 regions, 1093963 hits for ENCSR820ICX
+[1] 324256697 hits in 73113947 regions
+> 
+> print(bpok(result))
+ [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+> print("Database fill complete")
+[1] "Database fill complete"
+> print(date())
+[1] "Tue Sep 26 01:17:13 2017"
+> 
+You are now connected to database "eye_wellington_16" as user "root".
+CREATE INDEX
+CREATE INDEX
+You are now connected to database "eye_hint_16" as user "root".
+CREATE INDEX
+CREATE INDEX
