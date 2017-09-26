@@ -36,6 +36,28 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "adrenal_gland_hint_16"
     host = "localhost"
+
+  } else if (database == "blood_vessel_wellington_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "blood_vessel_wellington_20"
+    host = "localhost"    
+  } else if (database == "blood_vessel_hint_20_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "blood_vessel_hint_20"
+    host = "localhost"
+
+  } else if (database == "blood_vessel_wellington_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "blood_vessel_wellington_16"
+    host = "localhost"    
+  } else if (database == "blood_vessel_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "blood_vessel_hint_16"
+    host = "localhost"
     
   } else if (database == "bone_element_wellington_20_localhost") {
     user = "trena"
@@ -103,6 +125,17 @@ getDBConnection <- function(database) {
     dbname = "esophagus_hint_20"
     host = "localhost"
 
+  } else if (database == "esophagus_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "esophagus_wellington_16"
+    host = "localhost"
+  } else if (database == "esophagus_hint_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "esophagus_hint_16"
+    host = "localhost"
+    
   } else if (database == "extraembryonic_structure_hint_20_localhost") {      
     user = "trena"
     password = "trena"
@@ -157,6 +190,17 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "gonad_wellington_20"
     host = "localhost"
+
+  } else if (database == "gonad_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "gonad_hint_16"
+    host = "localhost"
+  } else if (database == "gonad_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "gonad_wellington_16"
+    host = "localhost"
     
   } else if (database == "heart_hint_20_localhost") {      
     user = "trena"
@@ -168,6 +212,17 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "heart_wellington_20"
     host = "localhost"
+
+  } else if (database == "heart_hint_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "heart_hint_16"
+    host = "localhost"
+  } else if (database == "heart_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "heart_wellington_16"
+    host = "localhost"
     
   } else if (database == "kidney_hint_20_localhost") {
     user = "trena"
@@ -178,6 +233,17 @@ getDBConnection <- function(database) {
     user = "trena"
     password = "trena"
     dbname = "kidney_wellington_20"
+    host = "localhost"
+
+  } else if (database == "kidney_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "kidney_hint_16"
+    host = "localhost"
+  } else if (database == "kidney_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "kidney_wellington_16"
     host = "localhost"
     
   } else if (database == "large_intestine_hint_20_localhost") {
@@ -191,6 +257,17 @@ getDBConnection <- function(database) {
     dbname = "large_intestine_wellington_20"
     host = "localhost"
     
+  } else if (database == "large_intestine_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "large_intestine_hint_16"
+    host = "localhost"
+  } else if (database == "large_intestine_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "large_intestine_wellington_16"
+    host = "localhost"
+    
   } else if (database == "liver_hint_20_localhost") {
     user = "trena"
     password = "trena"
@@ -200,6 +277,17 @@ getDBConnection <- function(database) {
     user = "trena"
     password = "trena"
     dbname = "liver_wellington_20"
+    host = "localhost"
+
+  } else if (database == "liver_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "liver_hint_16"
+    host = "localhost"
+  } else if (database == "liver_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "liver_wellington_16"
     host = "localhost"
     
   } else if (database == "lung_hint_20_localhost") {
@@ -213,6 +301,17 @@ getDBConnection <- function(database) {
     dbname = "lung_wellington_20"
     host = "localhost"
     
+  } else if (database == "lung_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "lung_hint_16"
+    host = "localhost"
+  } else if (database == "lung_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "lung_wellington_16"
+    host = "localhost"
+    
   } else if (database == "lymphatic_vessel_hint_20_localhost") {
     user = "trena"
     password = "trena"
@@ -224,6 +323,17 @@ getDBConnection <- function(database) {
     dbname = "lymphatic_vessel_wellington_20"
     host = "localhost"
 
+  } else if (database == "lymphatic_vessel_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "lymphatic_vessel_hint_16"
+    host = "localhost"
+  } else if (database == "lymphatic_vessel_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "lymphatic_vessel_wellington_16"
+    host = "localhost"
+    
   } else if (database == "lymphoblast_wellington_16_localhost") {      
     user = "trena"
     password = "trena"
@@ -256,6 +366,17 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "mammary_gland_wellington_20"
     host = "localhost"
+
+  } else if (database == "mammary_gland_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "mammary_gland_hint_16"
+    host = "localhost"
+  } else if (database == "mammary_gland_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "mammary_gland_wellington_16"
+    host = "localhost"
     
   } else if (database == "mouth_hint_20_localhost") {
     user = "trena"
@@ -268,6 +389,17 @@ getDBConnection <- function(database) {
     dbname = "mouth_wellington_20"
     host = "localhost"
     
+  } else if (database == "mouth_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "mouth_hint_16"
+    host = "localhost"
+  } else if (database == "mouth_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "mouth_wellington_16"
+    host = "localhost"
+    
   } else if (database == "muscle_organ_hint_20_localhost") {
     user = "trena"
     password = "trena"
@@ -277,6 +409,17 @@ getDBConnection <- function(database) {
     user = "trena"
     password = "trena"
     dbname = "muscle_organ_wellington_20"
+    host = "localhost"
+
+  } else if (database == "muscle_organ_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "muscle_organ_hint_16"
+    host = "localhost"
+  } else if (database == "muscle_organ_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "muscle_organ_wellington_16"
     host = "localhost"
     
   } else if (database == "pancreas_hint_20_localhost") {
@@ -290,6 +433,17 @@ getDBConnection <- function(database) {
     dbname = "pancreas_wellington_20"
     host = "localhost"
     
+  } else if (database == "pancreas_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "pancreas_hint_16"
+    host = "localhost"
+  } else if (database == "pancreas_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "pancreas_wellington_16"
+    host = "localhost"
+    
   } else if (database == "prostate_gland_hint_20_localhost") {
     user = "trena"
     password = "trena"
@@ -301,6 +455,17 @@ getDBConnection <- function(database) {
     dbname = "prostate_gland_wellington_20"
     host = "localhost"
 
+  } else if (database == "prostate_gland_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "prostate_gland_hint_16"
+    host = "localhost"
+  } else if (database == "prostate_gland_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "prostate_gland_wellington_16"
+    host = "localhost"
+    
   } else if (database == "skin_wellington_16_localhost") {
     user = "trena"
     password = "trena"
@@ -333,6 +498,17 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "spinal_cord_wellington_20"
     host = "localhost"
+
+  } else if (database == "spinal_cord_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "spinal_cord_hint_16"
+    host = "localhost"
+  } else if (database == "spinal_cord_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "spinal_cord_wellington_16"
+    host = "localhost"
     
   } else if (database == "stomach_hint_20_localhost") {      
     user = "trena"
@@ -345,6 +521,17 @@ getDBConnection <- function(database) {
     dbname = "stomach_wellington_20"
     host = "localhost"
     
+  } else if (database == "stomach_hint_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "stomach_hint_16"
+    host = "localhost"
+  } else if (database == "stomach_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "stomach_wellington_16"
+    host = "localhost"
+    
   } else if (database == "thyroid_gland_hint_20_localhost") {
     user = "trena"
     password = "trena"
@@ -354,6 +541,17 @@ getDBConnection <- function(database) {
     user = "trena"
     password = "trena"
     dbname = "thyroid_gland_wellington_20"
+    host = "localhost"
+
+  } else if (database == "thyroid_gland_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "thyroid_gland_hint_16"
+    host = "localhost"
+  } else if (database == "thyroid_gland_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "thyroid_gland_wellington_16"
     host = "localhost"
     
   } else if (database == "tongue_hint_20_localhost") {
@@ -367,6 +565,17 @@ getDBConnection <- function(database) {
     dbname = "tongue_wellington_20"
     host = "localhost"
     
+  } else if (database == "tongue_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "tongue_hint_16"
+    host = "localhost"
+  } else if (database == "tongue_wellington_16_localhost") {      
+    user = "trena"
+    password = "trena"
+    dbname = "tongue_wellington_16"
+    host = "localhost"
+    
   } else if (database == "urinary_bladder_hint_20_localhost") {
     user = "trena"
     password = "trena"
@@ -377,7 +586,18 @@ getDBConnection <- function(database) {
     password = "trena"
     dbname = "urinary_bladder_wellington_20"
     host = "localhost"
- 
+
+  } else if (database == "urinary_bladder_hint_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "urinary_bladder_hint_16"
+    host = "localhost"    
+  } else if (database == "urinary_bladder_wellington_16_localhost") {
+    user = "trena"
+    password = "trena"
+    dbname = "urinary_bladder_wellington_16"
+    host = "localhost"
+    
   } else if (database == "test_wellington_localhost") {
     user = "trena"
     password = "trena"

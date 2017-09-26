@@ -127,5 +127,5 @@ Once you've updated the database and indexed it, you should definitely save it s
 
 Now that you've got a dump file, simply copy it to the proper S3 bucket and you're finished:
 
-`aws s3 cp ./2017_07_27_fimo.dump s3://marichards/2017_07_27_fimo_dbs/'`
+`aws s3 cp ./2017_07_27_fimo.dump s3://marichards/correct_index_dbs/'`
 
