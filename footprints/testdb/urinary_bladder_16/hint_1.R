@@ -9,7 +9,7 @@
 print(date())
 #-------------------------------------------------------------------------------
 # set path to hint output 
-data.path <- "/ssd/mrichard/data/footprints/urinary_bladder_hint_16"
+data.path <- "/scratch/data/footprints/urinary_bladder_hint_16"
 #-------------------------------------------------------------------------------
 # establish database connections:
 
