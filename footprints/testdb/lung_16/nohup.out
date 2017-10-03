@@ -1,0 +1,2846 @@
+CREATE DATABASE
+GRANT
+CREATE DATABASE
+GRANT
+You are now connected to database "lung_wellington_16" as user "postgres".
+CREATE TABLE
+GRANT
+CREATE TABLE
+GRANT
+You are now connected to database "lung_hint_16" as user "postgres".
+CREATE TABLE
+GRANT
+CREATE TABLE
+GRANT
+
+R version 3.4.1 (2017-06-30) -- "Single Candle"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # users can either step through this file, or call this file with 
+> # r -f example.R
+> 
+> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+> # database is in ../dbInitialization/createHintTest.sql
+> 
+> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
+> 
+> print(date())
+[1] "Sat Sep 30 05:14:11 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> data.path <- "/scratch/data/footprints/lung_hint_16"
+> #-------------------------------------------------------------------------------
+> # establish database connections:
+> 
+> if(!exists("db.hint"))
++     db.hint <- "lung_hint_16_localhost"
+> 
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
+> #-------------------------------------------------------------------------------
+> # Source the libraries
+> source("../src/dependencies.R")
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+Loading required package: DBI
+> source("../src/dbFunctions.R")
+> source("../src/tableParsing.R")
+> source("../src/tests.R")
+> source("../src/main_Bioc.R")
+> 
+> if(!interactive()){    
++     chromosomes <- paste0("chr",1:10)
++     
++     # Create parallel structure here    
++     library(BiocParallel)    
++     register(MulticoreParam(workers = 25, stop.on.error = FALSE, log = TRUE), default = TRUE)
++ 
++     # Run on all 24 possible chromosomes at once
++     result <- bptry(bplapply(chromosomes,fillAllSamplesByChromosome,
++              dbConnection = db.hint,             
++              fimo = db.fimo,             
++              minid = "lung_hint_16.minid",             
++              dbUser = "trena",             
++              dbTable = "lung_hint_16",             
++              sourcePath = data.path,             
++              isTest = FALSE,             
++              method = "HINT"))    
++ }
+
+R version 3.4.1 (2017-06-30) -- "Single Candle"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # users can either step through this file, or call this file with 
+> # r -f example.R
+> 
+> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+> # database is in ../dbInitialization/createHintTest.sql
+> 
+> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
+> 
+> print(date())
+[1] "Sat Sep 30 05:14:17 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> data.path <- "/scratch/data/footprints/lung_wellington_16"
+> #-------------------------------------------------------------------------------
+> # establish database connections:
+> 
+> if(!exists("db.wellington"))
++     db.wellington <- "lung_wellington_16_localhost"
+> 
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
+> #-------------------------------------------------------------------------------
+> # Source the libraries
+> source("../src/dependencies.R")
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+Loading required package: DBI
+> source("../src/dbFunctions.R")
+> source("../src/tableParsing.R")
+> source("../src/tests.R")
+> source("../src/main_Bioc.R")
+> 
+> if(!interactive()){    
++     chromosomes <- paste0("chr",1:10)
++     
++     # Create parallel structure here
++     library(BiocParallel)
++     register(MulticoreParam(workers = 25, stop.on.error = FALSE, log = TRUE), default = TRUE)
++ 
++     # Run on all 24 possible chromosomes at once
++     result <- bptry(bplapply(chromosomes, fillAllSamplesByChromosome,
++              dbConnection = db.wellington,
++              fimo = db.fimo,
++              minid = "lung_wellington_16.minid",
++              dbUser = "trena",
++              dbTable = "lung_wellington_16",
++              sourcePath = data.path,
++              isTest = FALSE,
++              method = "WELLINGTON"))
++ }
+############### LOG OUTPUT ###############
+Task: 9
+Node: 9
+Timestamp: 2017-09-30 06:20:37
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2473.468  168.556 3964.151 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1646819 88.0    2637877 140.9  1852222 99.0
+Vcells 1727146 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr9) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 144555 regions, 213503 hits for ENCSR000ELY
+[1] 213503 hits in 144555 regions
+[1] ---- ENCSR000EOD (chr9) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 242067 regions, 353723 hits for ENCSR000EOD
+[1] 1416306 hits in 900614 regions
+[1] ---- ENCSR000EOE (chr9) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 164153 regions, 237685 hits for ENCSR000EOE
+[1] 3065371 hits in 1876163 regions
+[1] ---- ENCSR000EOJ (chr9) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 184340 regions, 275252 hits for ENCSR000EOJ
+[1] 4383536 hits in 2521491 regions
+[1] ---- ENCSR000EPR (chr9) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 207651 regions, 310305 hits for ENCSR000EPR
+[1] 5200997 hits in 2746796 regions
+[1] ---- ENCSR582IPV (chr9) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 377035 regions, 545934 hits for ENCSR582IPV
+[1] 5746931 hits in 2971916 regions
+[1] ---- ENCSR627NIF (chr9) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 402620 regions, 580784 hits for ENCSR627NIF
+[1] 10479170 hits in 5061841 regions
+############### LOG OUTPUT ###############
+Task: 10
+Node: 10
+Timestamp: 2017-09-30 06:26:56
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3165.456  318.352 4341.109 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1646822 88.0    2637877 140.9  1852255 99.0
+Vcells 1727146 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr10) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 639985 regions, 1211960 hits for ENCSR000ELY
+[1] 1211960 hits in 639985 regions
+[1] ---- ENCSR000EOD (chr10) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 922918 regions, 1719224 hits for ENCSR000EOD
+[1] 9301454 hits in 6544178 regions
+[1] ---- ENCSR000EOE (chr10) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 757686 regions, 1426894 hits for ENCSR000EOE
+[1] 19086633 hits in 8244248 regions
+[1] ---- ENCSR000EOJ (chr10) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 906722 regions, 1717365 hits for ENCSR000EOJ
+[1] 27331023 hits in 10971566 regions
+[1] ---- ENCSR000EPR (chr10) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 933117 regions, 1789543 hits for ENCSR000EPR
+[1] 38425588 hits in 13861387 regions
+[1] ---- ENCSR582IPV (chr10) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1243049 regions, 2221947 hits for ENCSR582IPV
+[1] 42326935 hits in 15028170 regions
+[1] ---- ENCSR627NIF (chr10) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1153585 regions, 1988820 hits for ENCSR627NIF
+[1] 52255032 hits in 17834375 regions
+############### LOG OUTPUT ###############
+Task: 9
+Node: 9
+Timestamp: 2017-09-30 06:31:51
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2973.176  496.640 4635.894 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647806 88.1    2637877 140.9  1852255 99.0
+Vcells 1729639 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr9) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 627153 regions, 1189059 hits for ENCSR000ELY
+[1] 2401019 hits in 1267138 regions
+[1] ---- ENCSR000EOD (chr9) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 901452 regions, 1671806 hits for ENCSR000EOD
+[1] 10973260 hits in 6544178 regions
+[1] ---- ENCSR000EOE (chr9) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 731984 regions, 1374515 hits for ENCSR000EOE
+[1] 16560650 hits in 7374846 regions
+[1] ---- ENCSR000EOJ (chr9) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 846163 regions, 1604997 hits for ENCSR000EOJ
+[1] 25613658 hits in 10670929 regions
+[1] ---- ENCSR000EPR (chr9) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 898588 regions, 1723920 hits for ENCSR000EPR
+[1] 34718086 hits in 12918912 regions
+[1] ---- ENCSR582IPV (chr9) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1117191 regions, 2003808 hits for ENCSR582IPV
+[1] 48008283 hits in 16733858 regions
+[1] ---- ENCSR627NIF (chr9) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1066318 regions, 1849668 hits for ENCSR627NIF
+[1] 57055050 hits in 19121654 regions
+############### LOG OUTPUT ###############
+Task: 10
+Node: 10
+Timestamp: 2017-09-30 06:35:29
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2745.948 1361.372 4864.337 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647803 88.1    2637877 140.9  1852222 99.0
+Vcells 1729639 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr10) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 145004 regions, 215348 hits for ENCSR000ELY
+[1] 1062583 hits in 718170 regions
+[1] ---- ENCSR000EOD (chr10) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 238668 regions, 348853 hits for ENCSR000EOD
+[1] 4108284 hits in 2447794 regions
+[1] ---- ENCSR000EOE (chr10) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 163818 regions, 239063 hits for ENCSR000EOE
+[1] 4890692 hits in 2670336 regions
+[1] ---- ENCSR000EOJ (chr10) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 196033 regions, 292245 hits for ENCSR000EOJ
+[1] 6347273 hits in 3135299 regions
+[1] ---- ENCSR000EPR (chr10) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 208977 regions, 313385 hits for ENCSR000EPR
+[1] 8574900 hits in 4204854 regions
+[1] ---- ENCSR582IPV (chr10) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 400204 regions, 576513 hits for ENCSR582IPV
+[1] 11055683 hits in 5309508 regions
+[1] ---- ENCSR627NIF (chr10) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 411341 regions, 590735 hits for ENCSR627NIF
+[1] 12388879 hits in 5789493 regions
+############### LOG OUTPUT ###############
+Task: 8
+Node: 8
+Timestamp: 2017-09-30 06:43:26
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2987.716  265.440 5327.442 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647804 88.1    2637877 140.9  1852222 99.0
+Vcells 1729640 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr8) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 134672 regions, 199459 hits for ENCSR000ELY
+[1] 412962 hits in 279227 regions
+[1] ---- ENCSR000EOD (chr8) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 221450 regions, 323895 hits for ENCSR000EOD
+[1] 2009172 hits in 1251137 regions
+[1] ---- ENCSR000EOE (chr8) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 148506 regions, 215634 hits for ENCSR000EOE
+[1] 3759431 hits in 2267233 regions
+[1] ---- ENCSR000EOJ (chr8) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 180116 regions, 268093 hits for ENCSR000EOJ
+[1] 4651629 hits in 2596702 regions
+[1] ---- ENCSR000EPR (chr8) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 205312 regions, 308097 hits for ENCSR000EPR
+[1] 6055028 hits in 3054528 regions
+[1] ---- ENCSR582IPV (chr8) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 352633 regions, 509457 hits for ENCSR582IPV
+[1] 11565140 hits in 5526190 regions
+[1] ---- ENCSR627NIF (chr8) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 358272 regions, 514170 hits for ENCSR627NIF
+[1] 14774604 hits in 6520319 regions
+############### LOG OUTPUT ###############
+Task: 8
+Node: 8
+Timestamp: 2017-09-30 07:00:20
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3639.076  367.152 6315.431 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647807 88.1    2637877 140.9  1852255 99.0
+Vcells 1729640 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr8) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 605225 regions, 1152914 hits for ENCSR000ELY
+[1] 3553933 hits in 1872363 regions
+[1] ---- ENCSR000EOD (chr8) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 868360 regions, 1629930 hits for ENCSR000EOD
+[1] 15186135 hits in 7107148 regions
+[1] ---- ENCSR000EOE (chr8) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 672574 regions, 1269836 hits for ENCSR000EOE
+[1] 21904234 hits in 9297789 regions
+[1] ---- ENCSR000EOJ (chr8) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 874944 regions, 1666708 hits for ENCSR000EOJ
+[1] 28997731 hits in 11276651 regions
+[1] ---- ENCSR000EPR (chr8) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 939390 regions, 1811914 hits for ENCSR000EPR
+[1] 58866964 hits in 19415163 regions
+[1] ---- ENCSR582IPV (chr8) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1136526 regions, 2038649 hits for ENCSR582IPV
+[1] 71430169 hits in 21926825 regions
+[1] ---- ENCSR627NIF (chr8) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1049990 regions, 1815341 hits for ENCSR627NIF
+[1] 85102834 hits in 24384928 regions
+############### LOG OUTPUT ###############
+Task: 5
+Node: 5
+Timestamp: 2017-09-30 07:16:41
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3662.488  417.192 7319.088 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647805 88.1    2637877 140.9  1852222 99.0
+Vcells 1729641 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr5) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 156682 regions, 231219 hits for ENCSR000ELY
+[1] 644181 hits in 435909 regions
+[1] ---- ENCSR000EOD (chr5) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 250090 regions, 366373 hits for ENCSR000EOD
+[1] 7098833 hits in 3516676 regions
+[1] ---- ENCSR000EOE (chr5) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 161065 regions, 233004 hits for ENCSR000EOE
+[1] 11798144 hits in 5599352 regions
+[1] ---- ENCSR000EOJ (chr5) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 207984 regions, 307897 hits for ENCSR000EOJ
+[1] 15082501 hits in 6612253 regions
+[1] ---- ENCSR000EPR (chr5) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 249480 regions, 374234 hits for ENCSR000EPR
+[1] 16742500 hits in 7085611 regions
+[1] ---- ENCSR582IPV (chr5) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 417356 regions, 603164 hits for ENCSR582IPV
+[1] 19125541 hits in 7814677 regions
+[1] ---- ENCSR627NIF (chr5) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 427134 regions, 612993 hits for ENCSR627NIF
+[1] 22943823 hits in 9050442 regions
+############### LOG OUTPUT ###############
+Task: 6
+Node: 6
+Timestamp: 2017-09-30 07:16:54
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3594.484 1016.848 7333.779 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647806 88.1    2637877 140.9  1852222 99.0
+Vcells 1729642 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr6) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 174617 regions, 256455 hits for ENCSR000ELY
+[1] 3321826 hits in 2050780 regions
+[1] ---- ENCSR000EOD (chr6) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 262554 regions, 385187 hits for ENCSR000EOD
+[1] 6732460 hits in 3327210 regions
+[1] ---- ENCSR000EOE (chr6) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 180572 regions, 261160 hits for ENCSR000EOE
+[1] 12650039 hits in 5868288 regions
+[1] ---- ENCSR000EOJ (chr6) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 226593 regions, 335705 hits for ENCSR000EOJ
+[1] 15418206 hits in 6707373 regions
+[1] ---- ENCSR000EPR (chr6) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 252393 regions, 377580 hits for ENCSR000EPR
+[1] 17120080 hits in 7182506 regions
+[1] ---- ENCSR582IPV (chr6) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 448880 regions, 646544 hits for ENCSR582IPV
+[1] 20203030 hits in 8205542 regions
+[1] ---- ENCSR627NIF (chr6) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 460361 regions, 661512 hits for ENCSR627NIF
+[1] 23605335 hits in 9263196 regions
+############### LOG OUTPUT ###############
+Task: 7
+Node: 7
+Timestamp: 2017-09-30 07:24:30
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3862.688  432.988 7787.831 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647808 88.1    2637877 140.9  1852255 99.0
+Vcells 1729641 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr7) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 663117 regions, 1262871 hits for ENCSR000ELY
+[1] 4816804 hits in 2535480 regions
+[1] ---- ENCSR000EOD (chr7) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1043180 regions, 1939450 hits for ENCSR000EOD
+[1] 30937181 hits in 11975222 regions
+[1] ---- ENCSR000EOE (chr7) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 817480 regions, 1537428 hits for ENCSR000EOE
+[1] 60404392 hits in 20031058 regions
+[1] ---- ENCSR000EOJ (chr7) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 981450 regions, 1852624 hits for ENCSR000EOJ
+[1] 75387526 hits in 22639222 regions
+[1] ---- ENCSR000EPR (chr7) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1022606 regions, 1970377 hits for ENCSR000EPR
+[1] 85102834 hits in 24384928 regions
+[1] ---- ENCSR582IPV (chr7) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1331132 regions, 2380156 hits for ENCSR582IPV
+[1] 102393178 hits in 27489417 regions
+[1] ---- ENCSR627NIF (chr7) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1239780 regions, 2143850 hits for ENCSR627NIF
+[1] 115651550 hits in 30007201 regions
+############### LOG OUTPUT ###############
+Task: 6
+Node: 6
+Timestamp: 2017-09-30 07:25:39
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+4058.352  423.544 7837.591 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647809 88.1    2637877 140.9  1852255 99.0
+Vcells 1729642 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr6) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 761304 regions, 1447933 hits for ENCSR000ELY
+[1] 6264737 hits in 3296784 regions
+[1] ---- ENCSR000EOD (chr6) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1086141 regions, 2056985 hits for ENCSR000EOD
+[1] 32994166 hits in 12668018 regions
+[1] ---- ENCSR000EOE (chr6) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 852814 regions, 1609127 hits for ENCSR000EOE
+[1] 62013519 hits in 20031058 regions
+[1] ---- ENCSR000EOJ (chr6) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1104610 regions, 2104733 hits for ENCSR000EOJ
+[1] 73534902 hits in 22639222 regions
+[1] ---- ENCSR000EPR (chr6) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1153249 regions, 2227968 hits for ENCSR000EPR
+[1] 89586668 hits in 25138697 regions
+[1] ---- ENCSR582IPV (chr6) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1434776 regions, 2566762 hits for ENCSR582IPV
+[1] 104959940 hits in 28119392 regions
+[1] ---- ENCSR627NIF (chr6) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1321963 regions, 2278028 hits for ENCSR627NIF
+[1] 120094375 hits in 30935607 regions
+############### LOG OUTPUT ###############
+Task: 7
+Node: 7
+Timestamp: 2017-09-30 07:26:58
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3567.228 1768.472 7923.492 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647807 88.1    2637877 140.9  1852222 99.0
+Vcells 1729643 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr7) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 150249 regions, 221971 hits for ENCSR000ELY
+[1] 3543797 hits in 2201029 regions
+[1] ---- ENCSR000EOD (chr7) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 275847 regions, 403936 hits for ENCSR000EOD
+[1] 7832568 hits in 3904717 regions
+[1] ---- ENCSR000EOE (chr7) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 181880 regions, 263358 hits for ENCSR000EOE
+[1] 13124701 hits in 6015583 regions
+[1] ---- ENCSR000EOJ (chr7) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 202662 regions, 300788 hits for ENCSR000EOJ
+[1] 15718994 hits in 6790730 regions
+[1] ---- ENCSR000EPR (chr7) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 230530 regions, 345976 hits for ENCSR000EPR
+[1] 18522377 hits in 7552553 regions
+[1] ---- ENCSR582IPV (chr7) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 418114 regions, 600757 hits for ENCSR582IPV
+[1] 21137701 hits in 8551195 regions
+[1] ---- ENCSR627NIF (chr7) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 432503 regions, 619639 hits for ENCSR627NIF
+[1] 25459216 hits in 9993651 regions
+############### LOG OUTPUT ###############
+Task: 5
+Node: 5
+Timestamp: 2017-09-30 07:31:00
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+4622.804  498.280 8175.050 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647810 88.1    2637877 140.9  1852255 99.0
+Vcells 1729643 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr5) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 695225 regions, 1317493 hits for ENCSR000ELY
+[1] 7582230 hits in 3992009 regions
+[1] ---- ENCSR000EOD (chr5) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1020893 regions, 1917959 hits for ENCSR000EOD
+[1] 36636045 hits in 13861387 regions
+[1] ---- ENCSR000EOE (chr5) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 778492 regions, 1469627 hits for ENCSR000EOE
+[1] 63483146 hits in 20318494 regions
+[1] ---- ENCSR000EOJ (chr5) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1026235 regions, 1948019 hits for ENCSR000EOJ
+[1] 79566837 hits in 23438256 regions
+[1] ---- ENCSR000EPR (chr5) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1126887 regions, 2174480 hits for ENCSR000EPR
+[1] 95113882 hits in 26029892 regions
+[1] ---- ENCSR582IPV (chr5) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1372851 regions, 2453210 hits for ENCSR582IPV
+[1] 107413150 hits in 28753038 regions
+[1] ---- ENCSR627NIF (chr5) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1249825 regions, 2154855 hits for ENCSR627NIF
+[1] 122249230 hits in 31274226 regions
+############### LOG OUTPUT ###############
+Task: 4
+Node: 4
+Timestamp: 2017-09-30 07:33:17
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3910.032 1189.648 8308.099 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647808 88.1    2637877 140.9  1852222 99.0
+Vcells 1729644 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr4) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 137257 regions, 203054 hits for ENCSR000ELY
+[1] 847235 hits in 573166 regions
+[1] ---- ENCSR000EOD (chr4) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 225201 regions, 329799 hits for ENCSR000EOD
+[1] 7428632 hits in 3690697 regions
+[1] ---- ENCSR000EOE (chr4) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 145261 regions, 211304 hits for ENCSR000EOE
+[1] 12861343 hits in 5934530 regions
+[1] ---- ENCSR000EOJ (chr4) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 191421 regions, 285497 hits for ENCSR000EOJ
+[1] 16004491 hits in 6876488 regions
+[1] ---- ENCSR000EPR (chr4) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 222099 regions, 333914 hits for ENCSR000EPR
+[1] 20536944 hits in 8298911 regions
+[1] ---- ENCSR582IPV (chr4) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 372888 regions, 537493 hits for ENCSR582IPV
+[1] 24142828 hits in 9498823 regions
+[1] ---- ENCSR627NIF (chr4) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 366366 regions, 524018 hits for ENCSR627NIF
+[1] 27986755 hits in 10984643 regions
+############### LOG OUTPUT ###############
+Task: 3
+Node: 3
+Timestamp: 2017-09-30 07:42:39
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+4517.116 1096.696 8870.140 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647809 88.1    2637877 140.9  1852222 99.0
+Vcells 1729645 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr3) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 181967 regions, 268971 hits for ENCSR000ELY
+[1] 1685277 hits in 1082581 regions
+[1] ---- ENCSR000EOD (chr3) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 292281 regions, 428947 hits for ENCSR000EOD
+[1] 8261515 hits in 4125396 regions
+[1] ---- ENCSR000EOE (chr3) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 199860 regions, 289468 hits for ENCSR000EOE
+[1] 13414169 hits in 6104113 regions
+[1] ---- ENCSR000EOJ (chr3) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 244831 regions, 363775 hits for ENCSR000EOJ
+[1] 16368266 hits in 6978554 regions
+[1] ---- ENCSR000EPR (chr3) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 286556 regions, 430945 hits for ENCSR000EPR
+[1] 19556486 hits in 7930190 regions
+[1] ---- ENCSR582IPV (chr3) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 481684 regions, 696749 hits for ENCSR582IPV
+[1] 24839577 hits in 9795282 regions
+[1] ---- ENCSR627NIF (chr3) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 483754 regions, 695172 hits for ENCSR627NIF
+[1] 28681927 hits in 11204081 regions
+############### LOG OUTPUT ###############
+Task: 4
+Node: 4
+Timestamp: 2017-09-30 07:42:54
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+4777.012 2170.444 8882.264 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647811 88.1    2637877 140.9  1852255 99.0
+Vcells 1729644 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr4) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 576953 regions, 1099089 hits for ENCSR000ELY
+[1] 17659739 hits in 7951799 regions
+[1] ---- ENCSR000EOD (chr4) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 896831 regions, 1679400 hits for ENCSR000EOD
+[1] 40104988 hits in 14476058 regions
+[1] ---- ENCSR000EOE (chr4) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 665361 regions, 1253633 hits for ENCSR000EOE
+[1] 64736779 hits in 20567961 regions
+[1] ---- ENCSR000EOJ (chr4) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 921713 regions, 1750279 hits for ENCSR000EOJ
+[1] 81317116 hits in 23797812 regions
+[1] ---- ENCSR000EPR (chr4) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1013402 regions, 1956289 hits for ENCSR000EPR
+[1] 97070171 hits in 26386131 regions
+[1] ---- ENCSR582IPV (chr4) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1218209 regions, 2164797 hits for ENCSR582IPV
+[1] 117816347 hits in 30583527 regions
+[1] ---- ENCSR627NIF (chr4) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1090569 regions, 1870759 hits for ENCSR627NIF
+[1] 134369546 hits in 33719309 regions
+############### LOG OUTPUT ###############
+Task: 1
+Node: 1
+Timestamp: 2017-09-30 07:46:19
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+5045.104  705.768 9087.015 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647810 88.1    2637877 140.9  1852222 99.0
+Vcells 1729646 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr1) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 305305 regions, 450058 hits for ENCSR000ELY
+[1] 2459230 hits in 1556442 regions
+[1] ---- ENCSR000EOD (chr1) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 507829 regions, 741961 hits for ENCSR000EOD
+[1] 9316861 hits in 4582943 regions
+[1] ---- ENCSR000EOE (chr1) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 332374 regions, 483901 hits for ENCSR000EOE
+[1] 13898070 hits in 6243788 regions
+[1] ---- ENCSR000EOJ (chr1) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 378946 regions, 563979 hits for ENCSR000EOJ
+[1] 18176401 hits in 7463576 regions
+[1] ---- ENCSR000EPR (chr1) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 424012 regions, 632942 hits for ENCSR000EPR
+[1] 21770643 hits in 8704223 regions
+[1] ---- ENCSR582IPV (chr1) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 746240 regions, 1079317 hits for ENCSR582IPV
+[1] 26538533 hits in 10429318 regions
+[1] ---- ENCSR627NIF (chr1) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 805978 regions, 1159107 hits for ENCSR627NIF
+[1] 29841034 hits in 11555886 regions
+############### LOG OUTPUT ###############
+Task: 2
+Node: 2
+Timestamp: 2017-09-30 07:49:35
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+5241.564  818.516 9280.779 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647811 88.1    2637877 140.9  1852222 99.0
+Vcells 1729647 13.2    3142662  24.0  2552033 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr2) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 247930 regions, 368456 hits for ENCSR000ELY
+[1] 2827686 hits in 1804372 regions
+[1] ---- ENCSR000EOD (chr2) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 395916 regions, 581525 hits for ENCSR000EOD
+[1] 9898386 hits in 4884058 regions
+[1] ---- ENCSR000EOE (chr2) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 249183 regions, 362364 hits for ENCSR000EOE
+[1] 14260434 hits in 6356108 regions
+[1] ---- ENCSR000EOJ (chr2) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 325711 regions, 492342 hits for ENCSR000EOJ
+[1] 17612422 hits in 7320588 regions
+[1] ---- ENCSR000EPR (chr2) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 371855 regions, 560187 hits for ENCSR000EPR
+[1] 22330830 hits in 8853547 regions
+[1] ---- ENCSR582IPV (chr2) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 637224 regions, 924204 hits for ENCSR582IPV
+[1] 27462737 hits in 10817590 regions
+[1] ---- ENCSR627NIF (chr2) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 663945 regions, 956790 hits for ENCSR627NIF
+[1] 30797824 hits in 11860975 regions
+> 
+> print(bpok(result))
+ [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+> print("Database fill complete")
+[1] "Database fill complete"
+> print(date())
+[1] "Sat Sep 30 07:49:35 2017"
+> 
+############### LOG OUTPUT ###############
+Task: 3
+Node: 3
+Timestamp: 2017-09-30 07:53:57
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+5011.352 2703.712 9538.175 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647812 88.1    2637877 140.9  1852255 99.0
+Vcells 1729645 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr3) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 809714 regions, 1547765 hits for ENCSR000ELY
+[1] 20634398 hits in 9053962 regions
+[1] ---- ENCSR000EOD (chr3) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1198780 regions, 2257929 hits for ENCSR000EOD
+[1] 50266212 hits in 17520829 regions
+[1] ---- ENCSR000EOE (chr3) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 933927 regions, 1770002 hits for ENCSR000EOE
+[1] 66506781 hits in 20904261 regions
+[1] ---- ENCSR000EOJ (chr3) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1187692 regions, 2255866 hits for ENCSR000EOJ
+[1] 89586668 hits in 25138697 regions
+[1] ---- ENCSR000EPR (chr3) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1290663 regions, 2491024 hits for ENCSR000EPR
+[1] 109904174 hits in 29163730 regions
+[1] ---- ENCSR582IPV (chr3) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1563323 regions, 2800814 hits for ENCSR582IPV
+[1] 128291973 hits in 32486306 regions
+[1] ---- ENCSR627NIF (chr3) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1433752 regions, 2472105 hits for ENCSR627NIF
+[1] 140446987 hits in 35000056 regions
+############### LOG OUTPUT ###############
+Task: 1
+Node: 1
+Timestamp: 2017-09-30 07:54:51
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+5550.604  754.016 9599.538 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647813 88.1    2637877 140.9  1852255 99.0
+Vcells 1729646 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr1) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1366271 regions, 2582945 hits for ENCSR000ELY
+[1] 13556205 hits in 6544178 regions
+[1] ---- ENCSR000EOD (chr1) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1976255 regions, 3677540 hits for ENCSR000EOD
+[1] 46004475 hits in 16275260 regions
+[1] ---- ENCSR000EOE (chr1) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1529717 regions, 2884739 hits for ENCSR000EOE
+[1] 69391520 hits in 21425857 regions
+[1] ---- ENCSR000EOJ (chr1) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1770190 regions, 3352734 hits for ENCSR000EOJ
+[1] 92939402 hits in 25655253 regions
+[1] ---- ENCSR000EPR (chr1) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1883778 regions, 3603526 hits for ENCSR000EPR
+[1] 113507700 hits in 29670726 regions
+[1] ---- ENCSR582IPV (chr1) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 2337552 regions, 4206814 hits for ENCSR582IPV
+[1] 132498787 hits in 33419693 regions
+[1] ---- ENCSR627NIF (chr1) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 2230182 regions, 3886387 hits for ENCSR627NIF
+[1] 144333374 hits in 35534630 regions
+############### LOG OUTPUT ###############
+Task: 2
+Node: 2
+Timestamp: 2017-09-30 08:10:39
+Success: TRUE
+Task duration:
+     user    system   elapsed 
+ 5995.852  2475.544 10537.435 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647814 88.1    2637877 140.9  1852255 99.0
+Vcells 1729647 13.2    3142662  24.0  2552034 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr2) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1108413 regions, 2104427 hits for ENCSR000ELY
+[1] 24008661 hits in 10406202 regions
+[1] ---- ENCSR000EOD (chr2) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1570063 regions, 2950350 hits for ENCSR000EOD
+[1] 55205382 hits in 18855850 regions
+[1] ---- ENCSR000EOE (chr2) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1177191 regions, 2231292 hits for ENCSR000EOE
+[1] 77618818 hits in 23067139 regions
+[1] ---- ENCSR000EOJ (chr2) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1542100 regions, 2942851 hits for ENCSR000EOJ
+[1] 100013022 hits in 26903326 regions
+[1] ---- ENCSR000EPR (chr2) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1675651 regions, 3241929 hits for ENCSR000EPR
+[1] 125491159 hits in 31792902 regions
+[1] ---- ENCSR582IPV (chr2) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 2011735 regions, 3605336 hits for ENCSR582IPV
+[1] 137974882 hits in 34618689 regions
+[1] ---- ENCSR627NIF (chr2) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1896703 regions, 3273296 hits for ENCSR627NIF
+[1] 147606670 hits in 36049403 regions
+> 
+> print(bpok(result))
+ [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+> print("Database fill complete")
+[1] "Database fill complete"
+> print(date())
+[1] "Sat Sep 30 08:10:40 2017"
+> 
+
+R version 3.4.1 (2017-06-30) -- "Single Candle"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # users can either step through this file, or call this file with 
+> # r -f example.R
+> 
+> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+> # database is in ../dbInitialization/createHintTest.sql
+> 
+> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
+> 
+> print(date())
+[1] "Sat Sep 30 16:50:12 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> data.path <- "/scratch/data/footprints/lung_hint_16"
+> #-------------------------------------------------------------------------------
+> # establish database connections:
+> 
+> if(!exists("db.hint"))
++     db.hint <- "lung_hint_16_localhost"
+> 
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
+> #-------------------------------------------------------------------------------
+> # Source the libraries
+> source("../src/dependencies.R")
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+Loading required package: DBI
+> source("../src/dbFunctions.R")
+> source("../src/tableParsing.R")
+> source("../src/tests.R")
+> source("../src/main_Bioc.R")
+> 
+> if(!interactive()){    
++     chromosomes <- paste0("chr",c(11:22,"X","Y","MT"))
++     
++     # Create parallel structure here    
++     library(BiocParallel)    
++     register(MulticoreParam(workers = 25, stop.on.error = FALSE, log = TRUE), default = TRUE)
++ 
++     # Run on all 24 possible chromosomes at once
++     result <- bptry(bplapply(chromosomes,fillAllSamplesByChromosome,
++              dbConnection = db.hint,             
++              fimo = db.fimo,             
++              minid = "lung_hint_16.minid",             
++              dbUser = "trena",             
++              dbTable = "lung_hint_16",             
++              sourcePath = data.path,             
++              isTest = FALSE,             
++              method = "HINT"))    
++ }
+
+R version 3.4.1 (2017-06-30) -- "Single Candle"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # users can either step through this file, or call this file with 
+> # r -f example.R
+> 
+> # THIS ASSUMES THAT THE TESTHINT DATABASE EXISTS. The recipe for building that
+> # database is in ../dbInitialization/createHintTest.sql
+> 
+> # THIS EXAMPLE USES THE BRAIN HINT OUTPUT MADE BY RUNNING make hint at /scratch/data/footprints
+> 
+> print(date())
+[1] "Sat Sep 30 16:50:30 2017"
+> #-------------------------------------------------------------------------------
+> # set path to hint output 
+> data.path <- "/scratch/data/footprints/lung_wellington_16"
+> #-------------------------------------------------------------------------------
+> # establish database connections:
+> 
+> if(!exists("db.wellington"))
++     db.wellington <- "lung_wellington_16_localhost"
+> 
+> if(!exists("db.fimo"))
++     db.fimo <- "fimo_localhost"
+> #-------------------------------------------------------------------------------
+> # Source the libraries
+> source("../src/dependencies.R")
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colMeans, colnames,
+    colSums, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, lengths, Map, mapply, match,
+    mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rowMeans, rownames, rowSums, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+Loading required package: DBI
+> source("../src/dbFunctions.R")
+> source("../src/tableParsing.R")
+> source("../src/tests.R")
+> source("../src/main_Bioc.R")
+> 
+> if(!interactive()){    
++     chromosomes <- paste0("chr",c(11:22,"X","Y","MT"))
++     
++     # Create parallel structure here
++     library(BiocParallel)
++     register(MulticoreParam(workers = 25, stop.on.error = FALSE, log = TRUE), default = TRUE)
++ 
++     # Run on all 24 possible chromosomes at once
++     result <- bptry(bplapply(chromosomes, fillAllSamplesByChromosome,
++              dbConnection = db.wellington,
++              fimo = db.fimo,
++              minid = "lung_wellington_16.minid",
++              dbUser = "trena",
++              dbTable = "lung_wellington_16",
++              sourcePath = data.path,
++              isTest = FALSE,
++              method = "WELLINGTON"))
++ }
+############### LOG OUTPUT ###############
+Task: 15
+Node: 15
+Timestamp: 2017-09-30 16:50:38
+Success: TRUE
+Task duration:
+   user  system elapsed 
+  2.952   0.156   3.122 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1646883 88.0    2637877 140.9  1852329 99.0
+Vcells 1727059 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chrMT) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] No rows matching chrMT
+############### LOG OUTPUT ###############
+Task: 15
+Node: 15
+Timestamp: 2017-09-30 16:50:38
+Success: TRUE
+Task duration:
+   user  system elapsed 
+ 21.352   0.484  21.833 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1646886 88.0    2637877 140.9  1852340 99.0
+Vcells 1727059 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chrMT) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] No rows matching chrMT
+############### LOG OUTPUT ###############
+Task: 14
+Node: 14
+Timestamp: 2017-09-30 17:12:09
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+ 731.896   64.444 1290.504 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647887 88.1    2637877 140.9  1852329 99.0
+Vcells 1729747 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chrY) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 22467 regions, 32334 hits for ENCSR000ELY
+[1] 30830158 hits in 11883442 regions
+[1] ---- ENCSR000EOD (chrY) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 30579 regions, 43992 hits for ENCSR000EOD
+[1] 30874150 hits in 11905233 regions
+[1] ---- ENCSR000EOE (chrY) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 18458 regions, 26899 hits for ENCSR000EOE
+[1] 30901049 hits in 11911812 regions
+[1] ---- ENCSR000EOJ (chrY) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 22015 regions, 31975 hits for ENCSR000EOJ
+[1] 31004177 hits in 11968267 regions
+[1] ---- ENCSR000EPR (chrY) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 9323 regions, 13618 hits for ENCSR000EPR
+[1] 31142781 hits in 12055147 regions
+[1] ---- ENCSR582IPV (chrY) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 28353 regions, 40645 hits for ENCSR582IPV
+[1] 31183426 hits in 12070830 regions
+[1] ---- ENCSR627NIF (chrY) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 75708 regions, 107285 hits for ENCSR627NIF
+[1] 31660768 hits in 12322048 regions
+############### LOG OUTPUT ###############
+Task: 14
+Node: 14
+Timestamp: 2017-09-30 17:30:15
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+1535.260  125.896 2384.588 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647890 88.1    2637877 140.9  1852340 99.0
+Vcells 1729747 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chrY) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 35148 regions, 57203 hits for ENCSR000ELY
+[1] 147663873 hits in 36084551 regions
+[1] ---- ENCSR000EOD (chrY) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 49867 regions, 79997 hits for ENCSR000EOD
+[1] 147743870 hits in 36122839 regions
+[1] ---- ENCSR000EOE (chrY) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 23303 regions, 36578 hits for ENCSR000EOE
+[1] 148797880 hits in 36682940 regions
+[1] ---- ENCSR000EOJ (chrY) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 40013 regions, 66655 hits for ENCSR000EOJ
+[1] 150530773 hits in 37575627 regions
+[1] ---- ENCSR000EPR (chrY) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 13662 regions, 22023 hits for ENCSR000EPR
+[1] 158667568 hits in 41622133 regions
+[1] ---- ENCSR582IPV (chrY) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 52775 regions, 87487 hits for ENCSR582IPV
+[1] 161430167 hits in 42814171 regions
+[1] ---- ENCSR627NIF (chrY) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 105035 regions, 165328 hits for ENCSR627NIF
+[1] 168162945 hits in 44934336 regions
+############### LOG OUTPUT ###############
+Task: 12
+Node: 12
+Timestamp: 2017-09-30 17:30:58
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+1396.004   96.140 2419.016 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647888 88.1    2637877 140.9  1852329 99.0
+Vcells 1729748 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr22) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 84944 regions, 124986 hits for ENCSR000ELY
+[1] 31129163 hits in 12053211 regions
+[1] ---- ENCSR000EOD (chr22) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 165075 regions, 238979 hits for ENCSR000EOD
+[1] 31553483 hits in 12272213 regions
+[1] ---- ENCSR000EOE (chr22) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 105533 regions, 153329 hits for ENCSR000EOE
+[1] 32452530 hits in 12801845 regions
+[1] ---- ENCSR000EOJ (chr22) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 95792 regions, 140993 hits for ENCSR000EOJ
+[1] 33402928 hits in 13337456 regions
+[1] ---- ENCSR000EPR (chr22) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 99277 regions, 147326 hits for ENCSR000EPR
+[1] 34683203 hits in 13993200 regions
+[1] ---- ENCSR582IPV (chr22) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 185990 regions, 269193 hits for ENCSR582IPV
+[1] 35855366 hits in 14558017 regions
+[1] ---- ENCSR627NIF (chr22) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 272075 regions, 391425 hits for ENCSR627NIF
+[1] 38488383 hits in 15642897 regions
+############### LOG OUTPUT ###############
+Task: 11
+Node: 11
+Timestamp: 2017-09-30 17:34:03
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+1026.696  726.888 2598.706 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647889 88.1    2637877 140.9  1852329 99.0
+Vcells 1729749 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr21) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 48410 regions, 71153 hits for ENCSR000ELY
+[1] 30972202 hits in 11960222 regions
+[1] ---- ENCSR000EOD (chr21) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 90403 regions, 131078 hits for ENCSR000EOD
+[1] 31314504 hits in 12143733 regions
+[1] ---- ENCSR000EOE (chr21) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 52432 regions, 76355 hits for ENCSR000EOE
+[1] 32658377 hits in 12914314 regions
+[1] ---- ENCSR000EOJ (chr21) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 60494 regions, 89634 hits for ENCSR000EOJ
+[1] 33888640 hits in 13631816 regions
+[1] ---- ENCSR000EPR (chr21) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 59960 regions, 88685 hits for ENCSR000EPR
+[1] 35586173 hits in 14457791 regions
+[1] ---- ENCSR582IPV (chr21) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 114338 regions, 165301 hits for ENCSR582IPV
+[1] 37664710 hits in 15265089 regions
+[1] ---- ENCSR627NIF (chr21) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 156274 regions, 224284 hits for ENCSR627NIF
+[1] 39656143 hits in 16049910 regions
+############### LOG OUTPUT ###############
+Task: 8
+Node: 8
+Timestamp: 2017-09-30 17:44:16
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+1790.680  126.300 3216.057 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647890 88.1    2637877 140.9  1852329 99.0
+Vcells 1729750 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr18) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 56832 regions, 83878 hits for ENCSR000ELY
+[1] 31744646 hits in 12378880 regions
+[1] ---- ENCSR000EOD (chr18) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 101757 regions, 148162 hits for ENCSR000EOD
+[1] 33047985 hits in 13156298 regions
+[1] ---- ENCSR000EOE (chr18) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 68717 regions, 99287 hits for ENCSR000EOE
+[1] 35497488 hits in 14434257 regions
+[1] ---- ENCSR000EOJ (chr18) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 80805 regions, 120024 hits for ENCSR000EOJ
+[1] 36974711 hits in 14966576 regions
+[1] ---- ENCSR000EPR (chr18) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 95878 regions, 143193 hits for ENCSR000EPR
+[1] 39656143 hits in 16049910 regions
+[1] ---- ENCSR582IPV (chr18) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 187318 regions, 270163 hits for ENCSR582IPV
+[1] 41570162 hits in 16739148 regions
+[1] ---- ENCSR627NIF (chr18) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 196016 regions, 280344 hits for ENCSR627NIF
+[1] 43156398 hits in 17141944 regions
+############### LOG OUTPUT ###############
+Task: 12
+Node: 12
+Timestamp: 2017-09-30 17:50:02
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2188.832  232.056 3563.855 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647891 88.1    2637877 140.9  1852340 99.0
+Vcells 1729748 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr22) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 341199 regions, 631335 hits for ENCSR000ELY
+[1] 148761302 hits in 36672330 regions
+[1] ---- ENCSR000EOD (chr22) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 484471 regions, 881844 hits for ENCSR000EOD
+[1] 152215056 hits in 38310652 regions
+[1] ---- ENCSR000EOE (chr22) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 410310 regions, 754736 hits for ENCSR000EOE
+[1] 161342680 hits in 42786559 regions
+[1] ---- ENCSR000EOJ (chr22) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 387976 regions, 728349 hits for ENCSR000EOJ
+[1] 168162945 hits in 44934336 regions
+[1] ---- ENCSR000EPR (chr22) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 395507 regions, 750161 hits for ENCSR000EPR
+[1] 178860984 hits in 47941583 regions
+[1] ---- ENCSR582IPV (chr22) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 524694 regions, 938300 hits for ENCSR582IPV
+[1] 188609470 hits in 50241647 regions
+[1] ---- ENCSR627NIF (chr22) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 542198 regions, 927607 hits for ENCSR627NIF
+[1] 195647735 hits in 51393731 regions
+############### LOG OUTPUT ###############
+Task: 10
+Node: 10
+Timestamp: 2017-09-30 17:51:59
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+1644.808  815.504 3671.402 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647891 88.1    2637877 140.9  1852329 99.0
+Vcells 1729751 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr20) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 87990 regions, 129492 hits for ENCSR000ELY
+[1] 32582022 hits in 12889835 regions
+[1] ---- ENCSR000EOD (chr20) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 158282 regions, 230127 hits for ENCSR000EOD
+[1] 35173908 hits in 14247942 regions
+[1] ---- ENCSR000EOE (chr20) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 106515 regions, 154268 hits for ENCSR000EOE
+[1] 37499409 hits in 15195827 regions
+[1] ---- ENCSR000EOJ (chr20) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 107657 regions, 158954 hits for ENCSR000EOJ
+[1] 40287985 hits in 16210660 regions
+[1] ---- ENCSR000EPR (chr20) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 116096 regions, 173115 hits for ENCSR000EPR
+[1] 42649560 hits in 16992606 regions
+[1] ---- ENCSR582IPV (chr20) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 226736 regions, 328418 hits for ENCSR582IPV
+[1] 44778742 hits in 17728556 regions
+[1] ---- ENCSR627NIF (chr20) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 256956 regions, 369784 hits for ENCSR627NIF
+[1] 47150601 hits in 18448572 regions
+############### LOG OUTPUT ###############
+Task: 4
+Node: 4
+Timestamp: 2017-09-30 17:52:08
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2139.036  175.024 3678.790 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647892 88.1    2637877 140.9  1852329 99.0
+Vcells 1729752 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr14) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 94179 regions, 138870 hits for ENCSR000ELY
+[1] 31883516 hits in 12473059 regions
+[1] ---- ENCSR000EOD (chr14) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 161280 regions, 236819 hits for ENCSR000EOD
+[1] 34125459 hits in 13755062 regions
+[1] ---- ENCSR000EOE (chr14) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 103768 regions, 150448 hits for ENCSR000EOE
+[1] 36005814 hits in 14602876 regions
+[1] ---- ENCSR000EOJ (chr14) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 116135 regions, 173664 hits for ENCSR000EOJ
+[1] 39288666 hits in 15926838 regions
+[1] ---- ENCSR000EPR (chr14) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 134289 regions, 201154 hits for ENCSR000EPR
+[1] 42083802 hits in 16858298 regions
+[1] ---- ENCSR582IPV (chr14) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 243024 regions, 351755 hits for ENCSR582IPV
+[1] 44450324 hits in 17593977 regions
+[1] ---- ENCSR627NIF (chr14) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 264104 regions, 379951 hits for ENCSR627NIF
+[1] 48151654 hits in 18742391 regions
+############### LOG OUTPUT ###############
+Task: 7
+Node: 7
+Timestamp: 2017-09-30 17:52:10
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2124.420  139.008 3680.414 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647893 88.1    2637877 140.9  1852329 99.0
+Vcells 1729753 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr17) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 172180 regions, 252566 hits for ENCSR000ELY
+[1] 32136082 hits in 12645239 regions
+[1] ---- ENCSR000EOD (chr17) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 281929 regions, 410418 hits for ENCSR000EOD
+[1] 34535877 hits in 13961049 regions
+[1] ---- ENCSR000EOE (chr17) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 194952 regions, 284370 hits for ENCSR000EOE
+[1] 36290184 hits in 14683358 regions
+[1] ---- ENCSR000EOJ (chr17) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 201066 regions, 297351 hits for ENCSR000EOJ
+[1] 39288666 hits in 15926838 regions
+[1] ---- ENCSR000EPR (chr17) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 210848 regions, 312486 hits for ENCSR000EPR
+[1] 41882648 hits in 16805760 regions
+[1] ---- ENCSR582IPV (chr17) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 388441 regions, 562044 hits for ENCSR582IPV
+[1] 44450324 hits in 17593977 regions
+[1] ---- ENCSR627NIF (chr17) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 430102 regions, 621102 hits for ENCSR627NIF
+[1] 48151654 hits in 18742391 regions
+############### LOG OUTPUT ###############
+Task: 5
+Node: 5
+Timestamp: 2017-09-30 17:54:11
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2234.804  242.188 3801.868 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647894 88.1    2637877 140.9  1852329 99.0
+Vcells 1729754 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr15) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 110582 regions, 163119 hits for ENCSR000ELY
+[1] 32299201 hits in 12755821 regions
+[1] ---- ENCSR000EOD (chr15) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 178837 regions, 260578 hits for ENCSR000EOD
+[1] 34943781 hits in 14126923 regions
+[1] ---- ENCSR000EOE (chr15) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 118488 regions, 172166 hits for ENCSR000EOE
+[1] 36854687 hits in 14930613 regions
+[1] ---- ENCSR000EOJ (chr15) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 135492 regions, 201080 hits for ENCSR000EOJ
+[1] 40129031 hits in 16172121 regions
+[1] ---- ENCSR000EPR (chr15) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 152469 regions, 226494 hits for ENCSR000EPR
+[1] 42876054 hits in 17047697 regions
+[1] ---- ENCSR582IPV (chr15) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 268937 regions, 388301 hits for ENCSR582IPV
+[1] 45725504 hits in 18010838 regions
+[1] ---- ENCSR627NIF (chr15) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 287747 regions, 412419 hits for ENCSR627NIF
+[1] 48800728 hits in 18925374 regions
+############### LOG OUTPUT ###############
+Task: 11
+Node: 11
+Timestamp: 2017-09-30 17:55:44
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2282.400  543.360 3903.474 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647892 88.1    2637877 140.9  1852340 99.0
+Vcells 1729749 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr21) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 208292 regions, 386097 hits for ENCSR000ELY
+[1] 148129967 hits in 36331131 regions
+[1] ---- ENCSR000EOD (chr21) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 290495 regions, 529331 hits for ENCSR000EOD
+[1] 157365770 hits in 40945407 regions
+[1] ---- ENCSR000EOE (chr21) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 214892 regions, 402128 hits for ENCSR000EOE
+[1] 164166303 hits in 43674188 regions
+[1] ---- ENCSR000EOJ (chr21) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 256477 regions, 480025 hits for ENCSR000EOJ
+[1] 176657611 hits in 47551276 regions
+[1] ---- ENCSR000EPR (chr21) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 264059 regions, 502153 hits for ENCSR000EPR
+[1] 186487339 hits in 49836595 regions
+[1] ---- ENCSR582IPV (chr21) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 337902 regions, 603630 hits for ENCSR582IPV
+[1] 194720128 hits in 51245005 regions
+[1] ---- ENCSR627NIF (chr21) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 339981 regions, 577008 hits for ENCSR627NIF
+[1] 206761191 hits in 53136982 regions
+############### LOG OUTPUT ###############
+Task: 9
+Node: 9
+Timestamp: 2017-09-30 17:57:40
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+1667.852 1086.572 4010.767 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647895 88.1    2637877 140.9  1852329 99.0
+Vcells 1729755 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr19) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 147025 regions, 213950 hits for ENCSR000ELY
+[1] 33261935 hits in 13303323 regions
+[1] ---- ENCSR000EOD (chr19) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 270707 regions, 392337 hits for ENCSR000EOD
+[1] 36682521 hits in 14880907 regions
+[1] ---- ENCSR000EOE (chr19) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 187662 regions, 271808 hits for ENCSR000EOE
+[1] 39927951 hits in 16119574 regions
+[1] ---- ENCSR000EOJ (chr19) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 165091 regions, 243467 hits for ENCSR000EOJ
+[1] 42327269 hits in 16906939 regions
+[1] ---- ENCSR000EPR (chr19) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 176199 regions, 258502 hits for ENCSR000EPR
+[1] 45037244 hits in 17774524 regions
+[1] ---- ENCSR582IPV (chr19) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 332172 regions, 481233 hits for ENCSR582IPV
+[1] 47150601 hits in 18448572 regions
+[1] ---- ENCSR627NIF (chr19) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 381879 regions, 552646 hits for ENCSR627NIF
+[1] 49685919 hits in 19150773 regions
+############### LOG OUTPUT ###############
+Task: 3
+Node: 3
+Timestamp: 2017-09-30 18:04:31
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2089.764  969.816 4422.444 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647896 88.1    2637877 140.9  1852329 99.0
+Vcells 1729756 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr13) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 70505 regions, 104670 hits for ENCSR000ELY
+[1] 33692228 hits in 13533281 regions
+[1] ---- ENCSR000EOD (chr13) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 117810 regions, 173976 hits for ENCSR000EOD
+[1] 37838686 hits in 15356493 regions
+[1] ---- ENCSR000EOE (chr13) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 76107 regions, 112023 hits for ENCSR000EOE
+[1] 40844446 hits in 16483743 regions
+[1] ---- ENCSR000EOJ (chr13) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 106933 regions, 162098 hits for ENCSR000EOJ
+[1] 43318496 hits in 17192466 regions
+[1] ---- ENCSR000EPR (chr13) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 110756 regions, 167400 hits for ENCSR000EPR
+[1] 46299584 hits in 18172284 regions
+[1] ---- ENCSR582IPV (chr13) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 208877 regions, 302389 hits for ENCSR582IPV
+[1] 49988308 hits in 19286509 regions
+[1] ---- ENCSR627NIF (chr13) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 211175 regions, 304564 hits for ENCSR627NIF
+[1] 51811171 hits in 19930390 regions
+############### LOG OUTPUT ###############
+Task: 6
+Node: 6
+Timestamp: 2017-09-30 18:05:51
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2025.028 1149.176 4502.647 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647897 88.1    2637877 140.9  1852329 99.0
+Vcells 1729757 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr16) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 125320 regions, 184630 hits for ENCSR000ELY
+[1] 33587558 hits in 13462776 regions
+[1] ---- ENCSR000EOD (chr16) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 225817 regions, 329268 hits for ENCSR000EOD
+[1] 38817651 hits in 15812438 regions
+[1] ---- ENCSR000EOE (chr16) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 141555 regions, 206894 hits for ENCSR000EOE
+[1] 41299999 hits in 16614664 regions
+[1] ---- ENCSR000EOJ (chr16) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 146448 regions, 218029 hits for ENCSR000EOJ
+[1] 43536525 hits in 17243682 regions
+[1] ---- ENCSR000EPR (chr16) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 158354 regions, 236655 hits for ENCSR000EPR
+[1] 48388309 hits in 18796433 regions
+[1] ---- ENCSR582IPV (chr16) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 309583 regions, 446624 hits for ENCSR582IPV
+[1] 50434932 hits in 19460438 regions
+[1] ---- ENCSR627NIF (chr16) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 350171 regions, 505835 hits for ENCSR627NIF
+[1] 52317006 hits in 20083019 regions
+############### LOG OUTPUT ###############
+Task: 10
+Node: 10
+Timestamp: 2017-09-30 18:09:43
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2592.456  690.964 4738.686 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647893 88.1    2637877 140.9  1852340 99.0
+Vcells 1729750 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr20) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 371594 regions, 704338 hits for ENCSR000ELY
+[1] 153837005 hits in 39172165 regions
+[1] ---- ENCSR000EOD (chr20) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 568092 regions, 1043955 hits for ENCSR000EOD
+[1] 165210258 hits in 44047998 regions
+[1] ---- ENCSR000EOE (chr20) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 460284 regions, 859318 hits for ENCSR000EOE
+[1] 178110823 hits in 47851729 regions
+[1] ---- ENCSR000EOJ (chr20) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 477947 regions, 903915 hits for ENCSR000EOJ
+[1] 191599509 hits in 50669741 regions
+[1] ---- ENCSR000EPR (chr20) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 499279 regions, 951708 hits for ENCSR000EPR
+[1] 199925770 hits in 51987882 regions
+[1] ---- ENCSR582IPV (chr20) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 673743 regions, 1204202 hits for ENCSR582IPV
+[1] 213806954 hits in 54318305 regions
+[1] ---- ENCSR627NIF (chr20) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 643847 regions, 1105360 hits for ENCSR627NIF
+[1] 222665085 hits in 55764204 regions
+############### LOG OUTPUT ###############
+Task: 9
+Node: 9
+Timestamp: 2017-09-30 18:09:54
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+2961.080  280.328 4755.758 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647894 88.1    2637877 140.9  1852340 99.0
+Vcells 1729751 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr19) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 620823 regions, 1183271 hits for ENCSR000ELY
+[1] 149981151 hits in 37303763 regions
+[1] ---- ENCSR000EOD (chr19) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 879876 regions, 1590702 hits for ENCSR000EOD
+[1] 163020869 hits in 43328934 regions
+[1] ---- ENCSR000EOE (chr19) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 773502 regions, 1437118 hits for ENCSR000EOE
+[1] 174137411 hits in 46717982 regions
+[1] ---- ENCSR000EOJ (chr19) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 717309 regions, 1346907 hits for ENCSR000EOJ
+[1] 189956377 hits in 50391741 regions
+[1] ---- ENCSR000EPR (chr19) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 699336 regions, 1317747 hits for ENCSR000EPR
+[1] 198974062 hits in 51857482 regions
+[1] ---- ENCSR582IPV (chr19) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 906393 regions, 1643436 hits for ENCSR582IPV
+[1] 211310792 hits in 53845356 regions
+[1] ---- ENCSR627NIF (chr19) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 901308 regions, 1608851 hits for ENCSR627NIF
+[1] 224273936 hits in 55926993 regions
+############### LOG OUTPUT ###############
+Task: 1
+Node: 1
+Timestamp: 2017-09-30 18:13:28
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3128.184  227.332 4952.919 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647898 88.1    2637877 140.9  1852329 99.0
+Vcells 1729758 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr11) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 163045 regions, 241446 hits for ENCSR000ELY
+[1] 32899823 hits in 13077359 regions
+[1] ---- ENCSR000EOD (chr11) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 251996 regions, 370430 hits for ENCSR000EOD
+[1] 37499409 hits in 15195827 regions
+[1] ---- ENCSR000EOE (chr11) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 170400 regions, 248659 hits for ENCSR000EOE
+[1] 41093105 hits in 16556632 regions
+[1] ---- ENCSR000EOJ (chr11) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 201292 regions, 299959 hits for ENCSR000EOJ
+[1] 45337203 hits in 17852752 regions
+[1] ---- ENCSR000EPR (chr11) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 221177 regions, 332545 hits for ENCSR000EPR
+[1] 49133273 hits in 19007425 regions
+[1] ---- ENCSR582IPV (chr11) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 408454 regions, 593219 hits for ENCSR582IPV
+[1] 51506607 hits in 19828309 regions
+[1] ---- ENCSR627NIF (chr11) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 431078 regions, 623333 hits for ENCSR627NIF
+[1] 53600474 hits in 20479049 regions
+############### LOG OUTPUT ###############
+Task: 8
+Node: 8
+Timestamp: 2017-09-30 18:13:54
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3175.696  290.512 4987.277 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647895 88.1    2637877 140.9  1852340 99.0
+Vcells 1729752 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr18) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 254248 regions, 482967 hits for ENCSR000ELY
+[1] 150464118 hits in 37558011 regions
+[1] ---- ENCSR000EOD (chr18) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 395862 regions, 743306 hits for ENCSR000EOD
+[1] 163764175 hits in 43598298 regions
+[1] ---- ENCSR000EOE (chr18) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 315247 regions, 593894 hits for ENCSR000EOE
+[1] 177251505 hits in 47681622 regions
+[1] ---- ENCSR000EOJ (chr18) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 390490 regions, 739217 hits for ENCSR000EOJ
+[1] 190695594 hits in 50536707 regions
+[1] ---- ENCSR000EPR (chr18) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 455655 regions, 873630 hits for ENCSR000EPR
+[1] 204940137 hits in 52864880 regions
+[1] ---- ENCSR582IPV (chr18) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 579987 regions, 1030199 hits for ENCSR582IPV
+[1] 214837153 hits in 54604623 regions
+[1] ---- ENCSR627NIF (chr18) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 530851 regions, 905102 hits for ENCSR627NIF
+[1] 229901591 hits in 57003520 regions
+############### LOG OUTPUT ###############
+Task: 13
+Node: 13
+Timestamp: 2017-09-30 18:20:31
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3335.168  377.176 5371.133 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647899 88.1    2637877 140.9  1852329 99.0
+Vcells 1729759 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chrX) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 72188 regions, 106778 hits for ENCSR000ELY
+[1] 33799006 hits in 13605469 regions
+[1] ---- ENCSR000EOD (chrX) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 177610 regions, 258272 hits for ENCSR000EOD
+[1] 38096958 hits in 15504936 regions
+[1] ---- ENCSR000EOE (chrX) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 103235 regions, 149176 hits for ENCSR000EOE
+[1] 42476445 hits in 16953385 regions
+[1] ---- ENCSR000EOJ (chrX) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 106925 regions, 162395 hits for ENCSR000EOJ
+[1] 46299584 hits in 18172284 regions
+[1] ---- ENCSR000EPR (chrX) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 128710 regions, 190787 hits for ENCSR000EPR
+[1] 50625719 hits in 19511975 regions
+[1] ---- ENCSR582IPV (chrX) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 224520 regions, 323705 hits for ENCSR582IPV
+[1] 52640711 hits in 20209289 regions
+[1] ---- ENCSR627NIF (chrX) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 261500 regions, 375340 hits for ENCSR627NIF
+[1] 53975814 hits in 20603817 regions
+############### LOG OUTPUT ###############
+Task: 4
+Node: 4
+Timestamp: 2017-09-30 18:22:15
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3549.216  309.688 5469.752 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647896 88.1    2637877 140.9  1852340 99.0
+Vcells 1729753 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr14) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 423500 regions, 802439 hits for ENCSR000ELY
+[1] 152215056 hits in 38310652 regions
+[1] ---- ENCSR000EOD (chr14) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 618581 regions, 1149098 hits for ENCSR000EOD
+[1] 166359356 hits in 44448515 regions
+[1] ---- ENCSR000EOE (chr14) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 477063 regions, 903474 hits for ENCSR000EOE
+[1] 182689221 hits in 49143182 regions
+[1] ---- ENCSR000EOJ (chr14) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 554591 regions, 1057981 hits for ENCSR000EOJ
+[1] 194116498 hits in 51098175 regions
+[1] ---- ENCSR000EPR (chr14) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 612491 regions, 1175661 hits for ENCSR000EPR
+[1] 207936852 hits in 53315760 regions
+[1] ---- ENCSR582IPV (chr14) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 736042 regions, 1328730 hits for ENCSR582IPV
+[1] 225602666 hits in 56228243 regions
+[1] ---- ENCSR627NIF (chr14) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 718690 regions, 1243872 hits for ENCSR627NIF
+[1] 238951544 hits in 58722080 regions
+############### LOG OUTPUT ###############
+Task: 5
+Node: 5
+Timestamp: 2017-09-30 18:23:59
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3603.124  405.132 5588.814 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647897 88.1    2637877 140.9  1852340 99.0
+Vcells 1729754 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr15) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 489919 regions, 917611 hits for ENCSR000ELY
+[1] 153837005 hits in 39172165 regions
+[1] ---- ENCSR000EOD (chr15) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 698027 regions, 1299712 hits for ENCSR000EOD
+[1] 169462657 hits in 45382048 regions
+[1] ---- ENCSR000EOE (chr15) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 555205 regions, 1048634 hits for ENCSR000EOE
+[1] 184432141 hits in 49477603 regions
+[1] ---- ENCSR000EOJ (chr15) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 641346 regions, 1212425 hits for ENCSR000EOJ
+[1] 196860160 hits in 51585560 regions
+[1] ---- ENCSR000EPR (chr15) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 674683 regions, 1291960 hits for ENCSR000EPR
+[1] 212602752 hits in 54027675 regions
+[1] ---- ENCSR582IPV (chr15) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 841298 regions, 1507059 hits for ENCSR582IPV
+[1] 227109725 hits in 56569870 regions
+[1] ---- ENCSR627NIF (chr15) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 804044 regions, 1390971 hits for ENCSR627NIF
+[1] 240342515 hits in 58927686 regions
+############### LOG OUTPUT ###############
+Task: 3
+Node: 3
+Timestamp: 2017-09-30 18:26:04
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3694.912  384.672 5695.507 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647898 88.1    2637877 140.9  1852340 99.0
+Vcells 1729755 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr13) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 310024 regions, 593106 hits for ENCSR000ELY
+[1] 155470452 hits in 40028745 regions
+[1] ---- ENCSR000EOD (chr13) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 481828 regions, 909912 hits for ENCSR000EOD
+[1] 167269268 hits in 44780063 regions
+[1] ---- ENCSR000EOE (chr13) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 366002 regions, 694286 hits for ENCSR000EOE
+[1] 183383507 hits in 49283525 regions
+[1] ---- ENCSR000EOJ (chr13) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 520953 regions, 994690 hits for ENCSR000EOJ
+[1] 202583260 hits in 52434741 regions
+[1] ---- ENCSR000EPR (chr13) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 519614 regions, 1006983 hits for ENCSR000EPR
+[1] 217157270 hits in 54950036 regions
+[1] ---- ENCSR582IPV (chr13) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 688645 regions, 1227828 hits for ENCSR582IPV
+[1] 231129419 hits in 57337828 regions
+[1] ---- ENCSR627NIF (chr13) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 606135 regions, 1034830 hits for ENCSR627NIF
+[1] 243500135 hits in 59573002 regions
+############### LOG OUTPUT ###############
+Task: 6
+Node: 6
+Timestamp: 2017-09-30 18:29:29
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3894.216  466.584 5935.070 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647899 88.1    2637877 140.9  1852340 99.0
+Vcells 1729756 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr16) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 546556 regions, 1040341 hits for ENCSR000ELY
+[1] 154877346 hits in 39718721 regions
+[1] ---- ENCSR000EOD (chr16) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 774169 regions, 1421356 hits for ENCSR000EOD
+[1] 172700293 hits in 46473361 regions
+[1] ---- ENCSR000EOE (chr16) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 627695 regions, 1183831 hits for ENCSR000EOE
+[1] 187671170 hits in 50051821 regions
+[1] ---- ENCSR000EOJ (chr16) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 653243 regions, 1244046 hits for ENCSR000EOJ
+[1] 206184183 hits in 53035028 regions
+[1] ---- ENCSR000EPR (chr16) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 686677 regions, 1313134 hits for ENCSR000EPR
+[1] 217157270 hits in 54950036 regions
+[1] ---- ENCSR582IPV (chr16) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 878152 regions, 1583567 hits for ENCSR582IPV
+[1] 232712986 hits in 57682855 regions
+[1] ---- ENCSR627NIF (chr16) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 874140 regions, 1529516 hits for ENCSR627NIF
+[1] 245029651 hits in 59790147 regions
+############### LOG OUTPUT ###############
+Task: 2
+Node: 2
+Timestamp: 2017-09-30 18:32:48
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3548.528 1004.604 6108.680 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647900 88.1    2637877 140.9  1852329 99.0
+Vcells 1729760 13.2    3142662  24.0  2552048 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr12) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 152246 regions, 224293 hits for ENCSR000ELY
+[1] 35497488 hits in 14434257 regions
+[1] ---- ENCSR000EOD (chr12) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 303913 regions, 444438 hits for ENCSR000EOD
+[1] 40732423 hits in 16448083 regions
+[1] ---- ENCSR000EOE (chr12) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 168381 regions, 244285 hits for ENCSR000EOE
+[1] 45969789 hits in 18078145 regions
+[1] ---- ENCSR000EOJ (chr12) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 193665 regions, 287669 hits for ENCSR000EOJ
+[1] 50913388 hits in 19586891 regions
+[1] ---- ENCSR000EPR (chr12) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 224924 regions, 336430 hits for ENCSR000EPR
+[1] 52977141 hits in 20293818 regions
+[1] ---- ENCSR582IPV (chr12) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 377296 regions, 545329 hits for ENCSR582IPV
+[1] 54521143 hits in 20822016 regions
+[1] ---- ENCSR627NIF (chr12) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 388526 regions, 558335 hits for ENCSR627NIF
+[1] 55079478 hits in 20990128 regions
+> 
+> print(bpok(result))
+ [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+> print("Database fill complete")
+[1] "Database fill complete"
+> print(date())
+[1] "Sat Sep 30 18:32:49 2017"
+> 
+############### LOG OUTPUT ###############
+Task: 7
+Node: 7
+Timestamp: 2017-09-30 18:33:00
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+3906.420  572.476 6144.650 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647900 88.1    2637877 140.9  1852340 99.0
+Vcells 1729757 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr17) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 725700 regions, 1365987 hits for ENCSR000ELY
+[1] 156836439 hits in 40754445 regions
+[1] ---- ENCSR000EOD (chr17) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 990514 regions, 1816280 hits for ENCSR000EOD
+[1] 171278937 hits in 45987283 regions
+[1] ---- ENCSR000EOE (chr17) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 833658 regions, 1553045 hits for ENCSR000EOE
+[1] 186487339 hits in 49836595 regions
+[1] ---- ENCSR000EOJ (chr17) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 884225 regions, 1662800 hits for ENCSR000EOJ
+[1] 202583260 hits in 52434741 regions
+[1] ---- ENCSR000EPR (chr17) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 887217 regions, 1679067 hits for ENCSR000EPR
+[1] 218836337 hits in 55146126 regions
+[1] ---- ENCSR582IPV (chr17) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1137359 regions, 2046066 hits for ENCSR582IPV
+[1] 236679784 hits in 58355510 regions
+[1] ---- ENCSR627NIF (chr17) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1113259 regions, 1944782 hits for ENCSR627NIF
+[1] 249252707 hits in 60562107 regions
+############### LOG OUTPUT ###############
+Task: 2
+Node: 2
+Timestamp: 2017-09-30 18:37:47
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+4149.508  388.084 6409.774 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647901 88.1    2637877 140.9  1852340 99.0
+Vcells 1729758 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr12) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 673208 regions, 1279775 hits for ENCSR000ELY
+[1] 158645545 hits in 41618615 regions
+[1] ---- ENCSR000EOD (chr12) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1108821 regions, 2040175 hits for ENCSR000EOD
+[1] 176177586 hits in 47464006 regions
+[1] ---- ENCSR000EOE (chr12) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 775322 regions, 1459008 hits for ENCSR000EOE
+[1] 193058517 hits in 50929886 regions
+[1] ---- ENCSR000EOJ (chr12) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 913429 regions, 1730504 hits for ENCSR000EOJ
+[1] 211310792 hits in 53845356 regions
+[1] ---- ENCSR000EPR (chr12) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 983037 regions, 1886764 hits for ENCSR000EPR
+[1] 228996489 hits in 56846549 regions
+[1] ---- ENCSR582IPV (chr12) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1188153 regions, 2122790 hits for ENCSR582IPV
+[1] 242465305 hits in 59396120 regions
+[1] ---- ENCSR627NIF (chr12) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1114900 regions, 1939472 hits for ENCSR627NIF
+[1] 252433575 hits in 61137938 regions
+############### LOG OUTPUT ###############
+Task: 1
+Node: 1
+Timestamp: 2017-09-30 18:44:21
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+4472.460  470.752 6809.882 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647902 88.1    2637877 140.9  1852340 99.0
+Vcells 1729759 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chr11) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 721749 regions, 1374133 hits for ENCSR000ELY
+[1] 160041701 hits in 42343882 regions
+[1] ---- ENCSR000EOD (chr11) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 989189 regions, 1852463 hits for ENCSR000EOD
+[1] 180713447 hits in 48554835 regions
+[1] ---- ENCSR000EOE (chr11) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 782987 regions, 1483247 hits for ENCSR000EOE
+[1] 204066507 hits in 52707183 regions
+[1] ---- ENCSR000EOJ (chr11) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 946541 regions, 1806305 hits for ENCSR000EOJ
+[1] 221559725 hits in 55595469 regions
+[1] ---- ENCSR000EPR (chr11) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 999265 regions, 1920732 hits for ENCSR000EPR
+[1] 234633718 hits in 57961423 regions
+[1] ---- ENCSR582IPV (chr11) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1265778 regions, 2278274 hits for ENCSR582IPV
+[1] 247307925 hits in 60318684 regions
+[1] ---- ENCSR627NIF (chr11) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 1202197 regions, 2099534 hits for ENCSR627NIF
+[1] 254533109 hits in 61438171 regions
+############### LOG OUTPUT ###############
+Task: 13
+Node: 13
+Timestamp: 2017-09-30 19:02:54
+Success: TRUE
+Task duration:
+    user   system  elapsed 
+4928.628  661.624 7908.917 
+Memory used:
+          used (Mb) gc trigger  (Mb) max used (Mb)
+Ncells 1647903 88.1    2637877 140.9  1852340 99.0
+Vcells 1729760 13.2    3142662  24.0  2552049 19.5
+Log messages:
+stderr and stdout:
+[1] ---- ENCSR000ELY (chrX) (1/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 289560 regions, 546243 hits for ENCSR000ELY
+[1] 161342680 hits in 42786559 regions
+[1] ---- ENCSR000EOD (chrX) (2/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 587280 regions, 1072300 hits for ENCSR000EOD
+[1] 181785747 hits in 48974914 regions
+[1] ---- ENCSR000EOE (chrX) (3/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 430977 regions, 796155 hits for ENCSR000EOE
+[1] 197656315 hits in 51747841 regions
+[1] ---- ENCSR000EOJ (chrX) (4/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 481428 regions, 917083 hits for ENCSR000EOJ
+[1] 219753420 hits in 55312910 regions
+[1] ---- ENCSR000EPR (chrX) (5/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 543821 regions, 1027888 hits for ENCSR000EPR
+[1] 237707672 hits in 58530252 regions
+[1] ---- ENCSR582IPV (chrX) (6/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 697874 regions, 1241396 hits for ENCSR582IPV
+[1] 250494103 hits in 60868378 regions
+[1] ---- ENCSR627NIF (chrX) (7/7)
+[1] "Data table read. Merging with Fimo..."
+[1] "Merged. Now splitting table to regions and hits..."
+[1] filling 597221 regions, 1005337 hits for ENCSR627NIF
+[1] 255538446 hits in 61613794 regions
+> 
+> print(bpok(result))
+ [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+> print("Database fill complete")
+[1] "Database fill complete"
+> print(date())
+[1] "Sat Sep 30 19:02:54 2017"
+> 
+You are now connected to database "lung_wellington_16" as user "root".
+CREATE INDEX
+CREATE INDEX
+You are now connected to database "lung_hint_16" as user "root".
+CREATE INDEX
+CREATE INDEX
