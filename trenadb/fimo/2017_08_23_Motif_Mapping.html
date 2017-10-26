@@ -651,7 +651,7 @@ head(motifs.to.add)</code></pre>
 ## 4 Ahr::Arnt jaspar2016
 ## 5 Ahr::Arnt jaspar2016
 ## 6        Ar jaspar2016</code></pre>
-<p>Interestingly, as everything looks to line up, there are subtle differences. Anyway, we’ll finish up by adding our columns to the “Table.2” object and get our final thing:</p>
+<p>Interestingly, as everything looks to line up, there are subtle differences. Anyway, we’ll finish up by adding our columns to the “Table.2” object and get our final thing.</p>
 <pre class="r"><code>trimmed.motifs &lt;- motifs.to.add %&gt;% select(&quot;Motif&quot; = &quot;Long.ID&quot;, &quot;TF&quot; = &quot;TF.x&quot;, &quot;Origin&quot; = &quot;Origin.x&quot;)
 
 Table.2 %&gt;% dplyr::union(trimmed.motifs) -&gt; Motif.TF.Map
@@ -662,20 +662,71 @@ head(Motif.TF.Map); tail(Motif.TF.Map); nrow(Motif.TF.Map)</code></pre>
 ## 1   Mmusculus-UniPROBE-Sp100.UP00049 SP140 TFClass
 ## 2 Mmusculus-jaspar2016-Hes1-MA1099.1  HEY1 TFClass
 ## 3 Mmusculus-jaspar2016-Hes1-MA1099.1  HES7 TFClass
-## 4 Mmusculus-jaspar2016-Hes1-MA1099.1  HES5 TFClass
-## 5 Mmusculus-jaspar2016-Hes1-MA1099.1  HES3 TFClass
-## 6 Mmusculus-jaspar2016-Hes1-MA1099.1  HES2 TFClass</code></pre>
+## 4 Mmusculus-jaspar2016-Hes1-MA1099.1  HES6 TFClass
+## 5 Mmusculus-jaspar2016-Hes1-MA1099.1  HES5 TFClass
+## 6 Mmusculus-jaspar2016-Hes1-MA1099.1  HES4 TFClass</code></pre>
 <pre><code>## # A tibble: 6 x 3
 ##                                       Motif     TF      Origin
 ##                                       &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;
-## 1       Mmusculus-jaspar2016-Sox17-MA0078.1   SOX5     TFClass
-## 2   Rrattus-jaspar2016-ARNT::HIF1A-MA0259.1 SOHLH2     TFClass
-## 3 Mmusculus-jaspar2016-Bach1::Mafk-MA0591.1   MAFA     TFClass
-## 4         Hsapiens-jaspar2016-CDX2-MA0465.1  Hoxa9    UniPROBE
-## 5   Hsapiens-HOCOMOCOv10-AP2B_HUMAN.H10MO.B   AP2B HOCOMOCOv10
-## 6         Hsapiens-jaspar2016-ELF1-MA0473.2  ETV3L     TFClass</code></pre>
+## 1 Mmusculus-HOCOMOCOv10-ARI3A_MOUSE.H10MO.D  ARI3A HOCOMOCOv10
+## 2          Hsapiens-jaspar2016-GSC-MA0648.1   ESX1     TFClass
+## 3       Hsapiens-jaspar2016-HOXC11-MA0651.1 HOXA10     TFClass
+## 4        Mmusculus-jaspar2016-Alx1-MA0854.1  Hoxd1    UniPROBE
+## 5        Hsapiens-jaspar2016-NHLH1-MA0048.2  MESP1     TFClass
+## 6         Hsapiens-jaspar2016-CTCF-MA0139.1   CTCF  jaspar2016</code></pre>
 <pre><code>## [1] 15801</code></pre>
-<p>By using the <code>union</code>, we already screened out duplicates:</p>
+<p>After looking at this set of motifs, I noticed there are 6 motifs that don’t match our non-redundant set:</p>
+<pre class="r"><code>extra.motifs &lt;- setdiff(motifs.to.add$Long.ID, Table.2$Motif)
+extra.motifs</code></pre>
+<pre><code>## [1] &quot;Mmusculus-UniPROBE-Nkx1_1.UP00220&quot; &quot;Mmusculus-UniPROBE-Nkx1_2.UP00139&quot;
+## [3] &quot;Mmusculus-UniPROBE-Nkx2_6.UP00147&quot; &quot;Mmusculus-UniPROBE-Nkx6_3.UP00238&quot;
+## [5] &quot;Scerevisiae-UniPROBE-Yap1.UP00327&quot; &quot;Mmusculus-UniPROBE-Nr2f2.UP00009&quot;</code></pre>
+<p>Basically, we added TFs for all our motifs, mapping our redundant ones along the way, but now we’re again trying to map to the redundant motifs. How many records does this account for?</p>
+<pre class="r"><code>Motif.TF.Map %&gt;% filter(Motif %in% extra.motifs)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##                               Motif     TF  Origin
+##                               &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;
+## 1  Mmusculus-UniPROBE-Nr2f2.UP00009  NR2F2 TFClass
+## 2 Mmusculus-UniPROBE-Nkx1_2.UP00139 NKX1-2 TFClass
+## 3 Mmusculus-UniPROBE-Nkx1_1.UP00220 NKX1-1 TFClass
+## 4 Mmusculus-UniPROBE-Nkx2_6.UP00147 NKX2-6 TFClass
+## 5 Scerevisiae-UniPROBE-Yap1.UP00327   YAP1 TFClass
+## 6 Mmusculus-UniPROBE-Nkx6_3.UP00238 NKX6-3 TFClass</code></pre>
+<p>So there’s literally just 6 rows here; let’s use our mapping to change them to the correct names.</p>
+<pre class="r"><code>Motif.TF.Map %&gt;% filter(Motif %in% extra.motifs) %&gt;% 
+  inner_join(Table.1, by = c(&quot;Motif&quot; = &quot;Query.ID&quot;)) %&gt;%
+  select(&quot;Motif&quot;  = &quot;Target.ID&quot;, TF) %&gt;% 
+  mutate(Origin = &quot;TFClass&quot;) -&gt; corrected.extras
+
+dim(corrected.extras)</code></pre>
+<pre><code>## [1] 24  3</code></pre>
+<pre class="r"><code>corrected.extras</code></pre>
+<pre><code>## # A tibble: 24 x 3
+##                                      Motif     TF  Origin
+##                                      &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;
+##  1      Hsapiens-jaspar2016-NR2F1-MA0017.2  NR2F2 TFClass
+##  2       Mmusculus-jaspar2016-Arx-MA0874.1 NKX1-2 TFClass
+##  3      Mmusculus-jaspar2016-Alx1-MA0854.1 NKX1-2 TFClass
+##  4      Mmusculus-jaspar2016-Alx4-MA0853.1 NKX1-2 TFClass
+##  5     Hsapiens-jaspar2016-POU6F1-MA0628.1 NKX1-2 TFClass
+##  6     Mmusculus-jaspar2016-Hoxd3-MA0912.1 NKX1-2 TFClass
+##  7       Hsapiens-jaspar2016-LHX2-MA0700.1 NKX1-2 TFClass
+##  8 Hsapiens-HOCOMOCOv10-EMX2_HUMAN.H10MO.D NKX1-2 TFClass
+##  9       Hsapiens-jaspar2016-VSX1-MA0725.1 NKX1-2 TFClass
+## 10     Mmusculus-jaspar2016-Hoxb5-MA0904.1 NKX1-2 TFClass
+## # ... with 14 more rows</code></pre>
+<p>We get 24 rows instead of 6 simply because the UniPROBE IDs tend to map to multiple things; that’s quite alright. Let’s pull out those rows from the initial mapping; that should give only 15795 rows. Then we’ll add our 24 and we should get 15819. And finally, we should see only 1530 unique motifs, not 1536:</p>
+<pre class="r"><code># Take out the 6 bad rows
+Motif.TF.Map %&gt;% filter(!(Motif %in% extra.motifs)) -&gt; Motif.TF.Map
+nrow(Motif.TF.Map)</code></pre>
+<pre><code>## [1] 15795</code></pre>
+<pre class="r"><code># Add in the 24 good rows
+Motif.TF.Map %&gt;% dplyr::union(corrected.extras) -&gt; Motif.TF.Map
+nrow(Motif.TF.Map)</code></pre>
+<pre><code>## [1] 15819</code></pre>
+<pre class="r"><code>length(unique(Motif.TF.Map$Motif))</code></pre>
+<pre><code>## [1] 1530</code></pre>
+<p>Now then, back to evaluating. By using the <code>union</code>, we already screened out duplicates, but let’s make sure anyway:</p>
 <pre class="r"><code>sum(duplicated(Motif.TF.Map))</code></pre>
 <pre><code>## [1] 0</code></pre>
 <p>Note that as a final touch, we can summarize how many mappings and TFs came from each source:</p>
@@ -689,7 +740,7 @@ head(Motif.TF.Map); tail(Motif.TF.Map); nrow(Motif.TF.Map)</code></pre>
 ## 1  HOCOMOCOv10           1679        604
 ## 2   jaspar2016            631        544
 ## 3 SwissRegulon           3835        684
-## 4      TFClass           8552        762
+## 4      TFClass           8570        762
 ## 5     UniPROBE           1104        363</code></pre>
 <p>In general, we could say we’re done at this point. However, now there’s a new source of duplicates: we may very well have duplicated motif-TF mappings with multiple origins. Rather than having multiple records for these (and there are at least a couple hundred), might it be better to push them together using a semi-colon for separation?</p>
 <p>We’d want something like this:</p>
@@ -734,12 +785,12 @@ head(Motif.TF.Map.Collapsed)</code></pre>
 <pre><code>## # A tibble: 6 x 3
 ##                                       Motif    TF
 ##                                       &lt;chr&gt; &lt;chr&gt;
-## 1 Mmusculus-jaspar2016-Pparg::Rxra-MA0065.2  COT2
-## 2  Hsapiens-HOCOMOCOv10-MEIS1_HUMAN.H10MO.C MEIS1
-## 3       Mmusculus-jaspar2016-Stat4-MA0518.1 STAT3
-## 4        Mmusculus-jaspar2016-EGR2-MA0472.1  EGR2
-## 5   Hsapiens-HOCOMOCOv10-MBD2_HUMAN.H10MO.B  MBD2
-## 6         Hsapiens-jaspar2016-ESR2-MA0258.1  ESR1
+## 1 Mmusculus-HOCOMOCOv10-ARI3A_MOUSE.H10MO.D ARI3A
+## 2        Hsapiens-jaspar2016-GLIS3-MA0737.1 GLIS2
+## 3        Hsapiens-jaspar2016-FOXP1-MA0481.1 FOXF2
+## 4 Mmusculus-HOCOMOCOv10-SMAD2_MOUSE.H10MO.D SMAD2
+## 5  Hsapiens-HOCOMOCOv10-BCL6B_HUMAN.H10MO.D BCL6B
+## 6  Hsapiens-HOCOMOCOv10-BHE23_HUMAN.H10MO.D BHE23
 ## # ... with 1 more variables: Origin &lt;chr&gt;</code></pre>
 <p>To check on this, let’s re-do our computations from above to see the origins:</p>
 <pre class="r"><code>Motif.TF.Map.Collapsed %&gt;% select(TF, Origin) %&gt;%
@@ -762,13 +813,13 @@ head(Motif.TF.Map.Collapsed)</code></pre>
 ## 11             jaspar2016;SwissRegulon;TFClass            129        129
 ## 12                          jaspar2016;TFClass            121        121
 ## 13                         jaspar2016;UniPROBE             22         22
-## 14                                SwissRegulon           2118        497
-## 15                        SwissRegulon;TFClass            931        243
-## 16                                     TFClass           6941        622
+## 14                                SwissRegulon           2098        497
+## 15                        SwissRegulon;TFClass            951        247
+## 16                                     TFClass           6939        618
 ## 17                                    UniPROBE           1082        359</code></pre>
 <p>Also, let’s quickly just check and make sure we’re back to 13242 in terms of our unique mappings themselves:</p>
 <pre class="r"><code>nrow(Motif.TF.Map.Collapsed)</code></pre>
-<pre><code>## [1] 13242</code></pre>
+<pre><code>## [1] 13240</code></pre>
 <p>So we’re done! And our mapping is expanded! The last thing to do: let’s make sure we preserve the original mapping (call this Motif.TF.Map) and save our 2 new files (the expanded version will be Motif.TF.Map.Expanded).</p>
 <pre class="r"><code>Motif.TF.Map.Expanded &lt;- Motif.TF.Map
 Motif.TF.Map &lt;- Motif.TF.Map.Collapsed %&gt;% select(Motif, TF) %&gt;% arrange(Motif, TF) </code></pre>

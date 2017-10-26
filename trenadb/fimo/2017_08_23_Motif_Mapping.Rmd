@@ -437,7 +437,7 @@ Awesome, so we'll do an inner join on these to add the pertinent long IDs, then 
 motifs.to.add <- german.truck %>% inner_join(motif.id.map, by = "Short.ID")
 head(motifs.to.add)
 ```
-Interestingly, as everything looks to line up, there are subtle differences. Anyway, we'll finish up by adding our columns to the "Table.2" object and get our final thing:
+Interestingly, as everything looks to line up, there are subtle differences. Anyway, we'll finish up by adding our columns to the "Table.2" object and get our final thing.
 
 ```{r}
 
@@ -447,11 +447,49 @@ Table.2 %>% dplyr::union(trimmed.motifs) -> Motif.TF.Map
 head(Motif.TF.Map); tail(Motif.TF.Map); nrow(Motif.TF.Map)
 ```
 
-By using the `union`, we already screened out duplicates:
+After looking at this set of motifs, I noticed there are 6 motifs that don't match our non-redundant set:
+
+```{r}
+extra.motifs <- setdiff(motifs.to.add$Long.ID, Table.2$Motif)
+extra.motifs
+```
+
+Basically, we added TFs for all our motifs, mapping our redundant ones along the way, but now we're again trying to map to the redundant motifs. How many records does this account for?
+
+```{r}
+Motif.TF.Map %>% filter(Motif %in% extra.motifs)
+```
+
+So there's literally just 6 rows here; let's use our mapping to change them to the correct names.
+
+```{r}
+Motif.TF.Map %>% filter(Motif %in% extra.motifs) %>% 
+  inner_join(Table.1, by = c("Motif" = "Query.ID")) %>%
+  select("Motif"  = "Target.ID", TF) %>% 
+  mutate(Origin = "TFClass") -> corrected.extras
+
+dim(corrected.extras)
+corrected.extras
+```
+
+We get 24 rows instead of 6 simply because the UniPROBE IDs tend to map to multiple things; that's quite alright. Let's pull out those rows from the initial mapping; that should give only 15795 rows. Then we'll add our 24 and we should get 15819. And finally, we should see only 1530 unique motifs, not 1536:
+
+```{r}
+# Take out the 6 bad rows
+Motif.TF.Map %>% filter(!(Motif %in% extra.motifs)) -> Motif.TF.Map
+nrow(Motif.TF.Map)
+
+# Add in the 24 good rows
+Motif.TF.Map %>% dplyr::union(corrected.extras) -> Motif.TF.Map
+nrow(Motif.TF.Map)
+
+length(unique(Motif.TF.Map$Motif))
+```
+
+Now then, back to evaluating. By using the `union`, we already screened out duplicates, but let's make sure anyway:
 
 ```{r}
 sum(duplicated(Motif.TF.Map))
-
 ```
 
 Note that as a final touch, we can summarize how many mappings and TFs came from each source:
