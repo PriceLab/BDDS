@@ -19,6 +19,8 @@ readDataTable <- function(directory, sampleID, nrows=NA, chromosome=NA, method =
                            "score1", "score2", "score3", "score4");
         } else{
             colnames(tbl) <- c("chrom", "start", "end", "name", "score", "strand")
+            # Make sure to select only these 6 columns
+            tbl <- tbl[,c("chrom", "start", "end", "name", "score", "strand")]
         }
     
   #tbl$chrom <- paste("chr", tbl$chrom, sep="")
