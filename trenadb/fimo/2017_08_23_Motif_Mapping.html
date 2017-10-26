@@ -438,7 +438,14 @@ vert.motifs &lt;- subset(query(MotifDb, &quot;jaspar2016&quot;), organism %in% v
 # Grab all UP and SR motifs
 all.uniprobe &lt;- query(MotifDb, &quot;uniprobe&quot;)
 all.swiss &lt;- query(MotifDb, &quot;swissregulon&quot;)</code></pre>
-<p>From previous documents, we know the first set has 1673 motifs, the second has 24, the third has 380, and the 4th has 684. So the final should have 2761:</p>
+<p>From previous documents (and from some quick queries), we know the motifs break down as follows:</p>
+<ul>
+<li>607 human/mouse from JASPAR</li>
+<li>1066 human/mouse from HOCOMOCO</li>
+<li>24 other vertebrates from JASPAR</li>
+<li>380 from UniPROBE</li>
+<li>684 from SwissRegulon Adding these up, the final list should have 2761:</li>
+</ul>
 <pre class="r"><code>all.motifs &lt;- c(human.mouse.motifs,
                 vert.motifs,
                 all.uniprobe,
@@ -446,12 +453,13 @@ all.swiss &lt;- query(MotifDb, &quot;swissregulon&quot;)</code></pre>
 
 length(all.motifs)</code></pre>
 <pre><code>## [1] 2761</code></pre>
-<p>Indeed, that’s what we get; now obviously, we’re also going to screen some of these out, but we first need another mapping. This time, it needs to make the IDs LONGER. So let’s do what Paul does in his MEME-formatting code: just grab the names of the matrices. And while we’re at it, let’s grab the TFs too</p>
+<p>Indeed, that’s what we get; now obviously, we’re also going to screen some of these out, but we first need another mapping. This time, it needs to make the IDs LONGER. So let’s do what Paul does in his MEME-formatting code: just grab the names of the matrices. And while we’re at it, let’s grab the TFs too. Finally, we’ll also grab the name of each database, so we have something of a “database of origin” for each TF mapping.</p>
 <pre class="r"><code>motif.id.map &lt;- data_frame(Long.ID = names(all.motifs),
                            Short.ID = values(all.motifs)$providerId,
-                           TF = values(all.motifs)$geneSymbol)
+                           TF = values(all.motifs)$geneSymbol,
+                           Origin = values(all.motifs)$dataSource)
 head(motif.id.map)</code></pre>
-<pre><code>## # A tibble: 6 x 3
+<pre><code>## # A tibble: 6 x 4
 ##                                   Long.ID           Short.ID    TF
 ##                                     &lt;chr&gt;              &lt;chr&gt; &lt;chr&gt;
 ## 1  Hsapiens-HOCOMOCOv10-AHR_HUMAN.H10MO.B  AHR_HUMAN.H10MO.B   AHR
@@ -459,26 +467,59 @@ head(motif.id.map)</code></pre>
 ## 3 Hsapiens-HOCOMOCOv10-ALX1_HUMAN.H10MO.B ALX1_HUMAN.H10MO.B  ALX1
 ## 4 Hsapiens-HOCOMOCOv10-ALX3_HUMAN.H10MO.D ALX3_HUMAN.H10MO.D  ALX3
 ## 5 Hsapiens-HOCOMOCOv10-ALX4_HUMAN.H10MO.D ALX4_HUMAN.H10MO.D  ALX4
-## 6 Hsapiens-HOCOMOCOv10-ANDR_HUMAN.H10MO.A ANDR_HUMAN.H10MO.A  ANDR</code></pre>
-<p>This is actually really convenient; thanks Paul! Our task now is essentially down to figuring out the correct join. If we do it right, we should be able to get our Table.2, which is what we want. On a sidenote, this essentially matches “asset.7” from the previous Mapping document, with the <code>unique.map</code> matching “asset.8”. So we can just take the same join from there and add a select command to get what we want:</p>
+## 6 Hsapiens-HOCOMOCOv10-ANDR_HUMAN.H10MO.A ANDR_HUMAN.H10MO.A  ANDR
+## # ... with 1 more variables: Origin &lt;chr&gt;</code></pre>
+<p>We can also, at this point, pull out the total number of TFs mapped to by our motifs:</p>
+<pre class="r"><code>length(unique(motif.id.map$TF))</code></pre>
+<pre><code>## [1] 1349</code></pre>
+<p>So as we can see, there are 2761 unique motifs mapping to 1349 unique TFs. This is actually really convenient; thanks Paul! We’ll do one more thing here, which is to count the number of distinct motifs for each</p>
+<div id="name-conversion-for-swissregulon" class="section level3">
+<h3>Name Conversion for SwissRegulon</h3>
+<p>Since the initial run of this document (08/23/2017), the SwissRegulon names have been updated such that organism is now “Hsapiens” instead of “NA”. As demonstrated here:</p>
+<pre class="r"><code>motif.id.map %&gt;% filter(grepl(&quot;SwissRegulon&quot;,Long.ID)) %&gt;% head() -&gt; test.set
+test.set</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##                                     Long.ID            Short.ID     TF
+##                                       &lt;chr&gt;               &lt;chr&gt;  &lt;chr&gt;
+## 1    Hsapiens-SwissRegulon-AHR.SwissRegulon    AHR.SwissRegulon    AHR
+## 2   Hsapiens-SwissRegulon-AIRE.SwissRegulon   AIRE.SwissRegulon   AIRE
+## 3   Hsapiens-SwissRegulon-ALX1.SwissRegulon   ALX1.SwissRegulon   ALX1
+## 4   Hsapiens-SwissRegulon-ALX3.SwissRegulon   ALX3.SwissRegulon   ALX3
+## 5   Hsapiens-SwissRegulon-ALX4.SwissRegulon   ALX4.SwissRegulon   ALX4
+## 6 Hsapiens-SwissRegulon-ARID3A.SwissRegulon ARID3A.SwissRegulon ARID3A
+## # ... with 1 more variables: Origin &lt;chr&gt;</code></pre>
+<p>This is going to cause problems because the TOMTOM files and the already-constructed databases themselves have “NA” as the species. It’s not feasible to update those, so instead we’re going to change the “Long.ID” column back to “NA”. First we’ll demonstrate that this works on the test set:</p>
+<pre class="r"><code>gsub(&quot;^Hsapiens-SwissRegulon&quot;, &quot;NA-SwissRegulon&quot;, test.set$Long.ID)</code></pre>
+<pre><code>## [1] &quot;NA-SwissRegulon-AHR.SwissRegulon&quot;   
+## [2] &quot;NA-SwissRegulon-AIRE.SwissRegulon&quot;  
+## [3] &quot;NA-SwissRegulon-ALX1.SwissRegulon&quot;  
+## [4] &quot;NA-SwissRegulon-ALX3.SwissRegulon&quot;  
+## [5] &quot;NA-SwissRegulon-ALX4.SwissRegulon&quot;  
+## [6] &quot;NA-SwissRegulon-ARID3A.SwissRegulon&quot;</code></pre>
+<p>This is exactly what we want; let’s convert the Long.ID column and continue with the analysis as planned</p>
+<pre class="r"><code>motif.id.map$Long.ID &lt;- gsub(&quot;^Hsapiens-SwissRegulon&quot;, &quot;NA-SwissRegulon&quot;, motif.id.map$Long.ID)</code></pre>
+</div>
+<div id="back-to-our-regularly-scheduled-workflow" class="section level3">
+<h3>Back to our regularly-scheduled workflow</h3>
+<p>Our task now is essentially down to figuring out the correct join. If we do it right, we should be able to get our Table.2, which is what we want. On a sidenote, this essentially matches “asset.7” from the previous Mapping document, with the <code>unique.map</code> matching “asset.8”. So we can just take the same join from there and add a select command to get what we want:</p>
 <pre class="r"><code>prelim.mapping &lt;- left_join(unique.map,motif.id.map, by = c(&quot;Query.ID&quot; = &quot;Long.ID&quot;)) %&gt;%
-  select(&quot;Motif&quot; = &quot;Target.ID&quot;,TF)
+  select(&quot;Motif&quot; = &quot;Target.ID&quot;,TF, Origin)
 
 head(prelim.mapping); tail(prelim.mapping)</code></pre>
-<pre><code>##                                 Motif   TF
-## 1 Hsapiens-jaspar2016-PHOX2A-MA0713.1 ALX1
-## 2  Hsapiens-jaspar2016-PROP1-MA0715.1 ALX1
-## 3 Hsapiens-jaspar2016-PHOX2A-MA0713.1 ALX3
-## 4  Hsapiens-jaspar2016-PROP1-MA0715.1 ALX3
-## 5  Hsapiens-jaspar2016-PROP1-MA0715.1 ALX4
-## 6     Hsapiens-jaspar2016-AR-MA0007.2 ANDR</code></pre>
-<pre><code>##                                 Motif     TF
-## 5763 Mmusculus-UniPROBE-Hoxc9.UP00197   CDX2
-## 5764 Mmusculus-UniPROBE-Hoxc9.UP00197 HOXA10
-## 5765 Mmusculus-UniPROBE-Hoxc9.UP00197  HOXC9
-## 5766   Mmusculus-UniPROBE-Bbx.UP00012    BBX
-## 5767  Mmusculus-UniPROBE-Hbp1.UP00055   HBP1
-## 5768  Mmusculus-UniPROBE-Hlx1.UP00225    HLX</code></pre>
+<pre><code>##                                 Motif   TF      Origin
+## 1 Hsapiens-jaspar2016-PHOX2A-MA0713.1 ALX1 HOCOMOCOv10
+## 2  Hsapiens-jaspar2016-PROP1-MA0715.1 ALX1 HOCOMOCOv10
+## 3 Hsapiens-jaspar2016-PHOX2A-MA0713.1 ALX3 HOCOMOCOv10
+## 4  Hsapiens-jaspar2016-PROP1-MA0715.1 ALX3 HOCOMOCOv10
+## 5  Hsapiens-jaspar2016-PROP1-MA0715.1 ALX4 HOCOMOCOv10
+## 6     Hsapiens-jaspar2016-AR-MA0007.2 ANDR HOCOMOCOv10</code></pre>
+<pre><code>##                                  Motif     TF       Origin
+## 5763  Mmusculus-UniPROBE-Zbtb3.UP00031  ZBTB3 SwissRegulon
+## 5764 Mmusculus-UniPROBE-Zfp105.UP00037  ZNF35 SwissRegulon
+## 5765   Mmusculus-UniPROBE-Zic2.UP00057 ZNF423 SwissRegulon
+## 5766   Mmusculus-UniPROBE-Zic3.UP00006 ZNF423 SwissRegulon
+## 5767 Mmusculus-UniPROBE-Zfp691.UP00095 ZNF691 SwissRegulon
+## 5768 Mmusculus-UniPROBE-Zfp128.UP00094   ZNF8 SwissRegulon</code></pre>
 <p>Now we have to consider that we haven’t yet added the TFs for the non-redundant motifs, so let’s grab those as well. First, we’ll grab the short IDs of the things that are redundant, then we’ll use those as a screen for the motifs. We SHOULD get a total of 1530 motifs in the end:</p>
 <pre class="r"><code>## Get the short IDs to test on
 motif.id.map %&gt;% 
@@ -490,24 +531,35 @@ length(nonredundant.motifs)</code></pre>
 <pre><code>## [1] 1530</code></pre>
 <p>We got exactly what we were expecting, so we should grab the long IDs (names) and TFs for these, add them to our other mapping, and we’ll have our 2nd table:</p>
 <pre class="r"><code>data_frame(Motif = names(nonredundant.motifs),
-           TF = values(nonredundant.motifs)$geneSymbol) %&gt;%
+           TF = values(nonredundant.motifs)$geneSymbol,
+           Origin = values(nonredundant.motifs)$dataSource) %&gt;%
   bind_rows(prelim.mapping) -&gt; dups.mapping
 nrow(dups.mapping)</code></pre>
 <pre><code>## [1] 7298</code></pre>
 <p>We’ve called this <code>dups.mapping</code> for an obvious reason: there’s likely to be duplicates. So we’ll screen those out to finish:</p>
 <pre class="r"><code>Table.2 &lt;- dups.mapping[!duplicated(dups.mapping),]
-nrow(Table.2); head(Table.2)</code></pre>
-<pre><code>## [1] 6301</code></pre>
-<pre><code>## # A tibble: 6 x 2
-##                                      Motif    TF
-##                                      &lt;chr&gt; &lt;chr&gt;
-## 1   Hsapiens-HOCOMOCOv10-AHR_HUMAN.H10MO.B   AHR
-## 2  Hsapiens-HOCOMOCOv10-AIRE_HUMAN.H10MO.C  AIRE
-## 3  Hsapiens-HOCOMOCOv10-AP2B_HUMAN.H10MO.B  AP2B
-## 4  Hsapiens-HOCOMOCOv10-AP2D_HUMAN.H10MO.D  AP2D
-## 5 Hsapiens-HOCOMOCOv10-ARI3A_HUMAN.H10MO.D ARI3A
-## 6 Hsapiens-HOCOMOCOv10-ARI3A_HUMAN.H10MO.S ARI3A</code></pre>
+nrow(Table.2); head(Table.2); tail(Table.2)</code></pre>
+<pre><code>## [1] 7249</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##                                      Motif    TF      Origin
+##                                      &lt;chr&gt; &lt;chr&gt;       &lt;chr&gt;
+## 1   Hsapiens-HOCOMOCOv10-AHR_HUMAN.H10MO.B   AHR HOCOMOCOv10
+## 2  Hsapiens-HOCOMOCOv10-AIRE_HUMAN.H10MO.C  AIRE HOCOMOCOv10
+## 3  Hsapiens-HOCOMOCOv10-AP2B_HUMAN.H10MO.B  AP2B HOCOMOCOv10
+## 4  Hsapiens-HOCOMOCOv10-AP2D_HUMAN.H10MO.D  AP2D HOCOMOCOv10
+## 5 Hsapiens-HOCOMOCOv10-ARI3A_HUMAN.H10MO.D ARI3A HOCOMOCOv10
+## 6 Hsapiens-HOCOMOCOv10-ARI3A_HUMAN.H10MO.S ARI3A HOCOMOCOv10</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##                               Motif     TF       Origin
+##                               &lt;chr&gt;  &lt;chr&gt;        &lt;chr&gt;
+## 1  Mmusculus-UniPROBE-Zbtb3.UP00031  ZBTB3 SwissRegulon
+## 2 Mmusculus-UniPROBE-Zfp105.UP00037  ZNF35 SwissRegulon
+## 3   Mmusculus-UniPROBE-Zic2.UP00057 ZNF423 SwissRegulon
+## 4   Mmusculus-UniPROBE-Zic3.UP00006 ZNF423 SwissRegulon
+## 5 Mmusculus-UniPROBE-Zfp691.UP00095 ZNF691 SwissRegulon
+## 6 Mmusculus-UniPROBE-Zfp128.UP00094   ZNF8 SwissRegulon</code></pre>
 <p>It’s got about 6300 rows, which seems fine. If we want to, we can do some exploration of the motifs and their counts a bit later.</p>
+</div>
 </div>
 <div id="final-task-add-seths-mapping" class="section level2">
 <h2>Final Task: Add Seth’s Mapping</h2>
@@ -525,16 +577,16 @@ head(seth.table)</code></pre>
 ## 4 MA0006.1     AHR ENSG00000106546
 ## 5 MA0006.1    ARNT ENSG00000143437
 ## 6 MA0007.3      AR ENSG00000169083</code></pre>
-<p>For now, we’ll ignore the <code>tf.ensg</code> column. And while we’re at it, let’s rename the columns and call this the <code>german.truck</code>:</p>
-<pre class="r"><code>german.truck &lt;- seth.table %&gt;% select(&quot;Short.ID&quot; = &quot;motif&quot;,&quot;TF&quot; = &quot;tf.gene&quot;)
+<p>For now, we’ll ignore the <code>tf.ensg</code> column. And while we’re at it, let’s rename the columns and call this the <code>german.truck</code>, plus add the “TFClass” origin to it:</p>
+<pre class="r"><code>german.truck &lt;- seth.table %&gt;% select(&quot;Short.ID&quot; = &quot;motif&quot;,&quot;TF&quot; = &quot;tf.gene&quot;) %&gt;% mutate(Origin = &quot;TFClass&quot;)
 head(german.truck)</code></pre>
-<pre><code>##   Short.ID     TF
-## 1 MA0002.2  RUNX1
-## 2 MA0003.3 TFAP2A
-## 3 MA0004.1   ARNT
-## 4 MA0006.1    AHR
-## 5 MA0006.1   ARNT
-## 6 MA0007.3     AR</code></pre>
+<pre><code>##   Short.ID     TF  Origin
+## 1 MA0002.2  RUNX1 TFClass
+## 2 MA0003.3 TFAP2A TFClass
+## 3 MA0004.1   ARNT TFClass
+## 4 MA0006.1    AHR TFClass
+## 5 MA0006.1   ARNT TFClass
+## 6 MA0007.3     AR TFClass</code></pre>
 <p>Now here’s a problem: the “Short.ID” column here still isn’t perfect:</p>
 <pre class="r"><code>length(intersect(german.truck$Short.ID,motif.id.map$Short.ID))</code></pre>
 <pre><code>## [1] 512</code></pre>
@@ -585,46 +637,148 @@ length(setdiff(german.truck$Short.ID,motif.id.map$Short.ID))</code></pre>
 <p>Awesome, so we’ll do an inner join on these to add the pertinent long IDs, then compile everything to make our final table. First, adding our long IDs:</p>
 <pre class="r"><code>motifs.to.add &lt;- german.truck %&gt;% inner_join(motif.id.map, by = &quot;Short.ID&quot;)
 head(motifs.to.add)</code></pre>
-<pre><code>##   Short.ID   TF.x                                 Long.ID      TF.y
-## 1 MA0002.2  RUNX1     Mmusculus-jaspar2016-RUNX1-MA0002.2     RUNX1
-## 2 MA0003.3 TFAP2A     Hsapiens-jaspar2016-TFAP2A-MA0003.3    TFAP2A
-## 3 MA0004.1   ARNT      Mmusculus-jaspar2016-Arnt-MA0004.1      Arnt
-## 4 MA0006.1    AHR Mmusculus-jaspar2016-Ahr::Arnt-MA0006.1 Ahr::Arnt
-## 5 MA0006.1   ARNT Mmusculus-jaspar2016-Ahr::Arnt-MA0006.1 Ahr::Arnt
-## 6 MA0007.3     AR        Mmusculus-jaspar2016-Ar-MA0007.3        Ar</code></pre>
+<pre><code>##   Short.ID   TF.x Origin.x                                 Long.ID
+## 1 MA0002.2  RUNX1  TFClass     Mmusculus-jaspar2016-RUNX1-MA0002.2
+## 2 MA0003.3 TFAP2A  TFClass     Hsapiens-jaspar2016-TFAP2A-MA0003.3
+## 3 MA0004.1   ARNT  TFClass      Mmusculus-jaspar2016-Arnt-MA0004.1
+## 4 MA0006.1    AHR  TFClass Mmusculus-jaspar2016-Ahr::Arnt-MA0006.1
+## 5 MA0006.1   ARNT  TFClass Mmusculus-jaspar2016-Ahr::Arnt-MA0006.1
+## 6 MA0007.3     AR  TFClass        Mmusculus-jaspar2016-Ar-MA0007.3
+##        TF.y   Origin.y
+## 1     RUNX1 jaspar2016
+## 2    TFAP2A jaspar2016
+## 3      Arnt jaspar2016
+## 4 Ahr::Arnt jaspar2016
+## 5 Ahr::Arnt jaspar2016
+## 6        Ar jaspar2016</code></pre>
 <p>Interestingly, as everything looks to line up, there are subtle differences. Anyway, we’ll finish up by adding our columns to the “Table.2” object and get our final thing:</p>
-<pre class="r"><code>trimmed.motifs &lt;- motifs.to.add %&gt;% select(&quot;Motif&quot; = &quot;Long.ID&quot;, &quot;TF&quot; = &quot;TF.x&quot;)
+<pre class="r"><code>trimmed.motifs &lt;- motifs.to.add %&gt;% select(&quot;Motif&quot; = &quot;Long.ID&quot;, &quot;TF&quot; = &quot;TF.x&quot;, &quot;Origin&quot; = &quot;Origin.x&quot;)
 
 Table.2 %&gt;% dplyr::union(trimmed.motifs) -&gt; Motif.TF.Map
 head(Motif.TF.Map); tail(Motif.TF.Map); nrow(Motif.TF.Map)</code></pre>
-<pre><code>## # A tibble: 6 x 2
-##                                Motif     TF
-##                                &lt;chr&gt;  &lt;chr&gt;
-## 1   Mmusculus-UniPROBE-Sp100.UP00049 SP140L
-## 2 Mmusculus-jaspar2016-Hes1-MA1099.1   HEY2
-## 3 Mmusculus-jaspar2016-Hes1-MA1099.1   HEY1
-## 4 Mmusculus-jaspar2016-Hes1-MA1099.1   HES7
-## 5 Mmusculus-jaspar2016-Hes1-MA1099.1   HES6
-## 6 Mmusculus-jaspar2016-Hes1-MA1099.1   HES5</code></pre>
-<pre><code>## # A tibble: 6 x 2
-##                                      Motif     TF
-##                                      &lt;chr&gt;  &lt;chr&gt;
-## 1       Hsapiens-jaspar2016-KLF14-MA0740.1  KLF10
-## 2      Mmusculus-jaspar2016-Shox2-MA0720.1   EMX1
-## 3         Hsapiens-jaspar2016-BSX-MA0876.1    BSX
-## 4        Hsapiens-jaspar2016-GBX1-MA0889.1   ALX3
-## 5     Mmusculus-jaspar2016-Hoxa11-MA0911.1 HOXC13
-## 6 Hsapiens-HOCOMOCOv10-THAP1_HUMAN.H10MO.D  THAP1</code></pre>
-<pre><code>## [1] 13242</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##                                Motif    TF  Origin
+##                                &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;
+## 1   Mmusculus-UniPROBE-Sp100.UP00049 SP140 TFClass
+## 2 Mmusculus-jaspar2016-Hes1-MA1099.1  HEY1 TFClass
+## 3 Mmusculus-jaspar2016-Hes1-MA1099.1  HES7 TFClass
+## 4 Mmusculus-jaspar2016-Hes1-MA1099.1  HES5 TFClass
+## 5 Mmusculus-jaspar2016-Hes1-MA1099.1  HES3 TFClass
+## 6 Mmusculus-jaspar2016-Hes1-MA1099.1  HES2 TFClass</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##                                       Motif     TF      Origin
+##                                       &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;
+## 1       Mmusculus-jaspar2016-Sox17-MA0078.1   SOX5     TFClass
+## 2   Rrattus-jaspar2016-ARNT::HIF1A-MA0259.1 SOHLH2     TFClass
+## 3 Mmusculus-jaspar2016-Bach1::Mafk-MA0591.1   MAFA     TFClass
+## 4         Hsapiens-jaspar2016-CDX2-MA0465.1  Hoxa9    UniPROBE
+## 5   Hsapiens-HOCOMOCOv10-AP2B_HUMAN.H10MO.B   AP2B HOCOMOCOv10
+## 6         Hsapiens-jaspar2016-ELF1-MA0473.2  ETV3L     TFClass</code></pre>
+<pre><code>## [1] 15801</code></pre>
 <p>By using the <code>union</code>, we already screened out duplicates:</p>
 <pre class="r"><code>sum(duplicated(Motif.TF.Map))</code></pre>
 <pre><code>## [1] 0</code></pre>
-<p>So we’re done! And our mapping is expanded!</p>
+<p>Note that as a final touch, we can summarize how many mappings and TFs came from each source:</p>
+<pre class="r"><code>Motif.TF.Map %&gt;% select(TF, Origin) %&gt;%
+  group_by(Origin) %&gt;% 
+  summarize(Total.Mappings = n(),
+            Unique.TFs = n_distinct(TF))</code></pre>
+<pre><code>## # A tibble: 5 x 3
+##         Origin Total.Mappings Unique.TFs
+##          &lt;chr&gt;          &lt;int&gt;      &lt;int&gt;
+## 1  HOCOMOCOv10           1679        604
+## 2   jaspar2016            631        544
+## 3 SwissRegulon           3835        684
+## 4      TFClass           8552        762
+## 5     UniPROBE           1104        363</code></pre>
+<p>In general, we could say we’re done at this point. However, now there’s a new source of duplicates: we may very well have duplicated motif-TF mappings with multiple origins. Rather than having multiple records for these (and there are at least a couple hundred), might it be better to push them together using a semi-colon for separation?</p>
+<p>We’d want something like this:</p>
+<pre class="r"><code>df &lt;- data_frame(Motif = c(&quot;A&quot;,&quot;A&quot;,&quot;B&quot;), 
+                 TF = c(&quot;1&quot;,&quot;1&quot;,&quot;2&quot;),
+                 Origin = c(&quot;a&quot;,&quot;b&quot;,&quot;a&quot;))</code></pre>
+<p>Transformed to something like this:</p>
+<pre class="r"><code>data_frame(Motif = c(&quot;A&quot;,&quot;B&quot;), 
+           TF = c(&quot;1&quot;,&quot;2&quot;),
+           Origin = c(&quot;a;b&quot;,&quot;a&quot;))</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   Motif    TF Origin
+##   &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;
+## 1     A     1    a;b
+## 2     B     2      a</code></pre>
+<p>Using the <code>nest</code> command from <code>tidyr</code> should accomplish this</p>
+<pre class="r"><code>library(tidyr)
+
+# Create a list variable (a list of data frames) with nest
+df %&gt;% nest(Origin) -&gt; df.w.dfs
+
+# Use an sapply to change the column with a collapse
+f &lt;- function(x){x$Origin %&gt;% paste0(collapse = &quot;;&quot;)}
+
+df.w.dfs$Origin &lt;- sapply(df.w.dfs$data, f)
+df.w.dfs$data &lt;- NULL
+
+df.w.dfs</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   Motif    TF Origin
+##   &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;
+## 1     A     1    a;b
+## 2     B     2      a</code></pre>
+<p>We’ll apply this workflow to change our dataframe:</p>
+<pre class="r"><code>Motif.TF.Map %&gt;% arrange(Origin) %&gt;% # Note: the &quot;arrange&quot;&quot; is to make sure we collapse alphabetically
+  nest(Origin) -&gt; Motif.TF.Map.Collapsed
+
+Motif.TF.Map.Collapsed$Origin &lt;- sapply(Motif.TF.Map.Collapsed$data, f)
+Motif.TF.Map.Collapsed$data &lt;- NULL
+
+head(Motif.TF.Map.Collapsed)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##                                       Motif    TF
+##                                       &lt;chr&gt; &lt;chr&gt;
+## 1 Mmusculus-jaspar2016-Pparg::Rxra-MA0065.2  COT2
+## 2  Hsapiens-HOCOMOCOv10-MEIS1_HUMAN.H10MO.C MEIS1
+## 3       Mmusculus-jaspar2016-Stat4-MA0518.1 STAT3
+## 4        Mmusculus-jaspar2016-EGR2-MA0472.1  EGR2
+## 5   Hsapiens-HOCOMOCOv10-MBD2_HUMAN.H10MO.B  MBD2
+## 6         Hsapiens-jaspar2016-ESR2-MA0258.1  ESR1
+## # ... with 1 more variables: Origin &lt;chr&gt;</code></pre>
+<p>To check on this, let’s re-do our computations from above to see the origins:</p>
+<pre class="r"><code>Motif.TF.Map.Collapsed %&gt;% select(TF, Origin) %&gt;%
+  group_by(Origin) %&gt;% 
+  summarize(Total.Mappings = n(),
+            Unique.TFs = n_distinct(TF))</code></pre>
+<pre><code>## # A tibble: 17 x 3
+##                                         Origin Total.Mappings Unique.TFs
+##                                          &lt;chr&gt;          &lt;int&gt;      &lt;int&gt;
+##  1                                 HOCOMOCOv10            858        387
+##  2                      HOCOMOCOv10;jaspar2016              7          7
+##  3         HOCOMOCOv10;jaspar2016;SwissRegulon             21         20
+##  4 HOCOMOCOv10;jaspar2016;SwissRegulon;TFClass             81         81
+##  5              HOCOMOCOv10;jaspar2016;TFClass             31         31
+##  6                    HOCOMOCOv10;SwissRegulon            363        211
+##  7            HOCOMOCOv10;SwissRegulon;TFClass            174         98
+##  8                         HOCOMOCOv10;TFClass            144         75
+##  9                                  jaspar2016            201        182
+## 10                     jaspar2016;SwissRegulon             18         17
+## 11             jaspar2016;SwissRegulon;TFClass            129        129
+## 12                          jaspar2016;TFClass            121        121
+## 13                         jaspar2016;UniPROBE             22         22
+## 14                                SwissRegulon           2118        497
+## 15                        SwissRegulon;TFClass            931        243
+## 16                                     TFClass           6941        622
+## 17                                    UniPROBE           1082        359</code></pre>
+<p>Also, let’s quickly just check and make sure we’re back to 13242 in terms of our unique mappings themselves:</p>
+<pre class="r"><code>nrow(Motif.TF.Map.Collapsed)</code></pre>
+<pre><code>## [1] 13242</code></pre>
+<p>So we’re done! And our mapping is expanded! The last thing to do: let’s make sure we preserve the original mapping (call this Motif.TF.Map) and save our 2 new files (the expanded version will be Motif.TF.Map.Expanded).</p>
+<pre class="r"><code>Motif.TF.Map.Expanded &lt;- Motif.TF.Map
+Motif.TF.Map &lt;- Motif.TF.Map.Collapsed %&gt;% select(Motif, TF) %&gt;% arrange(Motif, TF) </code></pre>
 </div>
 <div id="final-tasks-saving-and-writing" class="section level2">
 <h2>Final Tasks: Saving and Writing</h2>
-<p>Before doing anything else, let’s save our mapping:</p>
-<pre class="r"><code>saveRDS(Motif.TF.Map, &quot;./2017_08_23_Motif_TF_Map.RDS&quot;)</code></pre>
+<p>Before doing anything else, let’s save our mappings:</p>
+<pre class="r"><code>saveRDS(Motif.TF.Map, &quot;./2017_08_23_Motif_TF_Map.RDS&quot;)
+saveRDS(Motif.TF.Map.Expanded, &quot;./2017_10_26_Motif_TF_Map_Expanded.RDS&quot;)
+saveRDS(Motif.TF.Map.Collapsed, &quot;./2017_10_26_Motif_TF_Map_Collapsed.RDS&quot;)</code></pre>
 <p>Our next step will be to re-write the hg38 table</p>
 </div>
 

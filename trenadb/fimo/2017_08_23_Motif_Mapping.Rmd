@@ -290,7 +290,14 @@ all.swiss <- query(MotifDb, "swissregulon")
 
 ```
 
-From previous documents, we know the first set has 1673 motifs, the second has 24, the third has 380, and the 4th has 684. So the final should have 2761:
+From previous documents (and from some quick queries), we know the motifs break down as follows:
+
+* 607 human/mouse from JASPAR
+* 1066 human/mouse from HOCOMOCO
+* 24 other vertebrates from JASPAR
+* 380 from UniPROBE
+* 684 from SwissRegulon
+Adding these up, the final list should have 2761:
 
 ```{r}
 all.motifs <- c(human.mouse.motifs,
@@ -301,20 +308,52 @@ all.motifs <- c(human.mouse.motifs,
 length(all.motifs)
 ```
 
-Indeed, that's what we get; now obviously, we're also going to screen some of these out, but we first need another mapping. This time, it needs to make the IDs LONGER. So let's do what Paul does in his MEME-formatting code: just grab the names of the matrices. And while we're at it, let's grab the TFs too
+Indeed, that's what we get; now obviously, we're also going to screen some of these out, but we first need another mapping. This time, it needs to make the IDs LONGER. So let's do what Paul does in his MEME-formatting code: just grab the names of the matrices. And while we're at it, let's grab the TFs too. Finally, we'll also grab the name of each database, so we have something of a "database of origin" for each TF mapping. 
 
 ```{r}
 motif.id.map <- data_frame(Long.ID = names(all.motifs),
                            Short.ID = values(all.motifs)$providerId,
-                           TF = values(all.motifs)$geneSymbol)
+                           TF = values(all.motifs)$geneSymbol,
+                           Origin = values(all.motifs)$dataSource)
 head(motif.id.map)
 ```
 
-This is actually really convenient; thanks Paul! Our task now is essentially down to figuring out the correct join. If we do it right, we should be able to get our Table.2, which is what we want. On a sidenote, this essentially matches "asset.7" from the previous Mapping document, with the `unique.map` matching "asset.8". So we can just take the same join from there and add a select command to get what we want:
+We can also, at this point, pull out the total number of TFs mapped to by our motifs:
+
+```{r}
+length(unique(motif.id.map$TF))
+```
+
+So as we can see, there are 2761 unique motifs mapping to 1349 unique TFs. This is actually really convenient; thanks Paul! We'll do one more thing here, which is to count the number of distinct motifs for each 
+
+### Name Conversion for SwissRegulon
+
+Since the initial run of this document (08/23/2017), the SwissRegulon names have been updated such that organism is now "Hsapiens" instead of "NA". As demonstrated here:
+
+```{r}
+motif.id.map %>% filter(grepl("SwissRegulon",Long.ID)) %>% head() -> test.set
+test.set
+```
+
+This is going to cause problems because the TOMTOM files and the already-constructed databases themselves have "NA" as the species. It's not feasible to update those, so instead we're going to change the "Long.ID" column back to "NA". First we'll demonstrate that this works on the test set:
+
+```{r}
+gsub("^Hsapiens-SwissRegulon", "NA-SwissRegulon", test.set$Long.ID)
+```
+
+This is exactly what we want; let's convert the Long.ID column and continue with the analysis as planned
+
+```{r}
+motif.id.map$Long.ID <- gsub("^Hsapiens-SwissRegulon", "NA-SwissRegulon", motif.id.map$Long.ID)
+```
+
+### Back to our regularly-scheduled workflow
+
+Our task now is essentially down to figuring out the correct join. If we do it right, we should be able to get our Table.2, which is what we want. On a sidenote, this essentially matches "asset.7" from the previous Mapping document, with the `unique.map` matching "asset.8". So we can just take the same join from there and add a select command to get what we want:
 
 ```{r}
 prelim.mapping <- left_join(unique.map,motif.id.map, by = c("Query.ID" = "Long.ID")) %>%
-  select("Motif" = "Target.ID",TF)
+  select("Motif" = "Target.ID",TF, Origin)
 
 head(prelim.mapping); tail(prelim.mapping)
 ```
@@ -335,7 +374,8 @@ We got exactly what we were expecting, so we should grab the long IDs (names) an
 
 ```{r}
 data_frame(Motif = names(nonredundant.motifs),
-           TF = values(nonredundant.motifs)$geneSymbol) %>%
+           TF = values(nonredundant.motifs)$geneSymbol,
+           Origin = values(nonredundant.motifs)$dataSource) %>%
   bind_rows(prelim.mapping) -> dups.mapping
 nrow(dups.mapping)
 ```
@@ -344,7 +384,7 @@ We've called this `dups.mapping` for an obvious reason: there's likely to be dup
 
 ```{r}
 Table.2 <- dups.mapping[!duplicated(dups.mapping),]
-nrow(Table.2); head(Table.2)
+nrow(Table.2); head(Table.2); tail(Table.2)
 ```
 It's got about 6300 rows, which seems fine. If we want to, we can do some exploration of the motifs and their counts a bit later. 
 
@@ -361,10 +401,10 @@ seth.table <- read.table(system.file(package="trena", "extdata", "motifGenes.tsv
 head(seth.table)
 ```
 
-For now, we'll ignore the `tf.ensg` column. And while we're at it, let's rename the columns and call this the `german.truck`:
+For now, we'll ignore the `tf.ensg` column. And while we're at it, let's rename the columns and call this the `german.truck`, plus add the "TFClass" origin to it:
 
 ```{r}
-german.truck <- seth.table %>% select("Short.ID" = "motif","TF" = "tf.gene")
+german.truck <- seth.table %>% select("Short.ID" = "motif","TF" = "tf.gene") %>% mutate(Origin = "TFClass")
 head(german.truck)
 ```
 Now here's a problem: the "Short.ID" column here still isn't perfect:
@@ -401,7 +441,7 @@ Interestingly, as everything looks to line up, there are subtle differences. Any
 
 ```{r}
 
-trimmed.motifs <- motifs.to.add %>% select("Motif" = "Long.ID", "TF" = "TF.x")
+trimmed.motifs <- motifs.to.add %>% select("Motif" = "Long.ID", "TF" = "TF.x", "Origin" = "Origin.x")
 
 Table.2 %>% dplyr::union(trimmed.motifs) -> Motif.TF.Map
 head(Motif.TF.Map); tail(Motif.TF.Map); nrow(Motif.TF.Map)
@@ -414,14 +454,93 @@ sum(duplicated(Motif.TF.Map))
 
 ```
 
-So we're done! And our mapping is expanded!
+Note that as a final touch, we can summarize how many mappings and TFs came from each source:
+
+```{r}
+Motif.TF.Map %>% select(TF, Origin) %>%
+  group_by(Origin) %>% 
+  summarize(Total.Mappings = n(),
+            Unique.TFs = n_distinct(TF))
+```
+
+In general, we could say we're done at this point. However, now there's a new source of duplicates: we may very well have duplicated motif-TF mappings with multiple origins. Rather than having multiple records for these (and there are at least a couple hundred), might it be better to push them together using a semi-colon for separation? 
+
+We'd want something like this:
+
+```{r}
+df <- data_frame(Motif = c("A","A","B"), 
+                 TF = c("1","1","2"),
+                 Origin = c("a","b","a"))
+```
+
+Transformed to something like this:
+
+```{r}
+data_frame(Motif = c("A","B"), 
+           TF = c("1","2"),
+           Origin = c("a;b","a"))
+```
+
+Using the `nest` command from `tidyr` should accomplish this
+
+```{r message = FALSE, warning = FALSE}
+library(tidyr)
+
+# Create a list variable (a list of data frames) with nest
+df %>% nest(Origin) -> df.w.dfs
+
+# Use an sapply to change the column with a collapse
+f <- function(x){x$Origin %>% paste0(collapse = ";")}
+
+df.w.dfs$Origin <- sapply(df.w.dfs$data, f)
+df.w.dfs$data <- NULL
+
+df.w.dfs
+```
+
+We'll apply this workflow to change our dataframe:
+
+```{r}
+Motif.TF.Map %>% arrange(Origin) %>% # Note: the "arrange"" is to make sure we collapse alphabetically
+  nest(Origin) -> Motif.TF.Map.Collapsed
+
+Motif.TF.Map.Collapsed$Origin <- sapply(Motif.TF.Map.Collapsed$data, f)
+Motif.TF.Map.Collapsed$data <- NULL
+
+head(Motif.TF.Map.Collapsed)
+```
+
+To check on this, let's re-do our computations from above to see the origins:
+
+```{r}
+Motif.TF.Map.Collapsed %>% select(TF, Origin) %>%
+  group_by(Origin) %>% 
+  summarize(Total.Mappings = n(),
+            Unique.TFs = n_distinct(TF))
+```
+
+Also, let's quickly just check and make sure we're back to 13242 in terms of our unique mappings themselves:
+
+```{r}
+nrow(Motif.TF.Map.Collapsed)
+```
+
+So we're done! And our mapping is expanded! The last thing to do: let's make sure we preserve the original mapping (call this Motif.TF.Map) and save our 2 new files (the expanded version will be Motif.TF.Map.Expanded).
+
+```{r}
+Motif.TF.Map.Expanded <- Motif.TF.Map
+Motif.TF.Map <- Motif.TF.Map.Collapsed %>% select(Motif, TF) %>% arrange(Motif, TF) 
+```
+
 
 ## Final Tasks: Saving and Writing
 
-Before doing anything else, let's save our mapping:
+Before doing anything else, let's save our mappings:
 
 ```{r}
 saveRDS(Motif.TF.Map, "./2017_08_23_Motif_TF_Map.RDS")
+saveRDS(Motif.TF.Map.Expanded, "./2017_10_26_Motif_TF_Map_Expanded.RDS")
+saveRDS(Motif.TF.Map.Collapsed, "./2017_10_26_Motif_TF_Map_Collapsed.RDS")
 ```
 
 Our next step will be to re-write the hg38 table
