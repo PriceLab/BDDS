@@ -370,13 +370,15 @@ nonredundant.motifs <- subset(all.motifs, !(providerId %in% short.ID$Short.ID))
 length(nonredundant.motifs)
 ```
 
-We got exactly what we were expecting, so we should grab the long IDs (names) and TFs for these, add them to our other mapping, and we'll have our 2nd table:
+We got exactly what we were expecting, so we should grab the long IDs (names) and TFs for these, add them to our other mapping, and we'll have our 2nd table. Note that, once again, we have to substitute the "NA" for the SwissRegulon ones:
 
 ```{r}
 data_frame(Motif = names(nonredundant.motifs),
            TF = values(nonredundant.motifs)$geneSymbol,
            Origin = values(nonredundant.motifs)$dataSource) %>%
   bind_rows(prelim.mapping) -> dups.mapping
+
+dups.mapping$Motif <- gsub("^Hsapiens-SwissRegulon", "NA-SwissRegulon", dups.mapping$Motif)
 nrow(dups.mapping)
 ```
 
@@ -551,10 +553,7 @@ head(Motif.TF.Map.Collapsed)
 To check on this, let's re-do our computations from above to see the origins:
 
 ```{r}
-Motif.TF.Map.Collapsed %>% select(TF, Origin) %>%
-  group_by(Origin) %>% 
-  summarize(Total.Mappings = n(),
-            Unique.TFs = n_distinct(TF))
+Motif.TF.Map.Collapsed
 ```
 
 Also, let's quickly just check and make sure we're back to 13242 in terms of our unique mappings themselves:
