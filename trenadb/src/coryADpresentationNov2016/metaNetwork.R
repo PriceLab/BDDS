@@ -1,7 +1,8 @@
 if(!exists("renderAsNetwork"))  # a function in renderGeneModel.R
     source("~/github/BDDS/trenadb/src/renderGeneModel.R")
 
-table.names <- load("/Volumes/local/Cory/for_Paul/all_targets.RData")
+#table.names <- load("/Volumes/local/Cory/for_Paul/all_targets.RData")
+table.names <- load("~/Alzheimers/all_targets.RData")
 
 gene.names <- unlist(lapply(strsplit(table.names, split=".", fixed=TRUE), "[", 2))
 stopifnot(length(table.names) == length(gene.names))
@@ -17,8 +18,9 @@ tfs.by.targetGene <- list()
 for(i in 1:length(gene.names)){
     targetGene <- gene.names[i]
     tbl.gene <- eval(parse(text=table.names[i]))
-    tbl.sub <- subset(tbl.gene, abs(beta) < 0.5)
-    tbl.sub <- subset(tbl.sub, IncNodePurity >= threshold.IncNodePurity &
+    #not sure why this next line is included, but I took it out and modified the next line to play with things
+    #tbl.sub <- subset(tbl.gene, abs(beta) < 0.5)
+    tbl.sub <- subset(tbl.gene, IncNodePurity >= threshold.IncNodePurity &
                                 abs(beta) >= threshold.beta)
     if(nrow(tbl.sub) == 0){ # improvise
         printf ("no IncNodePurity above threshold for %s, max(abs(beta)): %f, max(abs(gene.cor)): %f, max(purity): %f",

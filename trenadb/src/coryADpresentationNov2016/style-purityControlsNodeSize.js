@@ -9,7 +9,7 @@ vizmap = [
       "border-color":"black","border-width":"1px",
       "width": "mapData(degree, 0.0, 100.0, 20.0, 200.0)",
       "height":"mapData(degree, 0.0, 100.0, 20.0, 200.0)",
-      "font-size":"32px"}},
+      "font-size":"100px"}},
 
 
    {selector: 'node[type="info"]', css: {
@@ -25,7 +25,7 @@ vizmap = [
        "shape": "roundrectangle",
        "width": "40px",
        "height": "30px",
-       "font-size": "14px",
+       "font-size": "12px",
        "background-color": "beige"
        }},
 

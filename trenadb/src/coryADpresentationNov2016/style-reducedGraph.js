@@ -9,12 +9,12 @@ vizmap = [
       "border-color":"black","border-width":"1px",
       "width": "mapData(degree, 0.0, 5.0, 20.0, 200.0)",
       "height":"mapData(degree, 0.0, 5.0, 20.0, 200.0)",
-      "font-size":"24px"}},
+      "font-size":"50px"}},
 
 
    {selector: 'node[type="TF"]', css: {
        "shape": "roundrectangle",
-       "font-size": "36px",
+       "font-size": "50px",
        "width": "mapData(degree, 0.0, 5.0, 20.0, 200.0)",
        "height":"mapData(degree, 0.0, 5.0, 20.0, 200.0)",
        "border-width": "3px",

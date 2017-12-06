@@ -1,7 +1,8 @@
 if(!exists("renderAsNetwork"))  # a function in renderGeneModel.R
     source("~/github/BDDS/trenadb/src/renderGeneModel.R")
 
-table.names <- load("/Volumes/local/Cory/for_Paul/all_targets.RData")
+#table.names <- load("/Volumes/local/Cory/for_Paul/all_targets.RData")
+table.names <- load("all_targets.RData")
 
 gene.names <- unlist(lapply(strsplit(table.names, split=".", fixed=TRUE), "[", 2))
 stopifnot(length(table.names) == length(gene.names))

@@ -657,23 +657,23 @@ head(motifs.to.add)</code></pre>
 Table.2 %&gt;% dplyr::union(trimmed.motifs) -&gt; Motif.TF.Map
 head(Motif.TF.Map); tail(Motif.TF.Map); nrow(Motif.TF.Map)</code></pre>
 <pre><code>## # A tibble: 6 x 3
-##                                Motif    TF  Origin
-##                                &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;
-## 1   Mmusculus-UniPROBE-Sp100.UP00049 SP140 TFClass
-## 2 Mmusculus-jaspar2016-Hes1-MA1099.1  HEY1 TFClass
-## 3 Mmusculus-jaspar2016-Hes1-MA1099.1  HES7 TFClass
-## 4 Mmusculus-jaspar2016-Hes1-MA1099.1  HES5 TFClass
-## 5 Mmusculus-jaspar2016-Hes1-MA1099.1  HES3 TFClass
-## 6 Mmusculus-jaspar2016-Hes1-MA1099.1  HES2 TFClass</code></pre>
+##                                Motif     TF  Origin
+##                                &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;
+## 1   Mmusculus-UniPROBE-Sp100.UP00049 SP140L TFClass
+## 2   Mmusculus-UniPROBE-Sp100.UP00049  SP140 TFClass
+## 3 Mmusculus-jaspar2016-Hes1-MA1099.1   HEY2 TFClass
+## 4 Mmusculus-jaspar2016-Hes1-MA1099.1   HEY1 TFClass
+## 5 Mmusculus-jaspar2016-Hes1-MA1099.1   HES7 TFClass
+## 6 Mmusculus-jaspar2016-Hes1-MA1099.1   HES5 TFClass</code></pre>
 <pre><code>## # A tibble: 6 x 3
-##                                       Motif     TF      Origin
-##                                       &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;
-## 1       Mmusculus-jaspar2016-Sox17-MA0078.1   SOX5     TFClass
-## 2   Rrattus-jaspar2016-ARNT::HIF1A-MA0259.1 SOHLH2     TFClass
-## 3 Mmusculus-jaspar2016-Bach1::Mafk-MA0591.1   MAFA     TFClass
-## 4         Hsapiens-jaspar2016-CDX2-MA0465.1  Hoxa9    UniPROBE
-## 5   Hsapiens-HOCOMOCOv10-AP2B_HUMAN.H10MO.B   AP2B HOCOMOCOv10
-## 6         Hsapiens-jaspar2016-ELF1-MA0473.2  ETV3L     TFClass</code></pre>
+##                                      Motif    TF       Origin
+##                                      &lt;chr&gt; &lt;chr&gt;        &lt;chr&gt;
+## 1       Hsapiens-jaspar2016-FOXL1-MA0033.2 FOXP2 SwissRegulon
+## 2       Mmusculus-jaspar2016-Hmx1-MA0896.1  HMX3      TFClass
+## 3 Hsapiens-HOCOMOCOv10-ARI3A_HUMAN.H10MO.D ARI3A  HOCOMOCOv10
+## 4        Hsapiens-jaspar2016-NFIC-MA0161.1  NFIC   jaspar2016
+## 5 Mmusculus-HOCOMOCOv10-ELK4_MOUSE.H10MO.B Gabpa     UniPROBE
+## 6      Mmusculus-jaspar2016-Hoxc9-MA0485.1  EVX1  HOCOMOCOv10</code></pre>
 <pre><code>## [1] 15801</code></pre>
 <p>By using the <code>union</code>, we already screened out duplicates:</p>
 <pre class="r"><code>sum(duplicated(Motif.TF.Map))</code></pre>
@@ -734,12 +734,12 @@ head(Motif.TF.Map.Collapsed)</code></pre>
 <pre><code>## # A tibble: 6 x 3
 ##                                       Motif    TF
 ##                                       &lt;chr&gt; &lt;chr&gt;
-## 1 Mmusculus-jaspar2016-Pparg::Rxra-MA0065.2  COT2
-## 2  Hsapiens-HOCOMOCOv10-MEIS1_HUMAN.H10MO.C MEIS1
-## 3       Mmusculus-jaspar2016-Stat4-MA0518.1 STAT3
-## 4        Mmusculus-jaspar2016-EGR2-MA0472.1  EGR2
-## 5   Hsapiens-HOCOMOCOv10-MBD2_HUMAN.H10MO.B  MBD2
-## 6         Hsapiens-jaspar2016-ESR2-MA0258.1  ESR1
+## 1        Hsapiens-jaspar2016-FOXA1-MA0148.3 FOXA3
+## 2       Hsapiens-jaspar2016-POU2F1-MA0785.1 PO2F3
+## 3         Hsapiens-jaspar2016-ELF3-MA0640.1  ELF1
+## 4 Mmusculus-HOCOMOCOv10-TEAD4_MOUSE.H10MO.D TEAD4
+## 5        Mmusculus-jaspar2016-ELF5-MA0136.1  ETS1
+## 6          Hsapiens-jaspar2016-RAX-MA0718.1    RX
 ## # ... with 1 more variables: Origin &lt;chr&gt;</code></pre>
 <p>To check on this, let’s re-do our computations from above to see the origins:</p>
 <pre class="r"><code>Motif.TF.Map.Collapsed %&gt;% select(TF, Origin) %&gt;%
