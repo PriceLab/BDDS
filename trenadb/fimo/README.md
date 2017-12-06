@@ -2,6 +2,10 @@
 
 This directory contains several versions of Motifs, both in MotifDb lists (`.RDS` format) and in JASPAR-formatted files (`.txt` format). Here is the explanation of what's in each:
 
+- `2017_08_23_Motif_TF_Mapping.RDS` - the most important file in here (as of now); this is the data frame containing the mapping between TFs and Motifs used to construct the FIMO database. This mapping governed what motifs we chose and pops up in our Machine Learning efforts as well. The process by which we arrived at this mapping is chronicled in the `2017_08_23_Motif_Mapping.Rmd` RMarkdown file. 
+
+- `2017_10_26_Motif_TF_Map_Expanded.RDS` and `2017_10_26_Motif_TF_Map_Collapsed.RDS` - two similar data frames that corresponds to the previously mentioned data frame. These tables extend the normal TF-Motif mapping by adding origin information to each motif-TF mapping. Thus, they each include a new row that, for a given mapping, will list the database(s) that give(s) rise to the mapping. The difference is that in `Expanded`, the table is in long form, with each TF-motif-database having its own row. By contrast, the `Collapsed` table has a unique row for each TF-motif relationship, but multiple databases are listed on the same row and separated by a `;`. 
+
 - `2017_07_27_all_fimo_motifs` - Everything in our 2017_07_27 FIMO database, including motifs from JASPAR 2016, HOCOMOCOv10, UniPROBE, and SwissRegulon. Said motifs were settled on using a few investigations, chronicled in a couple RMarkdown files. Notably, due to some strange "NA" organism designations from JASPAR, this collection is missing 2 motifs present in the "JASPAR Vertebrates" database
 
 - `2017_07_27_non_jaspar_vert.txt` - All the motifs from the above file, minus the 519 that appear in the JASPAR Vertebrates. This file represents what must be added to the smaller dataset to achieve the full FIMO dataset
